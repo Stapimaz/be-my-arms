@@ -23,6 +23,8 @@ namespace BeMyArms.M3
     {
         public Vector3 BoundsSize = new Vector3(24f, 8f, 24f);
         public List<M3MapSpawn> Spawns = new List<M3MapSpawn>();
+        /// <summary>World-space XZ rectangles of cover/walls the body cannot enter.</summary>
+        public List<Vector4> Obstacles = new List<Vector4>();
 
         public bool TryGet(int team, int body, int role, out M3MapSpawn spawn)
         {
@@ -38,7 +40,6 @@ namespace BeMyArms.M3
             return false;
         }
 
-        /// <summary>The body pose is the midpoint of its two role spawns, facing the P1 yaw.</summary>
         public bool TryGetBodyPose(int team, int body, out Vector3 position, out float yaw)
         {
             M3MapSpawn p1, p2;
@@ -57,6 +58,25 @@ namespace BeMyArms.M3
             position = Vector3.zero;
             yaw = 0f;
             return false;
+        }
+
+        /// <summary>Builds the deterministic arena collision used by the server and client prediction.</summary>
+        public M3MovementCollision BuildCollision()
+        {
+            var collision = new M3MovementCollision
+            {
+                HasBounds = BoundsSize.x > 0f && BoundsSize.z > 0f,
+                MinX = -BoundsSize.x * 0.5f,
+                MaxX = BoundsSize.x * 0.5f,
+                MinZ = -BoundsSize.z * 0.5f,
+                MaxZ = BoundsSize.z * 0.5f
+            };
+            for (int i = 0; i < Obstacles.Count; i++)
+            {
+                Vector4 o = Obstacles[i];
+                collision.Boxes.Add(new M3MovementCollision.Box { MinX = o.x, MinZ = o.y, MaxX = o.z, MaxZ = o.w });
+            }
+            return collision;
         }
     }
 }

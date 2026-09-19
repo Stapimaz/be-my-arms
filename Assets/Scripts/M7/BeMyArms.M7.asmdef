@@ -6,7 +6,10 @@
         "BeMyArms.M5",
         "BeMyArms.M3",
         "BeMyArms.M2",
-        "BeMyArms.M0"
+        "BeMyArms.M0",
+        "Unity.Netcode.Runtime",
+        "UnityEngine.UI",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

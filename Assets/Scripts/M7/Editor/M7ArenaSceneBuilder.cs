@@ -144,7 +144,8 @@ namespace BeMyArms.M7.EditorTools
                 }
             }
 
-            record.MinSpawnClearance = MeasureSpawnClearance(root, record.Spawns);
+            List<Bounds> obstacles = CollectObstacles(root);
+            record.MinSpawnClearance = MeasureSpawnClearance(record.Spawns, obstacles);
 
             EditorUtility.SetDirty(record);
             AssetDatabase.SaveAssets();
@@ -162,13 +163,30 @@ namespace BeMyArms.M7.EditorTools
                 M7Spawn s = record.Spawns[i];
                 mapSpawns.Spawns.Add(new M3MapSpawn { Team = s.Team, Body = s.Body, Role = s.Role, Position = s.Position, Yaw = s.Yaw });
             }
+            for (int i = 0; i < obstacles.Count; i++)
+            {
+                Bounds b = obstacles[i];
+                mapSpawns.Obstacles.Add(new Vector4(b.min.x, b.min.z, b.max.x, b.max.z));
+            }
 
-            M3DuelSceneBuilder.EnsurePrefabs(out GameObject bodyPrefab, out GameObject directorPrefab);
+            M7PlayerBodyBuilder.EnsurePrefabs(out GameObject bodyPrefab, out GameObject directorPrefab);
             M3DuelSceneBuilder.AddNetworkedMatchSetup(bodyPrefab, directorPrefab, 7780);
 
             // Server-side matchmaking/rating host (inert unless matchmaker mode is enabled).
             var hostGo = new GameObject("M4_MatchHost");
             hostGo.AddComponent<BeMyArms.M4.M4MatchHost>();
+
+            // Player-facing HUD and the audio/VFX services (client-only behaviour guards itself).
+            var hudGo = new GameObject("M7_MatchHud");
+            hudGo.AddComponent<M7MatchHudController>();
+
+            var audioGo = new GameObject("M7_Audio");
+            audioGo.AddComponent<M7AudioService>().Library =
+                AssetDatabase.LoadAssetAtPath<M7AudioLibrary>("Assets/Art/Audio/M7AudioLibrary.asset");
+
+            var vfxGo = new GameObject("M7_Vfx");
+            vfxGo.AddComponent<M7VfxService>().Library =
+                AssetDatabase.LoadAssetAtPath<M7VfxLibrary>("Assets/Art/Vfx/M7VfxLibrary.asset");
 
             Directory.CreateDirectory(Path.GetDirectoryName(scenePath));
             EditorSceneManager.SaveScene(scene, scenePath);
@@ -204,16 +222,8 @@ namespace BeMyArms.M7.EditorTools
         }
 
         /// <summary>Minimum horizontal distance from any spawn to a non-floor obstacle.</summary>
-        static float MeasureSpawnClearance(Transform root, List<M7Spawn> spawns)
+        static float MeasureSpawnClearance(List<M7Spawn> spawns, List<Bounds> obstacles)
         {
-            var obstacles = new List<Bounds>();
-            foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
-            {
-                string piece = PieceName(renderer.transform, root);
-                if (piece.StartsWith("BMA_Map_Floor") || piece.StartsWith("BMA_Map_SpawnPad")) continue;
-                obstacles.Add(renderer.bounds);
-            }
-
             float min = float.MaxValue;
             for (int i = 0; i < spawns.Count; i++)
             {
@@ -225,6 +235,19 @@ namespace BeMyArms.M7.EditorTools
                 }
             }
             return min == float.MaxValue ? 0f : min;
+        }
+
+        /// <summary>Non-floor, non-spawn-pad geometry that bodies must not enter.</summary>
+        static List<Bounds> CollectObstacles(Transform root)
+        {
+            var obstacles = new List<Bounds>();
+            foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                string piece = PieceName(renderer.transform, root);
+                if (piece.StartsWith("BMA_Map_Floor") || piece.StartsWith("BMA_Map_SpawnPad")) continue;
+                obstacles.Add(renderer.bounds);
+            }
+            return obstacles;
         }
 
         static float HorizontalDistance(Vector3 p, Bounds b)

@@ -323,6 +323,16 @@ namespace BeMyArms.M3
             }
             if (mapSpawns != null) Log($"using map spawns ({mapSpawns.Spawns.Count})");
 
+            // Bot-owned P2 roles get a legal loadout so bots can fight with the real economy path.
+            for (int team = 0; team < M3DuelSlots.Teams; team++)
+            {
+                for (int i = 0; i < _bodies[team].Count; i++)
+                {
+                    M3DuelBody body = _bodies[team][i];
+                    if (body != null && body.IsSlotBot(body.SlotP2)) body.ServerAutoBuyBotLoadout();
+                }
+            }
+
             MirrorState();
             Log($"round {round} started: buy phase {BuySeconds:0}s");
         }

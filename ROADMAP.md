@@ -341,6 +341,29 @@ complete and verified; audio/music/VFX production quality is deferred to a futur
 
 ---
 
+### Pre-M8 — playable private-match integration (checkpoint)
+
+**Status:** **Complete.** The normal client is directly playable through a real private-match flow
+with no command line: Main Menu → Play → Private Lobby (Duel/2v2, P1/P2 role) → fill empty slots with
+bots → Start Match → full server-authoritative match on the production arena → post-match → lobby.
+
+- The client transparently launches a **local dedicated server process of the same build** through a
+  provider-neutral allocator seam (`IM7MatchServerAllocator` / `M7LocalProcessAllocator`); a
+  production allocator replaces it without changing lobby/match code.
+- Private lobbies use the same slot model as future online lobbies: each role slot is owned by a human
+  or a bot; a human never controls both roles; bot-fill creates genuine bot ownership (distinct from
+  the disconnect bot-takeover mechanism).
+- Gameplay bots use normal P1/P2 authority (navigation/body orientation; target acquisition, sector
+  respect, aim/fire/reload/utility) and bot P2 roles get a loadout through the normal economy.
+- Segment-rig characters now have a procedural animation layer (locomotion, P1 head, P2 aim/grip,
+  recoil + muzzle flash); presentation only, rig contract and hitboxes unchanged.
+- Real player-facing UI (menu, private lobby, HUD, buy, round/match states, settings, post-match).
+
+Verified in the built player: human-P1+bot-P2 and human-P2+bot-P1 Duel, and bot-filled 2v2.
+Build: `Builds/M7/BeMyArms.exe`. Details and limitations: `docs/PRE_M8_PLAYABLE_INTEGRATION.md`.
+
+---
+
 ### M8 — UI/UX, accessibility and optimization
 
 - Final UI/UX, settings, onboarding, input polish and accessibility options.

@@ -46,6 +46,7 @@ namespace BeMyArms.M3
         M3DuelDirector _director;
         M2BodySim _predictSim;
         M2Reconciler _reconciler;
+        M3MovementCollision _collision;
 
         uint _p1Sequence;
         uint _p2Sequence;
@@ -97,6 +98,9 @@ namespace BeMyArms.M3
                 MaxPitchDegrees = MaxPitchDegrees
             };
             _predictSim.Initialize(0f);
+            M3MapSpawns map = FindAnyObjectByType<M3MapSpawns>();
+            if (map != null) _collision = map.BuildCollision();
+            _predictSim.MovementConstraint = ClampToArena;
             _reconciler = new M2Reconciler();
             _reconciler.Reset(_predictSim.State);
             _manualAimYaw = 0f;
@@ -306,6 +310,17 @@ namespace BeMyArms.M3
                 if (d < bestDistance) { bestDistance = d; best = candidate; }
             }
             return best;
+        }
+
+        /// <summary>Client-side arena collision for prediction; must match the server exactly.</summary>
+        void ClampToArena(M2BodySim sim)
+        {
+            if (_collision == null || _collision.IsEmpty) return;
+            float x = sim.State.PosX;
+            float z = sim.State.PosZ;
+            _collision.Resolve(ref x, ref z);
+            sim.State.PosX = x;
+            sim.State.PosZ = z;
         }
 
         void ApplyPresentation(float dt)

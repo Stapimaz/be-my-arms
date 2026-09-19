@@ -19,6 +19,13 @@ namespace BeMyArms.M2
         public float MaxPitchDegrees = 80f;
         public int MaxHealth = 100;
 
+        /// <summary>
+        /// Optional authoritative movement constraint (arena bounds/obstacles), invoked after each
+        /// P1 step. Kept as a delegate so the pure sim stays engine-free and prediction replays the
+        /// same constraint. Server and client set the same deterministic constraint.
+        /// </summary>
+        public System.Action<M2BodySim> MovementConstraint;
+
         public M2BodyState State;
 
         public void Initialize(float yaw, float posX = 0f, float posZ = 0f)
@@ -63,6 +70,8 @@ namespace BeMyArms.M2
 
             State.PosX += moveX * MoveSpeed * deltaTime;
             State.PosZ += moveZ * MoveSpeed * deltaTime;
+
+            MovementConstraint?.Invoke(this);
         }
 
         /// <summary>Applies P2's desired world aim, clamped to the sector around BodyYaw.</summary>

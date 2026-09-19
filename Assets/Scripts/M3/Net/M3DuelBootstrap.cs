@@ -37,6 +37,9 @@ namespace BeMyArms.M3
         {
             ParseArgs();
 
+            // Private-match flow: a scene bootstrap with no CLI role connects as a client.
+            if (Role == M3DuelRole.Host && M3Config.AutoStartClient) Role = M3DuelRole.Client;
+
             NetworkManager manager = Manager != null ? Manager : NetworkManager.Singleton;
             if (manager == null)
             {
@@ -44,10 +47,11 @@ namespace BeMyArms.M3
                 return;
             }
 
+            ushort effectivePort = M3Config.PortOverride != 0 ? M3Config.PortOverride : Port;
             var transport = manager.GetComponent<UnityTransport>();
             if (transport != null)
             {
-                transport.SetConnectionData("127.0.0.1", Port, "0.0.0.0");
+                transport.SetConnectionData("127.0.0.1", effectivePort, "0.0.0.0");
                 transport.DisconnectTimeoutMS = M3Config.DisconnectTimeoutMs;
             }
 

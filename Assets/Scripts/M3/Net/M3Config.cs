@@ -15,6 +15,12 @@ namespace BeMyArms.M3
         /// <summary>When true the server enqueues connections and lets the matchmaker assign slots.</summary>
         public static bool UseMatchmaker;
 
+        /// <summary>When true a scene bootstrap with no CLI role starts as a client (private-match flow).</summary>
+        public static bool AutoStartClient;
+
+        /// <summary>Port override for the private-match flow (0 = use the scene/CLI port).</summary>
+        public static ushort PortOverride;
+
         /// <summary>Preferred number of human players (bodies per team * 2 players per body * 2 teams).</summary>
         public static int ExpectedPlayers = 4;
 

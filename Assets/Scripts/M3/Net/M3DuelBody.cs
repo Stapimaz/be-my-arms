@@ -52,6 +52,7 @@ namespace BeMyArms.M3
 
         M2BodySim _sim;
         M2WeaponState _weapon;
+        M3MovementCollision _collision;
         M2LagCompensation[] _lag = Array.Empty<M2LagCompensation>();
         readonly M2DelayQueue<M2P1Input> _p1Queue = new M2DelayQueue<M2P1Input>();
         readonly M2DelayQueue<M2P2Input> _p2Queue = new M2DelayQueue<M2P2Input>();
@@ -64,6 +65,12 @@ namespace BeMyArms.M3
         M3WeaponId _activeWeapon = M3WeaponId.Pistol;
         float _blindRemaining;
         float _damageRemainder;
+        float _botClock;
+        float _botStuckTime;
+        float _botStrafeDir = 1f;
+        float _lastBotX;
+        float _lastBotZ;
+        float _grenadeCooldown = 5f;
         double _serverTime;
         float _accumulator;
         int _rejectedFires;
@@ -89,6 +96,10 @@ namespace BeMyArms.M3
                 MaxHealth = MaxHealthDefault
             };
             _sim.Initialize(0f, 0f, 0f);
+
+            M3MapSpawns map = FindAnyObjectByType<M3MapSpawns>();
+            if (map != null) _collision = map.BuildCollision();
+            _sim.MovementConstraint = ClampToArena;
 
             _weapon = new M2WeaponState();
             _p1Queue.LossPercent = LossPercent;
@@ -167,6 +178,17 @@ namespace BeMyArms.M3
 
         public bool IsSlotBot(int slot)
             => M3DuelRoleService.Instance != null && M3DuelRoleService.Instance.IsBot(slot);
+
+        /// <summary>Authoritative arena collision, applied after every P1 step (server and replay).</summary>
+        void ClampToArena(M2BodySim sim)
+        {
+            if (_collision == null || _collision.IsEmpty) return;
+            float x = sim.State.PosX;
+            float z = sim.State.PosZ;
+            _collision.Resolve(ref x, ref z);
+            sim.State.PosX = x;
+            sim.State.PosZ = z;
+        }
 
         // ---- Server tick ----
 
@@ -417,26 +439,65 @@ namespace BeMyArms.M3
 
         M2P1Input BuildBotP1(float dt)
         {
+            var input = new M2P1Input();
             M3DuelBody target = NearestEnemy(out float distance);
-            if (target == null) return new M2P1Input { MoveZ = 0.5f };
+            if (target == null) { input.MoveZ = 0.5f; return input; }
+
             float dx = target.State.Value.PosX - _sim.State.PosX;
             float dz = target.State.Value.PosZ - _sim.State.PosZ;
             float desired = Mathf.Atan2(dx, dz) * Mathf.Rad2Deg;
-            float delta = Mathf.Clamp(M2BodySim.Normalize(desired - _sim.State.LookYaw), -20f, 20f);
-            return new M2P1Input { MoveZ = distance > 8f ? 1f : 0f, LookYawDelta = delta, AlignBody = Mathf.Abs(delta) > 1f };
+            float delta = Mathf.Clamp(M2BodySim.Normalize(desired - _sim.State.LookYaw), -25f, 25f);
+            input.LookYawDelta = delta;
+            input.AlignBody = Mathf.Abs(delta) > 1.5f;
+
+            // Simple wall avoidance: if advancing barely moves the body, strafe instead.
+            float moved = Mathf.Sqrt((_sim.State.PosX - _lastBotX) * (_sim.State.PosX - _lastBotX) +
+                                     (_sim.State.PosZ - _lastBotZ) * (_sim.State.PosZ - _lastBotZ));
+            _lastBotX = _sim.State.PosX;
+            _lastBotZ = _sim.State.PosZ;
+            if (moved < 0.01f) _botStuckTime += dt;
+            else _botStuckTime = Mathf.Max(0f, _botStuckTime - dt * 2f);
+            if (_botStuckTime > 0.4f)
+            {
+                _botStrafeDir = _botStrafeDir >= 0f ? -1f : 1f;
+                _botStuckTime = 0f;
+            }
+
+            bool advance = distance > 10f;
+            input.MoveZ = _botStuckTime > 0f ? 0f : (advance ? 1f : 0.35f);
+            input.MoveX = _botStuckTime > 0f ? _botStrafeDir : Mathf.Sin(_botClock * 0.7f) * (distance < 12f ? 0.9f : 0.25f);
+            _botClock += dt;
+            return input;
         }
 
         M2P2Input BuildBotP2()
         {
             var input = new M2P2Input { AimPitch = 0f, Fire = false };
-            M3DuelBody target = NearestEnemy(out _);
+            M3DuelBody target = NearestEnemy(out float distance);
             if (target == null) { input.AimYaw = _sim.State.BodyYaw; return input; }
+
             float dx = target.State.Value.PosX - _sim.State.PosX;
             float dz = target.State.Value.PosZ - _sim.State.PosZ;
             input.AimYaw = Mathf.Atan2(dx, dz) * Mathf.Rad2Deg;
             input.Fire = true;
             input.Reload = _weapon.Ammo <= 0;
+
+            // Occasional utility through the normal P2 authority path.
+            _grenadeCooldown -= 1f / 60f;
+            if (_director != null && _director.IsLive && distance < 24f && _grenadeCooldown <= 0f && TryConsumeUtility(M3UtilityKind.Grenade))
+            {
+                _director.ServerApplyUtility(TeamIndex, M3UtilityKind.Grenade, _sim.State.PosX, _sim.State.PosZ, _sim.State.AimYaw);
+                _grenadeCooldown = 9f;
+            }
             return input;
+        }
+
+        /// <summary>Server-only: give a bot-owned P2 a legal loadout at the start of a round.</summary>
+        public void ServerAutoBuyBotLoadout()
+        {
+            if (!IsServer) return;
+            ServerBuy(0); // rifle (primary)
+            ServerBuy(6); // grenade (utility)
         }
 
         void Log(string message)

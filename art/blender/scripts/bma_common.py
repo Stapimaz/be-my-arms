@@ -212,6 +212,28 @@ def unwrap_all():
             uv_unwrap(ob)
 
 
+def joint(name, location, parent=None, size=0.08):
+    """An empty joint used as a rotation pivot for the procedural animation layer."""
+    ob = bpy.data.objects.new(name, None)
+    ob.empty_display_type = 'PLAIN_AXES'
+    ob.empty_display_size = size
+    bpy.context.collection.objects.link(ob)
+    ob.location = Vector(location)
+    if parent is not None:
+        bpy.context.view_layer.update()
+        ob.parent = parent
+        ob.matrix_parent_inverse = parent.matrix_world.inverted()
+    return ob
+
+
+def attach(ob, parent):
+    """Parent a mesh to a joint while keeping its world transform, so it rotates about the joint."""
+    bpy.context.view_layer.update()
+    ob.parent = parent
+    ob.matrix_parent_inverse = parent.matrix_world.inverted()
+    return ob
+
+
 def export_fbx(path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     bpy.ops.export_scene.fbx(
@@ -221,7 +243,7 @@ def export_fbx(path):
         axis_up='Y',
         global_scale=1.0,
         apply_scale_options='FBX_SCALE_NONE',
-        object_types={'MESH'},
+        object_types={'MESH', 'EMPTY'},
         use_mesh_modifiers=True,
         mesh_smooth_type='FACE',
         use_tspace=True,

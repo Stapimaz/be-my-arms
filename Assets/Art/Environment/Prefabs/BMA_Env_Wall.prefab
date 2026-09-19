@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5247433766674106344}
-  - component: {fileID: 1656769148547546683}
+  - component: {fileID: 7490837700041129603}
   m_Layer: 0
   m_Name: BMA_Env_Wall
   m_TagString: Untagged
@@ -33,7 +33,7 @@ Transform:
   - {fileID: 7318565418636249266}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1656769148547546683
+--- !u!114 &7490837700041129603
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

@@ -19,6 +19,7 @@ namespace BeMyArms.M7.EditorTools
             M7VfxPrefabBuilder.BuildAll();
             M7VfxLibraryBuilder.Build();
             M7ArenaSceneBuilder.BuildAll();
+            M7MenuSceneBuilder.Build();
             AssetDatabase.SaveAssets();
             Debug.Log("[M7] content regenerated");
         }
