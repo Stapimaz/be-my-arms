@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/M2NetworkingSpike.unity
+    guid: b53ecca2eaa9f6b45991eec47b091347
+  - enabled: 1
     path: Assets/Scenes/M1VerticalSlice.unity
     guid: e3c2f39475925de4382c11a6df2f4859
   - enabled: 1

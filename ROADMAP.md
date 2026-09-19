@@ -56,7 +56,7 @@ document wins. If they conflict on **implementation order**, this roadmap wins.
 | **M0** — local shared-body spike | Implemented; automated verification passing (12 EditMode, 2 PlayMode); single-tester spot-check confirmed the Model C coupling; the two-human feel playtest was intentionally deferred to the M1 gate |
 | **M0.5** — netcode bake-off | **Complete — chose Netcode for GameObjects** with a custom prediction/lag-comp layer; see `docs/M05_NETCODE_BAKEOFF.md`. NfE isolated on branch `m0.5/nfe` |
 | **M1** — local vertical slice | Implemented; automated verification passing (19 EditMode, 2 PlayMode); human two-duo playtest gate deferred; see `docs/M1_VERTICAL_SLICE.md` |
-| **M2** — networked spike | Not started |
+| **M2** — networked spike | In progress — role-tagged RPCs, deterministic sim, client prediction/reconciliation and sector validation implemented and host-verified; two-process run, lag-comp rewind, reconnect and metrics pending; see `docs/M2_NETWORKING_SPIKE.md` |
 | **M3** — PvP round loop | Not started |
 | **M4** — 2v2 and matchmaking | Not started |
 | **M5** — product systems | Not started |

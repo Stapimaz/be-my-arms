@@ -1,0 +1,20 @@
+{
+    "name": "BeMyArms.M2.Editor",
+    "rootNamespace": "BeMyArms.M2.EditorTools",
+    "references": [
+        "BeMyArms.M2",
+        "BeMyArms.M0",
+        "Unity.Netcode.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
