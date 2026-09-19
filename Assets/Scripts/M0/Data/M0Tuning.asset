@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db95ab7e77f21234e883250ac57b2a70, type: 3}
+  m_Name: M0Tuning
+  m_EditorClassIdentifier: BeMyArms.M0::BeMyArms.M0.M0Tuning
+  sectorHalfDegrees: 70
+  maxPitchDegrees: 80
+  p1MouseSensitivity: 0.12
+  gamepadYawSpeed: 220
+  gamepadPitchSpeed: 160
+  moveSpeed: 5
+  sprintMultiplier: 1.5
+  gravity: -20
+  fireRatePerSecond: 8
+  damage: 18
+  headshotMultiplier: 2.5
+  rangeMeters: 150
+  maxHealth: 100
+  p1CameraDistance: 4.5
+  p1CameraHeight: 1.6
+  p2ShoulderOffset: {x: 0, y: 1.45, z: 0.22}

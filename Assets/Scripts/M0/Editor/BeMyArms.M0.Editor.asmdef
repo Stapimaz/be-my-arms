@@ -1,0 +1,18 @@
+{
+    "name": "BeMyArms.M0.Editor",
+    "rootNamespace": "BeMyArms.M0.EditorTools",
+    "references": [
+        "BeMyArms.M0"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
