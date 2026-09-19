@@ -59,8 +59,8 @@ document wins. If they conflict on **implementation order**, this roadmap wins.
 | **M2** — networked spike | **Complete** (architecture proof). Real 3-process run: approval-based role authorization, wrong-role rejection, bandwidth + prediction-error + camera metrics, transport-level conditioning, sector + lag-comp validation; disconnect→bot→reconnect handoff verified on graceful disconnect; force-kill reconnect limitation documented (UTP detection/acceptance) for M3+; see `docs/M2_NETWORKING_SPIKE.md` |
 | **M3** — PvP round loop | **Complete (acceptance level).** End-to-end dedicated-server + 4-client Duel verified: role assignment, server-authoritative buy, live combat, elimination/timeout, utility, closing zone, round/match transitions and telemetry; EditMode 61/61. See `docs/M3_PVP_ROUND_LOOP.md` |
 | **M4** — 2v2 and matchmaking | **Complete (acceptance level).** Real dedicated-server + 8-client 2v2 verified end-to-end: matchmaking, provider-neutral allocation, parties, four shared bodies and post-match role-specific ratings; EditMode 76/76. Production hosting/services integration is deferred and non-blocking. See `docs/M4_2V2_MATCHMAKING.md` |
-| **M5** — product systems | Not started |
-| **M6–M10** — production to release | Not started |
+| **M5** — product systems | **Complete (acceptance level).** Product foundations (account/profile, role-specific ranked state/presentation, cosmetic ownership/equip, mounting presentation, social, moderation) + the enforced P1/P2 rig contract proven across all placeholder combinations; EditMode 89/89, PlayMode 3/3. Production content and vendors deferred. See `docs/M5_PRODUCT_SYSTEMS.md` |
+| **M6–M10** — production to release | Not started. M6 handoff prepared by the M5 contract; M6 begins the production DCC/art pipeline |
 
 ### M0 — Very small local shared-body mechanic spike
 
@@ -260,12 +260,29 @@ moderation, ranked presentation.
 **Acceptance criteria:** the rig and skin contract is enforced before cosmetic content
 scales; the shared-body identity is intact across all shipped combinations.
 
+**Outcome:** implemented and verified. `BeMyArms.M5` provides account/profile, role-specific ranked
+state and presentation, cosmetic ownership/equip, social and moderation seams (all behind clean
+interfaces with local in-memory implementations) plus the mounting assembler. The standardized
+P1/P2 rig contract is defined and **enforced before content scales**: a validator rejects missing
+sockets, corrects hitbox/region mismatches, and forbids cosmetic layers from carrying hitboxes or
+gameplay stats; a mount assembler combines any P1 skin with any P2 skin at fixed sockets with no
+pair-specific work. Proven with three placeholder P1 variants × three P2 variants: all 9
+combinations assemble and validate, authoritative hitbox and gameplay-stat signatures are identical
+across every combination, and negative cases (hitbox-bearing skin, stats-bearing skin, missing
+socket, wrong-role skin) are rejected. EditMode 89/89, PlayMode 3/3 (runtime mount matrix). No
+production art and no backend/vendor integration. Details: `docs/M5_PRODUCT_SYSTEMS.md`.
+
 ---
 
 ### M6 — Production art and content pipeline
 
 Establish the DCC/content pipeline and final asset standards before mass production. The
 pipeline tool is not chosen yet; Blender is a viable candidate among others.
+
+> **Boundary:** M5 established the product foundations and enforced the P1/P2 rig contract
+> (`docs/M5_PRODUCT_SYSTEMS.md`); M6 begins the production DCC/art pipeline and **real asset
+> creation**. No DCC tool is installed or configured before M6. Every M6 character/weapon must
+> conform to the contract and pass the M5 validator/mount assembly check.
 
 - Choose the DCC/content pipeline and define import, scale, naming, LOD and material conventions.
 - Finalize the standardized P1/P2 rig contract: gameplay skeleton, attachment sockets, camera
@@ -323,7 +340,7 @@ accessibility checklist passes.
 | Aim coupling | M1 playtest | Model A, B or C | Playtest notes from at least three duos |
 | P1 look/body tuning | M1 model resolved; numbers are TUNING | Neck limit, follow threshold/speed, align speed | Tuning playtest at alpha/beta |
 | Netcode stack | M0.5 (decided) | NGO chosen | `docs/M05_NETCODE_BAKEOFF.md`; M2 confirms prediction/lag-comp |
-| Simulation customisation | M2 | Is a custom character controller / deterministic sim actually required? | Bandwidth, prediction error, stack constraints |
+| Simulation customisation | M2 (resolved) | Is a custom character controller / deterministic sim actually required? | Resolved yes: NGO has no built-in prediction, so a custom deterministic pure body simulation (`M2BodySim`) with a client reconciler and lag compensation was adopted. Bandwidth/prediction metrics in `docs/M2_NETWORKING_SPIKE.md`. |
 | Disconnect policy | before M3/M4 | What happens to a body when one role disconnects mid-round? | Decided and implemented: the disconnected role becomes a temporary **bot** (never handed to the other human); a token reconnect atomically reclaims it. Single-owner invariant unit-tested (M2/M3). |
 
 ---

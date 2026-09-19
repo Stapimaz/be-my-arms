@@ -171,6 +171,11 @@ question with evidence. All three are **[SPIKE]**; Model C is not permanently lo
 - **Hitbox authority:** server-side hitboxes must derive from the same pose logic as the
   visual skeleton, or headshots will misregister. Keep a capsule rig driven by simulation
   state and consider kinematic bone math on the server **[SPIKE]**.
+- **Rig/skin contract status:** the standardized contract (gameplay skeleton, attachment/camera/
+  weapon/utility anchors, capsule hitboxes, animation interface) is defined and **enforced** by
+  `BeMyArms.M5` against placeholder variants, and any valid P1 skin must combine with any valid
+  P2 skin with no pair-specific work. See `docs/M5_PRODUCT_SYSTEMS.md`; production skins must pass
+  the validator before content scales.
 - **Silhouette constraint [LOCKED readability]:** P1's head is the only critical region and
   must remain visually exposed in the combined form; P2's upper body must never conceal it.
 
@@ -333,7 +338,6 @@ stack removes the need for a custom kinematic character controller.
 
 ## 12. Open technical questions — do not finalize silently
 
-- Whether a custom character controller or deterministic simulation is actually required.
 - Final server tick rate and lag-comp window.
 - How P2's view of body motion is reproduced (interpolation versus input relay).
 - Whether P1 retains a decoupled free-look camera.
@@ -349,6 +353,11 @@ stack removes the need for a custom kinematic character controller.
 M0, M0.5 and M1 use greybox and placeholder geometry only. Capsule bodies, arm proxies,
 untextured materials and blockout arenas are development assets and are **not** the intended
 final presentation; no agent should treat them as permanent art direction.
+
+> **Milestone boundary:** M5 established the product foundations and defined/enforced the P1/P2 rig
+> contract against placeholder variants (`docs/M5_PRODUCT_SYSTEMS.md`). M6 is where the production
+> DCC/content pipeline is chosen and real assets are created against that contract. M5 does not
+> choose a DCC tool, install one, or produce production art.
 
 - A DCC/content pipeline is established when production art begins. The tool is **not chosen
   yet**; Blender is a viable candidate alongside other DCCs, and the choice can be made when

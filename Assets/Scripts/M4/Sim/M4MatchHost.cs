@@ -24,7 +24,6 @@ namespace BeMyArms.M4
         M3DuelDirector _director;
         M4MatchProposal _proposal;
         bool _subscribed;
-        bool _started;
         float _startTime;
 
         void Start()
@@ -114,7 +113,6 @@ namespace BeMyArms.M4
             }
 
             _proposal = proposal;
-            _started = true;
             _director.ServerBeginMatch(assignments, ticket != null ? $"{ticket.MatchId}@{ticket.Endpoint}" : "local");
         }
 

@@ -197,6 +197,11 @@ All P1 skins must be compatible with all P2 skins. This requires standardized:
 - weapon anchors,
 - animation interfaces.
 
+These are enforced as the **rig contract** defined in M5 (`docs/M5_PRODUCT_SYSTEMS.md`); every
+cosmetic skin is authored against that contract, and the contract check rejects any skin that would
+move authoritative hitboxes or gameplay stats. Production skins are created against it from M6
+onward.
+
 The combined result should still visibly contain **both players' cosmetic identities**.
 
 P2 must not merely look like “P1's arm skin.” It should remain obvious that a second character has attached to the body.
@@ -1146,13 +1151,14 @@ This shared-body relationship is one of the project's highest-risk networking fe
 
 ---
 
-# 24. Networking Stack Selection — OPEN
+# 24. Networking Stack Selection — DECIDED
 
-Which netcode stack the project uses is **not selected**. The candidates are Netcode for
-GameObjects and Netcode for Entities, both on Unity Transport. The choice is made by the M0.5
-bake-off and confirmed by the M2 networking spike. See `ROADMAP.md` for the milestone gates and
-`TECHNICAL_PLAN.md` §8 for the comparison and the criteria the bake-off measures. No stack is
-chosen in advance, and no networking package is added before the milestone that needs it.
+The project uses **Netcode for GameObjects (NGO)** on Unity Transport, selected by the M0.5
+bake-off and confirmed by the M2 networking spike. Because NGO has no built-in prediction or lag
+compensation, the game maintains a custom deterministic body simulation with client-side
+prediction/reconciliation and server-side lag compensation. Netcode for Entities was evaluated and
+rejected; it remains isolated on a branch. Decision record: `docs/M05_NETCODE_BAKEOFF.md`;
+comparison and architecture: `TECHNICAL_PLAN.md` §8 and §9.
 
 ---
 
