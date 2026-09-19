@@ -1,0 +1,20 @@
+{
+    "name": "BeMyArms.M05.Ngo.Editor",
+    "rootNamespace": "BeMyArms.M05.Ngo.EditorTools",
+    "references": [
+        "BeMyArms.M05.Ngo",
+        "BeMyArms.M0",
+        "Unity.Netcode.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
