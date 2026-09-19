@@ -21,9 +21,25 @@ spawning batch-mode editors.
 | .NET SDK | `8.0` | Independent verification of pure C# logic |
 | Git | present | GitHub remote configured |
 
-The Unity CLI agent skill has **no OpenCode target** (supported clients: claude-code,
-claude-desktop, grok, cursor, windsurf, vscode, cline, codex). The CLI is usable directly;
-run `unity skill show` for its task guide.
+### Unity CLI agent skill for OpenCode
+
+Installed at `.opencode/skills/unity-cli` (OpenCode discovers `.opencode/skills/<id>/SKILL.md`,
+and also `.claude/skills` / `.agents/skills`). Unity's installer has no OpenCode client, so the
+skill is materialized from `unity skill show`:
+
+```powershell
+unity skill show --list            # SKILL.md, CHANGELOG.md, SECURITY.md, references/*.md
+unity skill show --path <file>     # print one file
+```
+
+**Encoding trap:** Windows PowerShell 5.1 decodes native-command stdout with the console code
+page (here `ibm857`), which corrupts Unity's UTF-8 output into mojibake. Capture with an explicit
+UTF-8 encoding instead — e.g. a .NET `ProcessStartInfo` with `StandardOutputEncoding = UTF8` (or
+`[Console]::OutputEncoding = [Text.Encoding]::UTF8` before running) — and write each file as
+UTF-8 without BOM. Verify that `SKILL.md` contains a real em dash (U+2014) and no `Ô`.
+
+Verify OpenCode discovery by checking that `unity-cli` appears in the available-skills list and
+that loading it reports a base directory of `.opencode/skills/unity-cli`.
 
 ---
 
