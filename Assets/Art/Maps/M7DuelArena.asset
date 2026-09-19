@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 376bb87d62e6b764385141d63f6838e1, type: 3}
+  m_Name: M7DuelArena
+  m_EditorClassIdentifier: BeMyArms.M7::BeMyArms.M7.M7MapDefinition
+  MapId: m7_duel_foundry
+  Family: 0
+  ScenePath: Assets/Scenes/M7DuelArena.unity
+  BoundsSize: {x: 24, y: 8, z: 24}
+  Spawns:
+  - Team: 0
+    Body: 0
+    Role: 0
+    Position: {x: -0.9, y: 0, z: -9}
+    Yaw: 0
+  - Team: 0
+    Body: 0
+    Role: 1
+    Position: {x: 0.9, y: 0, z: -9}
+    Yaw: 0
+  - Team: 1
+    Body: 0
+    Role: 0
+    Position: {x: -0.9, y: 0, z: 9}
+    Yaw: 180
+  - Team: 1
+    Body: 0
+    Role: 1
+    Position: {x: 0.9, y: 0, z: 9}
+    Yaw: 180
+  CoverCount: 13
+  LaneCount: 4
+  MaxVerticality: 3.0399995

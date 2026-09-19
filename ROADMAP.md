@@ -61,7 +61,8 @@ document wins. If they conflict on **implementation order**, this roadmap wins.
 | **M4** — 2v2 and matchmaking | **Complete (acceptance level).** Real dedicated-server + 8-client 2v2 verified end-to-end: matchmaking, provider-neutral allocation, parties, four shared bodies and post-match role-specific ratings; EditMode 76/76. Production hosting/services integration is deferred and non-blocking. See `docs/M4_2V2_MATCHMAKING.md` |
 | **M5** — product systems | **Complete (acceptance level).** Product foundations (account/profile, role-specific ranked state/presentation, cosmetic ownership/equip, mounting presentation, social, moderation) + the enforced P1/P2 rig contract proven across all placeholder combinations; EditMode 89/89, PlayMode 3/3. Production content and vendors deferred. See `docs/M5_PRODUCT_SYSTEMS.md` |
 | **M6** — production art and content pipeline | **Complete (acceptance level).** Blender 4.5.13 LTS pipeline with enforced conventions; real P1(body-only)/P2(shoulder+arms)/weapon/utility/environment assets imported at 1:1, anatomy-correct and validated against the M5 contract; every P1×P2 combination mounts with the weapon gripped (4/4); EditMode 94/94, PlayMode 3/3. See `docs/M6_ART_PIPELINE.md` |
-| **M7–M10** — content, product and release | Not started. M7 begins audio/VFX and the production map set on the M6 pipeline |
+| **M7** — audio, VFX, maps and content scale | **Complete (acceptance level).** Production Duel + 2v2 arena family, procedural audio set + library/service, 11 VFX effects + library/service, and a validated shippable match-set manifest; EditMode 101/101, PlayMode 5/5. Art direction and final audio sourcing are surfaced as open product decisions. See `docs/M7_CONTENT.md` |
+| **M8–M10** — UI/product and release | Not started. M8 begins UI/UX, accessibility and optimization |
 
 ### M0 — Very small local shared-body mechanic spike
 
@@ -320,6 +321,17 @@ and clear of P1's head. Details: `docs/M6_ART_PIPELINE.md`.
 > (`docs/M6_ART_PIPELINE.md`) and keeps every new asset passing the M5 contract and M6 validator;
 > it does not redefine the asset standards or the DCC choice.
 
+**Outcome:** implemented and verified. A 15-piece Blender map kit yields two production arenas
+following the map-family strategy (Duel 24×24 with closed flanks; 2v2 32×32 with extra lanes),
+each writing a validated map record with complete team/body/role spawns, cover, lanes and
+verticality. A reproducible procedural audio set (18 SFX + 3 loops) is imported with production
+settings and exposed through an audio library/service; 11 particle VFX are built and exposed through
+a VFX library/service. A pure content manifest plus validator confirms the project meets the
+shippable match-set floor (`MATCH SET READY`). EditMode 101/101, PlayMode 5/5. A focused
+art-direction pass refined the characters (articulated joints, layered armour, exposed P1 head,
+distinct P2 shoulder/arms) without changing the rig contract. Final art direction and final audio
+sourcing remain open product decisions. Details: `docs/M7_CONTENT.md`, `docs/M7_ART_DIRECTION.md`.
+
 ---
 
 ### M8 — UI/UX, accessibility and optimization
@@ -329,6 +341,10 @@ and clear of P1's head. Details: `docs/M6_ART_PIPELINE.md`.
 
 **Acceptance criteria:** defined frame-rate, memory and load targets are met, and an
 accessibility checklist passes.
+
+> **Boundary:** M8 begins final UI/UX, accessibility and optimization work. It consumes the M7 map
+> records and audio/VFX libraries and keeps new assets passing the M5/M6 validators; it does not
+> redefine content pipelines or the art/audio direction.
 
 ---
 

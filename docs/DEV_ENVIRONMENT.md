@@ -139,3 +139,15 @@ Then, in the editor: **Be My Arms > M6 > Regenerate Production Assets**, followe
 Coordinates, scale, naming, materials, LOD budgets and the rig/mount conventions are documented in
 `docs/M6_ART_PIPELINE.md`. Blender sources live outside `Assets/`; only exported FBX and built
 prefabs/materials enter the Unity project.
+
+### M7 content (audio, VFX, maps)
+
+```powershell
+# procedural production-test SFX/music (uses Blender's bundled Python)
+powershell -ExecutionPolicy Bypass -File tools/pipeline/build-audio.ps1
+```
+
+Then, in the editor: **Be My Arms > M7 > Regenerate Content** builds the map prefabs and arenas,
+the audio library and the VFX prefabs/libraries; **Be My Arms > M7 > Validate Content** runs the map
+and shippable-match-set checks (CLI: `M7PipelineCommands.Validate()`). See `docs/M7_CONTENT.md` and
+`docs/M7_ART_DIRECTION.md`.

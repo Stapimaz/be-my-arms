@@ -1,0 +1,33 @@
+{
+    "name": "BeMyArms.M7.Tests",
+    "rootNamespace": "BeMyArms.M7.Tests",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "BeMyArms.M7",
+        "BeMyArms.M7.Editor",
+        "BeMyArms.M6",
+        "BeMyArms.M6.Editor",
+        "BeMyArms.M5",
+        "BeMyArms.M3",
+        "BeMyArms.M2",
+        "BeMyArms.M1",
+        "BeMyArms.M0",
+        "Unity.Netcode.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

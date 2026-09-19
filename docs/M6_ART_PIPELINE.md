@@ -98,7 +98,7 @@ without re-exporting geometry. Palette: `BMA_Armor`, `BMA_Suit_Alpha`, `BMA_Suit
 This first pass is single-mesh **LOD0**; LOD1/LOD2 are authored in M7 when content scale begins.
 The pipeline still enforces an LOD0 triangle budget so assets cannot silently balloon:
 P1 ≤ 30k, P2 ≤ 20k, weapon ≤ 10k, environment piece ≤ 8k. Actual counts (all well under):
-P1 3,308–7,044 · P2 11,768–11,984 · rifle 952 · grenade 1,940 · environment 368–756.
+P1 4,388–5,144 · P2 2,496 · rifle 952 · grenade 1,940 · environment 368–756 · map kit 116–792.
 
 ## 7. Rigging / skinning conventions (first pass)
 

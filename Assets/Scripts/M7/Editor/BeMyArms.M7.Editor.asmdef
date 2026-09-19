@@ -1,0 +1,25 @@
+{
+    "name": "BeMyArms.M7.Editor",
+    "rootNamespace": "BeMyArms.M7.EditorTools",
+    "references": [
+        "BeMyArms.M7",
+        "BeMyArms.M6",
+        "BeMyArms.M6.Editor",
+        "BeMyArms.M5",
+        "BeMyArms.M3",
+        "BeMyArms.M2",
+        "BeMyArms.M0",
+        "Unity.Netcode.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

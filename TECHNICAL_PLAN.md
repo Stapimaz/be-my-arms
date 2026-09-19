@@ -362,6 +362,10 @@ final presentation; no agent should treat them as permanent art direction.
 > DCC/content pipeline is chosen and real assets are created against that contract. M5 does not
 > choose a DCC tool, install one, or produce production art.
 
+> **M7 content:** the production map kit and arenas, the audio set/library/service and the VFX
+> set/library/service are documented in `docs/M7_CONTENT.md`; the character art-direction pass is in
+> `docs/M7_ART_DIRECTION.md`.
+
 - A DCC/content pipeline is **established in M6**: the DCC is **Blender 4.5 LTS**, installed
   reproducibly with a pinned version and checksum, driven headlessly through `bpy`. The Blender →
   Unity pipeline, conventions and evidence are documented in `docs/M6_ART_PIPELINE.md`.

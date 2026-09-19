@@ -39,6 +39,9 @@ namespace BeMyArms.M6.EditorTools
             { "BMA_Concrete", new Entry(new Color(0.42f, 0.44f, 0.47f), 0.00f, 0.15f) },
             { "BMA_Env_Metal", new Entry(new Color(0.20f, 0.22f, 0.25f), 0.55f, 0.55f) },
             { "BMA_Env_Accent", new Entry(new Color(0.85f, 0.55f, 0.20f), 0.20f, 0.50f) },
+            { "BMA_Map_Floor", new Entry(new Color(0.24f, 0.26f, 0.29f), 0.00f, 0.30f) },
+            { "BMA_Team_Alpha", new Entry(new Color(0.15f, 0.65f, 0.85f), 0.10f, 0.50f) },
+            { "BMA_Team_Beta", new Entry(new Color(0.85f, 0.40f, 0.18f), 0.10f, 0.50f) },
         };
 
         public static IEnumerable<string> Names => Entries.Keys;

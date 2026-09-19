@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d005f2a1138792468ec39f51c4bea58, type: 3}
+  m_Name: M7VfxLibrary
+  m_EditorClassIdentifier: BeMyArms.M7::BeMyArms.M7.M7VfxLibrary
+  Effects:
+  - Id: 0
+    Prefab: {fileID: 1197985889336672141, guid: 7290b1eec54ffa94f92d68085b1511b6, type: 3}
+    Lifetime: 0.4
+    Scale: 1
+  - Id: 1
+    Prefab: {fileID: 7787545174023089223, guid: 6818e9dbdcc314f4bbcc31dddabc94c2, type: 3}
+    Lifetime: 0.54
+    Scale: 1
+  - Id: 2
+    Prefab: {fileID: 1085205323346061869, guid: 2ef16077924c5b743a0478e0a1d4b113, type: 3}
+    Lifetime: 0.85
+    Scale: 1
+  - Id: 3
+    Prefab: {fileID: 1455939107178360729, guid: 81187f504cef90f4dae01f0c62a1ba66, type: 3}
+    Lifetime: 0.8
+    Scale: 1
+  - Id: 4
+    Prefab: {fileID: 1850552937392288144, guid: 58f680f8211d9a6488071ece9f04dfca, type: 3}
+    Lifetime: 0.95
+    Scale: 1
+  - Id: 5
+    Prefab: {fileID: 8250271355881185162, guid: 2c9bdd384e1762c4fa3ace7112822d1e, type: 3}
+    Lifetime: 0.8
+    Scale: 1
+  - Id: 6
+    Prefab: {fileID: 3350137847107444323, guid: 1ee2c8ba078b9da4182e843102437157, type: 3}
+    Lifetime: 1.45
+    Scale: 1
+  - Id: 7
+    Prefab: {fileID: 5502687410247389430, guid: 022f729f5ab34974888013f041e26b7f, type: 3}
+    Lifetime: 2.8
+    Scale: 1
+  - Id: 8
+    Prefab: {fileID: 8043970034505515077, guid: 71524e965616b8c4698dfacdb073a23e, type: 3}
+    Lifetime: 0.73
+    Scale: 1
+  - Id: 9
+    Prefab: {fileID: 7228297202110206191, guid: 58b4fe3dd6d095445bc3de95d1dfc518, type: 3}
+    Lifetime: 1.75
+    Scale: 1
+  - Id: 10
+    Prefab: {fileID: 2659722879773462518, guid: 8255c1d93788f4248a1153bc173ba71a, type: 3}
+    Lifetime: 2.3
+    Scale: 1

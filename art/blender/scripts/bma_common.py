@@ -179,6 +179,15 @@ def limb(name, a, b, radius_start, radius_end=None, mat=None, seg=12, bevel=0.0,
     return _finish(name, bm, mat, smooth=True)
 
 
+def joint_sleeve(name, center, direction, length, radius, mat=None, seg=14, bevel=0.0):
+    """An articulated armored joint: a short sleeve along `direction`, never a bare ball."""
+    d = Vector(direction)
+    if d.length > 1e-6:
+        d = d.normalized()
+    half = d * (length * 0.5)
+    return limb(name, Vector(center) - half, Vector(center) + half, radius, radius * 0.92, mat, seg=seg, bevel=bevel)
+
+
 def uv_unwrap(ob):
     try:
         bpy.context.view_layer.objects.active = ob

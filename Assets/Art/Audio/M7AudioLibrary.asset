@@ -1,0 +1,141 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1cedb0558a6c1943bfb68522a6d2bf0, type: 3}
+  m_Name: M7AudioLibrary
+  m_EditorClassIdentifier: BeMyArms.M7::BeMyArms.M7.M7AudioLibrary
+  Clips:
+  - Id: 0
+    Clip: {fileID: 8300000, guid: c8f32309642aa924ea70d728e5b50749, type: 3}
+    Volume: 1
+    PitchJitter: 0.06
+    Spatial: 1
+    Loop: 0
+  - Id: 1
+    Clip: {fileID: 8300000, guid: 4fc4707788770454a90ecbbad963ab5c, type: 3}
+    Volume: 1
+    PitchJitter: 0.06
+    Spatial: 1
+    Loop: 0
+  - Id: 2
+    Clip: {fileID: 8300000, guid: a8b082593449c464582b213274b2eb67, type: 3}
+    Volume: 1
+    PitchJitter: 0.06
+    Spatial: 1
+    Loop: 0
+  - Id: 3
+    Clip: {fileID: 8300000, guid: ff44396710d0eb24db50d90db27cdec6, type: 3}
+    Volume: 1
+    PitchJitter: 0.06
+    Spatial: 1
+    Loop: 0
+  - Id: 4
+    Clip: {fileID: 8300000, guid: f0207e188fd192e4bb7f6bc0d163ad48, type: 3}
+    Volume: 1
+    PitchJitter: 0.06
+    Spatial: 1
+    Loop: 0
+  - Id: 5
+    Clip: {fileID: 8300000, guid: d74dca5b8c5de3644889178e93eeb463, type: 3}
+    Volume: 1
+    PitchJitter: 0.06
+    Spatial: 1
+    Loop: 0
+  - Id: 6
+    Clip: {fileID: 8300000, guid: ee3e7812c8e9b8c4eb1e718bb10365bf, type: 3}
+    Volume: 1
+    PitchJitter: 0.06
+    Spatial: 1
+    Loop: 0
+  - Id: 7
+    Clip: {fileID: 8300000, guid: 40ce1797a7b15b84781643ccfbe13fb2, type: 3}
+    Volume: 1
+    PitchJitter: 0.06
+    Spatial: 1
+    Loop: 0
+  - Id: 8
+    Clip: {fileID: 8300000, guid: 23531504478b36e49b2a30615cb862f9, type: 3}
+    Volume: 1
+    PitchJitter: 0.06
+    Spatial: 1
+    Loop: 0
+  - Id: 9
+    Clip: {fileID: 8300000, guid: 3d1b7788f60fa4246aba0d538e4477d2, type: 3}
+    Volume: 1
+    PitchJitter: 0.06
+    Spatial: 1
+    Loop: 0
+  - Id: 10
+    Clip: {fileID: 8300000, guid: 30b2dc93d0f36244b9d8f542a3fb2fe9, type: 3}
+    Volume: 1
+    PitchJitter: 0.06
+    Spatial: 1
+    Loop: 0
+  - Id: 11
+    Clip: {fileID: 8300000, guid: c5212b7d2a4d69440a39222ce67f6169, type: 3}
+    Volume: 1
+    PitchJitter: 0.06
+    Spatial: 1
+    Loop: 0
+  - Id: 12
+    Clip: {fileID: 8300000, guid: fde3311b9edd6d74d891b68737c272c4, type: 3}
+    Volume: 1
+    PitchJitter: 0.06
+    Spatial: 0
+    Loop: 0
+  - Id: 13
+    Clip: {fileID: 8300000, guid: df192548efb19dc4e912b77d1ee1431a, type: 3}
+    Volume: 1
+    PitchJitter: 0.06
+    Spatial: 0
+    Loop: 0
+  - Id: 14
+    Clip: {fileID: 8300000, guid: 1e5edc95e9c77324fba425dd388152d0, type: 3}
+    Volume: 1
+    PitchJitter: 0.06
+    Spatial: 1
+    Loop: 0
+  - Id: 15
+    Clip: {fileID: 8300000, guid: 20a50a1fa32238c4bb4496e297172459, type: 3}
+    Volume: 1
+    PitchJitter: 0.06
+    Spatial: 1
+    Loop: 0
+  - Id: 16
+    Clip: {fileID: 8300000, guid: c11ea3eb45899264b99bc1728920316b, type: 3}
+    Volume: 1
+    PitchJitter: 0.06
+    Spatial: 1
+    Loop: 0
+  - Id: 17
+    Clip: {fileID: 8300000, guid: 80fedc6d2039dc0408577a8e677a798c, type: 3}
+    Volume: 1
+    PitchJitter: 0.06
+    Spatial: 1
+    Loop: 0
+  - Id: 18
+    Clip: {fileID: 8300000, guid: 18dfb0a366d27054eaec4ab7ec322767, type: 3}
+    Volume: 1
+    PitchJitter: 0
+    Spatial: 0
+    Loop: 1
+  - Id: 19
+    Clip: {fileID: 8300000, guid: d1175a1e852db5042beff06d6e09ea52, type: 3}
+    Volume: 1
+    PitchJitter: 0
+    Spatial: 0
+    Loop: 1
+  - Id: 20
+    Clip: {fileID: 8300000, guid: 382c043030d522e4889bb62397d15e25, type: 3}
+    Volume: 1
+    PitchJitter: 0
+    Spatial: 0
+    Loop: 1
