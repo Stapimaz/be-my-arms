@@ -909,6 +909,10 @@ The exact art direction is still open and should be resolved through:
 - combined P1+P2 skin tests,
 - readability tests at gameplay distance.
 
+An M6 production test authored a first-pass stylized/readable direction purely to prove the
+Blender → Unity pipeline; it is a production test, **not** a final art-direction decision
+(`docs/M6_ART_PIPELINE.md`).
+
 ## 20.2 Visual Priorities
 
 Regardless of final style:

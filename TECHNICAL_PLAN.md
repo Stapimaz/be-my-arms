@@ -15,10 +15,13 @@
 
 ## 0. Project context
 
-`be-my-arms` is a clean production project. Current gameplay is the disposable M0 shared-body
-spike under `Assets/Scripts/M0`, with its tests under `Assets/Tests` and its generated scene
-`Assets/Scenes/M0SharedBody.unity`. No networking package is installed; the netcode stack is
-selected at M0.5.
+`be-my-arms` is a Unity 6 / URP production project. Milestones M0–M6 are complete at their
+acceptance level: a local shared-body slice, an NGO networking spike, a networked Duel and 2v2 round
+loop with matchmaking and role ratings (`Assets/Scripts/M0`, `M05`, `M1`, `M2`, `M3`, `M4`), the
+product-system foundations and enforced P1/P2 rig contract (`Assets/Scripts/M5`), and the Blender
+production-art pipeline with its first real assets (`Assets/Scripts/M6`, `tools/blender`,
+`tools/pipeline`, `art/blender`). Netcode is **Netcode for GameObjects**; the DCC is **Blender 4.5
+LTS**.
 
 Tooling versions, the Unity Pipeline setup and the OpenCode skill are environment concerns and
 are documented once in `docs/DEV_ENVIRONMENT.md` — do not duplicate them here. Milestone status
@@ -359,9 +362,9 @@ final presentation; no agent should treat them as permanent art direction.
 > DCC/content pipeline is chosen and real assets are created against that contract. M5 does not
 > choose a DCC tool, install one, or produce production art.
 
-- A DCC/content pipeline is established when production art begins. The tool is **not chosen
-  yet**; Blender is a viable candidate alongside other DCCs, and the choice can be made when
-  that phase starts.
+- A DCC/content pipeline is **established in M6**: the DCC is **Blender 4.5 LTS**, installed
+  reproducibly with a pinned version and checksum, driven headlessly through `bpy`. The Blender →
+  Unity pipeline, conventions and evidence are documented in `docs/M6_ART_PIPELINE.md`.
 - Whatever pipeline is chosen must respect the standardized P1/P2 rig contract: gameplay
   skeleton, attachment socket(s) on P1's upper chest/clavicle, camera anchors, weapon and
   utility anchors, hitbox definitions, and animation interfaces — so that every P1 skin works

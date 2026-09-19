@@ -20,6 +20,7 @@ spawning batch-mode editors.
 | Test Framework | `1.6.0` | EditMode + PlayMode |
 | .NET SDK | `8.0` | Independent verification of pure C# logic |
 | Git | present | GitHub remote configured |
+| Blender | `4.5.13 LTS` | Production DCC (M6). Pinned (version + SHA-256) in `tools/blender/BlenderVersion.json`; installed to `%LOCALAPPDATA%\BeMyArms\tools\blender` by `tools/blender/install-blender.ps1` (portable zip, no elevation) |
 
 ### Unity CLI agent skill for OpenCode
 
@@ -117,3 +118,24 @@ Milestone-gated additions (see `ROADMAP.md`):
 **Bake-off isolation:** Netcode for GameObjects and Netcode for Entities define colliding
 assembly names (`Unity.Netcode.Runtime`, `Unity.Netcode.Editor`), so they cannot be installed in
 the same project. This is why the rejected candidate lives on a separate branch.
+
+---
+
+## 6. Production art pipeline (M6)
+
+The DCC is **Blender 4.5 LTS**, installed reproducibly with a pinned version and checksum.
+
+```powershell
+# once per machine (portable zip, user-local, no elevation)
+powershell -ExecutionPolicy Bypass -File tools/blender/install-blender.ps1
+
+# regenerate all .blend sources (art/blender/blend) and FBX exports (Assets/Art)
+powershell -ExecutionPolicy Bypass -File tools/pipeline/build-art.ps1
+```
+
+Then, in the editor: **Be My Arms > M6 > Regenerate Production Assets**, followed by
+**Be My Arms > M6 > Validate Production Assets** (CLI: `M6PipelineCommands.Validate()`).
+
+Coordinates, scale, naming, materials, LOD budgets and the rig/mount conventions are documented in
+`docs/M6_ART_PIPELINE.md`. Blender sources live outside `Assets/`; only exported FBX and built
+prefabs/materials enter the Unity project.

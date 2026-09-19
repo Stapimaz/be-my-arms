@@ -1,0 +1,21 @@
+{
+    "name": "BeMyArms.M6.Editor",
+    "rootNamespace": "BeMyArms.M6.EditorTools",
+    "references": [
+        "BeMyArms.M6",
+        "BeMyArms.M5",
+        "BeMyArms.M0",
+        "BeMyArms.M4"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

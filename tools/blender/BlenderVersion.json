@@ -1,0 +1,8 @@
+{
+  "name": "Blender",
+  "channel": "LTS",
+  "version": "4.5.13",
+  "url": "https://download.blender.org/release/Blender4.5/blender-4.5.13-windows-x64.zip",
+  "sha256": "B5FDF800CE65FA2F209E8F68D02667E4D720FA1C42F247C72D1882AB04DECBA6",
+  "notes": "Pinned production DCC for the Be My Arms pipeline (Blender 4.5 LTS, supported to July 2027). The portable zip avoids a machine-wide install; the binary lives in a user-local tools cache, not in the repo."
+}

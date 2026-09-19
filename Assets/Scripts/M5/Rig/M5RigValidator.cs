@@ -30,7 +30,7 @@ namespace BeMyArms.M5
                 return report;
             }
 
-            if (root.name != contract.RootName)
+            if (root.name != contract.RootName && !IsCloneOf(root.name, contract.RootName))
                 report.Add($"root is '{root.name}', expected '{contract.RootName}'");
 
             // 1. Required sockets and anchors, with their expected parent path.
@@ -133,6 +133,10 @@ namespace BeMyArms.M5
 
         static string Round(Vector3 v)
             => $"{v.x:0.###},{v.y:0.###},{v.z:0.###}";
+
+        /// <summary>True for Unity's instantiated-prefab name, e.g. "SharedBody(Clone)".</summary>
+        static bool IsCloneOf(string name, string baseName)
+            => name == baseName + "(Clone)";
 
         static Transform Find(Transform root, string name)
         {

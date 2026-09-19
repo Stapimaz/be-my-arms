@@ -60,7 +60,8 @@ document wins. If they conflict on **implementation order**, this roadmap wins.
 | **M3** — PvP round loop | **Complete (acceptance level).** End-to-end dedicated-server + 4-client Duel verified: role assignment, server-authoritative buy, live combat, elimination/timeout, utility, closing zone, round/match transitions and telemetry; EditMode 61/61. See `docs/M3_PVP_ROUND_LOOP.md` |
 | **M4** — 2v2 and matchmaking | **Complete (acceptance level).** Real dedicated-server + 8-client 2v2 verified end-to-end: matchmaking, provider-neutral allocation, parties, four shared bodies and post-match role-specific ratings; EditMode 76/76. Production hosting/services integration is deferred and non-blocking. See `docs/M4_2V2_MATCHMAKING.md` |
 | **M5** — product systems | **Complete (acceptance level).** Product foundations (account/profile, role-specific ranked state/presentation, cosmetic ownership/equip, mounting presentation, social, moderation) + the enforced P1/P2 rig contract proven across all placeholder combinations; EditMode 89/89, PlayMode 3/3. Production content and vendors deferred. See `docs/M5_PRODUCT_SYSTEMS.md` |
-| **M6–M10** — production to release | Not started. M6 handoff prepared by the M5 contract; M6 begins the production DCC/art pipeline |
+| **M6** — production art and content pipeline | **Complete (acceptance level).** Blender 4.5.13 LTS pipeline with enforced conventions; real P1/P2/weapon/utility/environment assets imported at 1:1 and validated against the M5 contract; every P1×P2 combination mounts (4/4); EditMode 93/93, PlayMode 3/3. See `docs/M6_ART_PIPELINE.md` |
+| **M7–M10** — content, product and release | Not started. M7 begins audio/VFX and the production map set on the M6 pipeline |
 
 ### M0 — Very small local shared-body mechanic spike
 
@@ -276,13 +277,12 @@ production art and no backend/vendor integration. Details: `docs/M5_PRODUCT_SYST
 
 ### M6 — Production art and content pipeline
 
-Establish the DCC/content pipeline and final asset standards before mass production. The
-pipeline tool is not chosen yet; Blender is a viable candidate among others.
+Establish the DCC/content pipeline and final asset standards before mass production. The DCC is
+**Blender 4.5 LTS**, installed reproducibly with a pinned version and checksum.
 
 > **Boundary:** M5 established the product foundations and enforced the P1/P2 rig contract
-> (`docs/M5_PRODUCT_SYSTEMS.md`); M6 begins the production DCC/art pipeline and **real asset
-> creation**. No DCC tool is installed or configured before M6. Every M6 character/weapon must
-> conform to the contract and pass the M5 validator/mount assembly check.
+> (`docs/M5_PRODUCT_SYSTEMS.md`); M6 established the production DCC/art pipeline and created the
+> first real assets. M7 builds content (audio/VFX/maps) on this pipeline rather than redefining it.
 
 - Choose the DCC/content pipeline and define import, scale, naming, LOD and material conventions.
 - Finalize the standardized P1/P2 rig contract: gameplay skeleton, attachment sockets, camera
@@ -292,6 +292,17 @@ pipeline tool is not chosen yet; Blender is a viable candidate among others.
 **Acceptance criteria:** a production character and weapon travel the pipeline into the game,
 and an arbitrary P1 skin combines with an arbitrary P2 skin without per-pair work.
 
+**Outcome:** implemented and verified. Blender 4.5.13 LTS is installed/configured through pinned,
+checksum-verified, headless `bpy` tooling (`tools/blender`, `tools/pipeline`, `art/blender`), and
+the Blender → Unity pipeline defines and enforces scale/orientation, naming, hierarchy, transforms,
+export/import settings, materials, LOD0 budgets and rigging/skin conventions. Two production P1
+bodies, two production P2 upper-body/arms layers, a rifle, a grenade and a four-piece environment
+kit are authored, exported, imported at 1:1 and built into prefabs. Validation passes: the rig
+satisfies the M5 contract and **all 2 × 2 P1×P2 combinations mount with weapons at the correct
+anchors and unchanged authoritative hitboxes/stats**. EditMode 93/93, PlayMode 3/3. A showcase
+scene composes the assets. The first-pass visual direction is a production test and the final art
+direction remains open. Details: `docs/M6_ART_PIPELINE.md`.
+
 ---
 
 ### M7 — Audio, VFX, maps and content scale
@@ -300,6 +311,10 @@ and an arbitrary P1 skin combines with an arbitrary P2 skin without per-pair wor
 - The production map set for Duel and 2v2, following the map-family strategy.
 
 **Acceptance criteria:** content volume supports a shippable match set at production quality.
+
+> **Boundary:** M7 builds on the M6 pipeline and asset conventions
+> (`docs/M6_ART_PIPELINE.md`) and keeps every new asset passing the M5 contract and M6 validator;
+> it does not redefine the asset standards or the DCC choice.
 
 ---
 
