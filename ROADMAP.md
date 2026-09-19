@@ -54,7 +54,7 @@ document wins. If they conflict on **implementation order**, this roadmap wins.
 | Milestone | Status |
 |---|---|
 | **M0** — local shared-body spike | Implemented; automated verification passing (12 EditMode, 2 PlayMode); single-tester spot-check confirmed the Model C coupling; the two-human feel playtest was intentionally deferred to the M1 gate |
-| **M0.5** — netcode bake-off | Not started |
+| **M0.5** — netcode bake-off | In progress — candidate toolchains being installed (Netcode for GameObjects + Multiplayer Tools present); Netcode for Entities pending |
 | **M1** — local vertical slice | Not started |
 | **M2** — networked spike | Not started |
 | **M3** — PvP round loop | Not started |

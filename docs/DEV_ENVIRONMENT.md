@@ -102,12 +102,14 @@ actually ran; the real result is reported by `test_status`
 ## 5. Package policy
 
 Gameplay and networking packages are added **only when the current milestone requires
-them**. M0 needed none: the project has no Netcode for GameObjects, no Netcode for Entities
-and no transport package installed. `com.unity.pipeline` is development tooling, not a
-gameplay dependency.
+them**. M0 needed none. `com.unity.pipeline` is development tooling, not a gameplay
+dependency.
 
 Milestone-gated additions (see `ROADMAP.md`):
 
-- Netcode for GameObjects / Netcode for Entities — **M0.5** bake-off.
-- Unity Transport — **M0.5/M2** with the chosen stack.
+- **M0.5 bake-off (in progress):** `com.unity.netcode.gameobjects` 2.13.2 and
+  `com.unity.multiplayer.tools` 2.2.12 are installed for the first candidate. Netcode for
+  Entities will be added for the second candidate; the losing stack is removed after the
+  decision.
+- Unity Transport — **M0.5/M2** with the chosen stack (pulled in as a dependency).
 - Multiplayer Services SDK (sessions/lobby/matchmaking) — **M4**.
