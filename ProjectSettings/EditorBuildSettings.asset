@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/M3Duel.unity
+    guid: 38d79ef4b1b2e994ab23aa13e2ee9e40
+  - enabled: 1
     path: Assets/Scenes/NetProbe.unity
     guid: e2b0a55fd07389947a7c11f9adb77165
   - enabled: 1

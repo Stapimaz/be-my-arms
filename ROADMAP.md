@@ -57,8 +57,8 @@ document wins. If they conflict on **implementation order**, this roadmap wins.
 | **M0.5** — netcode bake-off | **Complete — chose Netcode for GameObjects** with a custom prediction/lag-comp layer; see `docs/M05_NETCODE_BAKEOFF.md`. NfE isolated on branch `m0.5/nfe` |
 | **M1** — local vertical slice | Implemented; automated verification passing (19 EditMode, 2 PlayMode); human two-duo playtest gate deferred; see `docs/M1_VERTICAL_SLICE.md` |
 | **M2** — networked spike | **Complete** (architecture proof). Real 3-process run: approval-based role authorization, wrong-role rejection, bandwidth + prediction-error + camera metrics, transport-level conditioning, sector + lag-comp validation; disconnect→bot→reconnect handoff verified on graceful disconnect; force-kill reconnect limitation documented (UTP detection/acceptance) for M3+; see `docs/M2_NETWORKING_SPIKE.md` |
-| **M3** — PvP round loop | In progress — authoritative round-loop core (match/round state machine with first-to-3/max-5, buy economy, closing zone, role queue, telemetry) implemented + tested (51/51); in-scene playable integration, utility effects and NGO authority wiring pending; see `docs/M3_PVP_ROUND_LOOP.md` |
-| **M4** — 2v2 and matchmaking | Not started |
+| **M3** — PvP round loop | **Complete (acceptance level).** End-to-end dedicated-server + 4-client Duel verified: role assignment, server-authoritative buy, live combat, elimination/timeout, utility, closing zone, round/match transitions and telemetry; EditMode 61/61. See `docs/M3_PVP_ROUND_LOOP.md` |
+| **M4** — 2v2 and matchmaking | In progress — ranked-ready structure (role ratings, derived body MMR, parties, 2v2 team rating, provider-neutral allocation); live services integration pending |
 | **M5** — product systems | Not started |
 | **M6–M10** — production to release | Not started |
 
@@ -220,6 +220,15 @@ maximum of five rounds, P2 loadout/buy draft, utility, closing zone, role queue.
 **Acceptance criteria:** a complete competitive round is playable and server-authoritative,
 with basic telemetry capturing the measurements listed in `GAME_CONCEPT.md` §31.
 
+**Outcome:** implemented and verified. A real dedicated server plus four client processes run the
+complete Duel loop: connection-approval slot assignment (A P1/P2 vs B P1/P2), server-authoritative
+draft buy, live elimination and timeout, closing zone, utility (grenade/smoke/flash), round
+transitions to first-to-3 within the 5-round cap, and match end with telemetry. The authoritative
+round-loop core is engine-free and unit-tested; the NGO integration reuses the M2 pure simulation
+and lag-compensation layer. Full evidence and the exact run commands: `docs/M3_PVP_ROUND_LOOP.md`.
+Placeholder geometry, flat networked damage and immediate-resolution utility are documented
+limitations, not design decisions.
+
 ---
 
 ### M4 — 2v2 and matchmaking
@@ -303,7 +312,7 @@ accessibility checklist passes.
 | P1 look/body tuning | M1 model resolved; numbers are TUNING | Neck limit, follow threshold/speed, align speed | Tuning playtest at alpha/beta |
 | Netcode stack | M0.5 (decided) | NGO chosen | `docs/M05_NETCODE_BAKEOFF.md`; M2 confirms prediction/lag-comp |
 | Simulation customisation | M2 | Is a custom character controller / deterministic sim actually required? | Bandwidth, prediction error, stack constraints |
-| Disconnect policy | before M3/M4 | What happens to a body when one role disconnects mid-round? | Design decision consistent with concept §29 |
+| Disconnect policy | before M3/M4 | What happens to a body when one role disconnects mid-round? | Decided and implemented: the disconnected role becomes a temporary **bot** (never handed to the other human); a token reconnect atomically reclaims it. Single-owner invariant unit-tested (M2/M3). |
 
 ---
 
