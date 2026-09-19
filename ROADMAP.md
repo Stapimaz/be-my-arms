@@ -60,7 +60,7 @@ document wins. If they conflict on **implementation order**, this roadmap wins.
 | **M3** — PvP round loop | **Complete (acceptance level).** End-to-end dedicated-server + 4-client Duel verified: role assignment, server-authoritative buy, live combat, elimination/timeout, utility, closing zone, round/match transitions and telemetry; EditMode 61/61. See `docs/M3_PVP_ROUND_LOOP.md` |
 | **M4** — 2v2 and matchmaking | **Complete (acceptance level).** Real dedicated-server + 8-client 2v2 verified end-to-end: matchmaking, provider-neutral allocation, parties, four shared bodies and post-match role-specific ratings; EditMode 76/76. Production hosting/services integration is deferred and non-blocking. See `docs/M4_2V2_MATCHMAKING.md` |
 | **M5** — product systems | **Complete (acceptance level).** Product foundations (account/profile, role-specific ranked state/presentation, cosmetic ownership/equip, mounting presentation, social, moderation) + the enforced P1/P2 rig contract proven across all placeholder combinations; EditMode 89/89, PlayMode 3/3. Production content and vendors deferred. See `docs/M5_PRODUCT_SYSTEMS.md` |
-| **M6** — production art and content pipeline | **Complete (acceptance level).** Blender 4.5.13 LTS pipeline with enforced conventions; real P1/P2/weapon/utility/environment assets imported at 1:1 and validated against the M5 contract; every P1×P2 combination mounts (4/4); EditMode 93/93, PlayMode 3/3. See `docs/M6_ART_PIPELINE.md` |
+| **M6** — production art and content pipeline | **Complete (acceptance level).** Blender 4.5.13 LTS pipeline with enforced conventions; real P1(body-only)/P2(shoulder+arms)/weapon/utility/environment assets imported at 1:1, anatomy-correct and validated against the M5 contract; every P1×P2 combination mounts with the weapon gripped (4/4); EditMode 94/94, PlayMode 3/3. See `docs/M6_ART_PIPELINE.md` |
 | **M7–M10** — content, product and release | Not started. M7 begins audio/VFX and the production map set on the M6 pipeline |
 
 ### M0 — Very small local shared-body mechanic spike
@@ -301,7 +301,11 @@ kit are authored, exported, imported at 1:1 and built into prefabs. Validation p
 satisfies the M5 contract and **all 2 × 2 P1×P2 combinations mount with weapons at the correct
 anchors and unchanged authoritative hitboxes/stats**. EditMode 93/93, PlayMode 3/3. A showcase
 scene composes the assets. The first-pass visual direction is a production test and the final art
-direction remains open. Details: `docs/M6_ART_PIPELINE.md`.
+direction remains open. A follow-up readability pass corrected the character anatomy: P1 is now the
+body/head/legs only (no arms), P2 is an upper-chest/shoulder layer with two complete arms
+(shoulder→upper arm→elbow→forearm→hand) and no head/backpack, P2's hands sit on the weapon
+grip/handguard (asserted within 0.20 m of the weapon bounds), and P2's cosmetic sensor sits below
+and clear of P1's head. Details: `docs/M6_ART_PIPELINE.md`.
 
 ---
 

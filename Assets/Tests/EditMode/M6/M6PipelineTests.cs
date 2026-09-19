@@ -102,6 +102,55 @@ namespace BeMyArms.M6.Tests
             Object.DestroyImmediate(rig);
         }
 
+        [Test]
+        public void P2HandsGripTheWeaponInEveryCombination()
+        {
+            GameObject rigPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(M6AssetConventions.RigPrefabPath);
+            string riflePath = FindPrefabLike(M6AssetConventions.WeaponDir, M6AssetConventions.WeaponPrefix);
+            string p1Path = FindPrefabs(M6AssetConventions.P1Dir)[0];
+            List<string> p2 = FindPrefabs(M6AssetConventions.P2Dir);
+            Assert.IsNotNull(rigPrefab);
+            Assert.IsNotNull(riflePath, "rifle prefab missing");
+
+            GameObject p1Skin = AssetDatabase.LoadAssetAtPath<GameObject>(p1Path);
+            foreach (string p2Path in p2)
+            {
+                GameObject rig = Object.Instantiate(rigPrefab);
+                M5AssembledBody body = M5MountAssembler.Assemble(rig, p1Skin, AssetDatabase.LoadAssetAtPath<GameObject>(p2Path));
+                Assert.IsTrue(body.IsValid, body.Report.ToString());
+
+                Transform socket = Find(rig.transform, "WeaponAnchor");
+                GameObject rifle = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(riflePath), socket, false);
+                Bounds weapon = ComputeBounds(rifle);
+
+                int hands = 0;
+                foreach (Transform t in body.P2Skin.GetComponentsInChildren<Transform>(true))
+                {
+                    if (!t.name.StartsWith("Hand_")) continue;
+                    hands++;
+                    float distance = weapon.SqrDistance(t.position);
+                    Assert.LessOrEqual(distance, 0.20f * 0.20f,
+                        $"{Path.GetFileNameWithoutExtension(p2Path)}: {t.name} is {Mathf.Sqrt(distance):0.00}m from the weapon");
+                }
+                Assert.GreaterOrEqual(hands, 2, "P2 skin should expose two hands for the grip check");
+
+                M5MountAssembler.Disassemble(body);
+                Object.DestroyImmediate(rig);
+            }
+        }
+
+        static Bounds ComputeBounds(GameObject go)
+        {
+            Bounds bounds = new Bounds();
+            bool first = true;
+            foreach (Renderer renderer in go.GetComponentsInChildren<Renderer>(true))
+            {
+                if (first) { bounds = renderer.bounds; first = false; }
+                else bounds.Encapsulate(renderer.bounds);
+            }
+            return bounds;
+        }
+
         static List<string> FindPrefabs(string modelDir)
         {
             string folder = $"{modelDir}/{M6AssetConventions.PrefabSubdir}";

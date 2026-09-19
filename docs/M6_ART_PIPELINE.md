@@ -98,7 +98,7 @@ without re-exporting geometry. Palette: `BMA_Armor`, `BMA_Suit_Alpha`, `BMA_Suit
 This first pass is single-mesh **LOD0**; LOD1/LOD2 are authored in M7 when content scale begins.
 The pipeline still enforces an LOD0 triangle budget so assets cannot silently balloon:
 P1 ≤ 30k, P2 ≤ 20k, weapon ≤ 10k, environment piece ≤ 8k. Actual counts (all well under):
-P1 2,876–6,612 · P2 7,892–8,108 · rifle 952 · grenade 1,940 · environment 368–756.
+P1 3,308–7,044 · P2 11,768–11,984 · rifle 952 · grenade 1,940 · environment 368–756.
 
 ## 7. Rigging / skinning conventions (first pass)
 
@@ -107,6 +107,24 @@ mounted at fixed sockets, driven through `IM5RigAnimation`. No skinned mesh is a
 When skinned characters are introduced, they must keep the same skeleton/socket names and the same
 mount spaces, and continue to pass `M5RigValidator` and the combination test. Cosmetics are never
 allowed to influence hitboxes or gameplay stats at any stage.
+
+### Character anatomy (readability correction)
+
+- **P1 is the body only:** head, neck, torso, pelvis and legs — **no arms**. Its head is the only
+  critical/headshot region and is kept clearly exposed (face plate + eye visor + crest; nothing
+  covers the face or silhouette).
+- **P2 is the shoulder system:** an upper-chest/clavicle/shoulder layer with **two complete arms**
+  reading as shoulder → upper arm → elbow → forearm → wrist/hand. It is **not** a helmet, backpack
+  or second head; there is no dorsal pack.
+- **Weapon read:** P2's hands are placed on the rifle's trigger grip (right) and handguard (left).
+  The validator asserts each `Hand_*` transform is within **0.20 m** of the mounted weapon's
+  renderer bounds, so the weapon reads as held rather than torso-mounted.
+- **P2 sensor:** a small cosmetic sensor pod sits to the side/behind and **below** P1's head so it
+  can never be read as a replacement head. `P2CameraAnchor` (the gameplay camera) is independent of
+  the cosmetic sensor placement.
+- **Combined silhouette:** one coherent fighter made of two people — P1 body/head/legs, P2
+  upper-body shoulders and arms. Mismatched P1/P2 skins are intentional; the standardized anatomy
+  and mount geometry stay readable.
 
 ## 8. What the pipeline generates
 
@@ -132,10 +150,11 @@ with a mounted P1+P2 body, the rifle at the weapon anchor and the environment ki
 - the rig prefab satisfies `M5RigContract.Default()`, including all anchors;
 - **every P1 skin combines with every P2 skin** (2 × 2 = 4) with valid contract, unchanged
   authoritative hitbox and gameplay-stat signatures, and independent P1/P2 identities;
-- the rifle mounts at `WeaponAnchor` and the grenade at `UtilityAnchor` in each combination;
+- the rifle mounts at `WeaponAnchor` and the grenade at `UtilityAnchor` in each combination, and
+  **both P2 hands are within 0.20 m of the weapon bounds** so the weapon reads as held;
 - cosmetic layers contain no hitbox and no gameplay-stat component.
 
-Result: **validation PASSED**, `combinations valid: 4/4`, **EditMode 93/93**, **PlayMode 3/3**
+Result: **validation PASSED**, `combinations valid: 4/4`, **EditMode 94/94**, **PlayMode 3/3**
 (the existing M5 runtime mount proof still passes).
 
 ## 10. Open decision to surface (not silently locked)

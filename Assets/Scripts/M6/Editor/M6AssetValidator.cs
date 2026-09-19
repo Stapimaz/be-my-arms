@@ -159,10 +159,11 @@ namespace BeMyArms.M6.EditorTools
                     GameObject p1Skin = AssetDatabase.LoadAssetAtPath<GameObject>(p1[i]);
                     GameObject p2Skin = AssetDatabase.LoadAssetAtPath<GameObject>(p2[j]);
                     M5AssembledBody body = M5MountAssembler.Assemble(rig, p1Skin, p2Skin);
+                    string label = $"{Path.GetFileNameWithoutExtension(p1[i])} + {Path.GetFileNameWithoutExtension(p2[j])}";
 
                     if (!body.IsValid)
                     {
-                        report.Error($"combination {Path.GetFileNameWithoutExtension(p1[i])} + {Path.GetFileNameWithoutExtension(p2[j])}: {body.Report}");
+                        report.Error($"combination {label}: {body.Report}");
                     }
                     else
                     {
@@ -172,9 +173,9 @@ namespace BeMyArms.M6.EditorTools
                         if (M5RigValidator.CaptureStatsSignature(rig) != baseStats)
                             report.Error($"combination {body.P1SkinId}+{body.P2SkinId}: gameplay stats changed");
 
-                        // Weapons mount at contract anchors in every combination.
-                        if (riflePath != null) RequireMounted(rig, "WeaponAnchor", riflePath, report);
-                        if (utilityPath != null) RequireMounted(rig, "UtilityAnchor", utilityPath, report);
+                        // Weapons mount at contract anchors and are visibly gripped by P2's hands.
+                        ValidateWeaponMount(rig, body, "WeaponAnchor", riflePath, checkGrip: true, report, label);
+                        ValidateWeaponMount(rig, body, "UtilityAnchor", utilityPath, checkGrip: false, report, label);
                     }
 
                     M5MountAssembler.Disassemble(body);
@@ -185,20 +186,48 @@ namespace BeMyArms.M6.EditorTools
             report.Note($"combinations valid: {valid}/{p1.Count * p2.Count} (P1={p1.Count}, P2={p2.Count})");
         }
 
-        static void RequireMounted(GameObject rig, string socketName, string prefabPath, M6ValidationReport report)
+        static void ValidateWeaponMount(GameObject rig, M5AssembledBody body, string socketName, string prefabPath, bool checkGrip, M6ValidationReport report, string label)
         {
+            if (string.IsNullOrEmpty(prefabPath)) return;
             Transform socket = Find(rig.transform, socketName);
-            if (socket == null) { report.Error($"missing socket '{socketName}'"); return; }
-            foreach (Transform child in socket)
-                if (child.name.StartsWith("attached_")) return;
+            if (socket == null) { report.Error($"{label}: missing socket '{socketName}'"); return; }
 
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (prefab == null) { report.Error($"{label}: weapon prefab missing {prefabPath}"); return; }
             GameObject instance = Object.Instantiate(prefab, socket, false);
             instance.name = "attached_" + Path.GetFileNameWithoutExtension(prefabPath);
             instance.transform.localPosition = Vector3.zero;
             if (instance.transform.parent != socket)
-                report.Error($"{instance.name} did not mount under {socketName}");
+                report.Error($"{label}: {instance.name} did not mount under {socketName}");
+
+            if (checkGrip && body != null && body.P2Skin != null)
+            {
+                Bounds weapon = ComputeBounds(instance);
+                int hands = 0;
+                foreach (Transform t in body.P2Skin.GetComponentsInChildren<Transform>(true))
+                {
+                    if (!t.name.StartsWith("Hand_")) continue;
+                    hands++;
+                    float distance = weapon.SqrDistance(t.position);
+                    if (distance > 0.20f * 0.20f)
+                        report.Error($"{label}: {t.name} is {Mathf.Sqrt(distance):0.00}m from the weapon bounds (weapon should read as held)");
+                }
+                if (hands == 0) report.Note($"{label}: P2 skin has no Hand_* transforms for the grip check");
+            }
+
             Object.DestroyImmediate(instance);
+        }
+
+        static Bounds ComputeBounds(GameObject go)
+        {
+            Bounds bounds = new Bounds();
+            bool first = true;
+            foreach (Renderer renderer in go.GetComponentsInChildren<Renderer>(true))
+            {
+                if (first) { bounds = renderer.bounds; first = false; }
+                else bounds.Encapsulate(renderer.bounds);
+            }
+            return bounds;
         }
 
         // ---- Helpers ----

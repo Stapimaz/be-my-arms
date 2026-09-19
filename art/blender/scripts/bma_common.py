@@ -116,6 +116,20 @@ def box(name, center, size, mat=None, bevel=0.0, seg=2, taper=None, shear_y=0.0)
     return _finish(name, bm, mat)
 
 
+def box_dir(name, center, size, direction, mat=None, bevel=0.0, seg=2):
+    """A box whose local +Z is aligned to `direction` (for hands/fists that follow a forearm)."""
+    bm = bmesh.new()
+    bmesh.ops.create_cube(bm, size=1.0)
+    bmesh.ops.scale(bm, vec=Vector(size), verts=bm.verts)
+    _bevel(bm, bevel, seg)
+    d = Vector(direction)
+    if d.length > 1e-6:
+        quat = Vector((0.0, 0.0, 1.0)).rotation_difference(d.normalized())
+        bmesh.ops.rotate(bm, verts=bm.verts, cent=(0, 0, 0), matrix=quat.to_matrix())
+    bmesh.ops.translate(bm, vec=Vector(center), verts=bm.verts)
+    return _finish(name, bm, mat)
+
+
 def cylinder(name, center, radius, depth, axis='Z', mat=None, seg=16, bevel=0.0, bseg=2, radius2=None):
     bm = bmesh.new()
     r2 = radius if radius2 is None else radius2
@@ -142,6 +156,26 @@ def sphere(name, center, radius, mat=None, scale=(1, 1, 1), subd=1):
         except Exception:
             pass
     bmesh.ops.translate(bm, vec=Vector(center), verts=bm.verts)
+    return _finish(name, bm, mat, smooth=True)
+
+
+def limb(name, a, b, radius_start, radius_end=None, mat=None, seg=12, bevel=0.0, bseg=1):
+    """A tapered capsule/cylinder running from point a to point b (for anatomical arms/legs)."""
+    a = Vector(a)
+    b = Vector(b)
+    delta = b - a
+    depth = delta.length
+    if depth < 1e-6:
+        depth = 1e-6
+    r2 = radius_start if radius_end is None else radius_end
+    bm = bmesh.new()
+    bmesh.ops.create_cone(bm, cap_ends=True, cap_tris=False, segments=seg, radius1=radius_start, radius2=r2, depth=depth)
+    _bevel(bm, bevel, bseg)
+    if delta.length > 1e-6:
+        quat = Vector((0.0, 0.0, 1.0)).rotation_difference(delta.normalized())
+        bmesh.ops.rotate(bm, verts=bm.verts, cent=(0, 0, 0), matrix=quat.to_matrix())
+    mid = (a + b) * 0.5
+    bmesh.ops.translate(bm, vec=mid, verts=bm.verts)
     return _finish(name, bm, mat, smooth=True)
 
 

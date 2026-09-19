@@ -13,6 +13,7 @@ namespace BeMyArms.M6.EditorTools
         public static void Regenerate()
         {
             Debug.Log("[M6] applying import conventions...");
+            AssetDatabase.Refresh();
             int reimported = M6AssetImportSettings.ApplyAll();
             M6MaterialPalette.RebuildAll();
             M6PrefabBuilders.BuildSharedBodyRig();
