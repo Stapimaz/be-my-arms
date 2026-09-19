@@ -42,8 +42,9 @@ namespace BeMyArms.M2
         public NetworkVariable<int> RejectedFires = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         public NetworkVariable<int> UnauthorizedInputs = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-        readonly Dictionary<ulong, byte> _connectionRole = new Dictionary<ulong, byte>();
-        readonly Dictionary<string, byte> _tokenRole = new Dictionary<string, byte>();
+        readonly M2RoleRegistry _roles = new M2RoleRegistry();
+        int _bytesIn;
+        int _bytesOut;
         readonly M2DelayQueue<M2P1Input> _p1Queue = new M2DelayQueue<M2P1Input>();
         readonly M2DelayQueue<M2P2Input> _p2Queue = new M2DelayQueue<M2P2Input>();
 
@@ -97,52 +98,27 @@ namespace BeMyArms.M2
         public void RegisterServerRpc(string token, byte desiredRole, ServerRpcParams rpcParams = default)
         {
             ulong clientId = rpcParams.Receive.SenderClientId;
-
-            if (!string.IsNullOrEmpty(token) && _tokenRole.TryGetValue(token, out byte remembered))
+            byte role = _roles.Assign(clientId, token, desiredRole, out ulong displaced);
+            if (displaced != ulong.MaxValue)
             {
-                _connectionRole[clientId] = remembered;
-                Debug.Log($"[M2] reconnect: client {clientId} restored {(remembered == RoleP1 ? "P1" : "P2")} (token '{token}')");
+                Debug.Log($"[M2] reclaim: role {(role == RoleP1 ? "P1" : "P2")} taken by client {clientId}; dropping stale client {displaced}");
+                if (NetworkManager != null) NetworkManager.DisconnectClient(displaced);
             }
-            else
-            {
-                byte role = FindFreeRole();
-                if (desiredRole == RoleP1 || desiredRole == RoleP2)
-                {
-                    if (!RoleTaken(desiredRole)) role = desiredRole;
-                }
-                _connectionRole[clientId] = role;
-                if (!string.IsNullOrEmpty(token)) _tokenRole[token] = role;
-                Debug.Log($"[M2] assigned client {clientId} -> {(role == RoleP1 ? "P1" : role == RoleP2 ? "P2" : "spectator")}");
-            }
-        }
-
-        byte FindFreeRole()
-        {
-            if (!RoleTaken(RoleP1)) return RoleP1;
-            if (!RoleTaken(RoleP2)) return RoleP2;
-            return RoleNone;
-        }
-
-        bool RoleTaken(byte role)
-        {
-            foreach (var kvp in _connectionRole)
-                if (kvp.Value == role) return true;
-            return false;
+            Debug.Log($"[M2] assigned client {clientId} -> {(role == RoleP1 ? "P1" : role == RoleP2 ? "P2" : "spectator")}{(string.IsNullOrEmpty(token) ? "" : $" (token '{token}')")}");
         }
 
         void OnClientDisconnected(ulong clientId)
         {
-            if (_connectionRole.TryGetValue(clientId, out byte role))
-            {
-                _connectionRole.Remove(clientId);
+            byte role = _roles.Release(clientId);
+            if (role != RoleNone)
                 Debug.Log($"[M2] client {clientId} disconnected from role {(role == RoleP1 ? "P1" : "P2")} (role freed)");
-            }
         }
 
         [ServerRpc(RequireOwnership = false)]
         public void SubmitP1ServerRpc(M2P1Input input, ServerRpcParams rpcParams = default)
         {
             if (!HasRole(rpcParams.Receive.SenderClientId, RoleP1)) { UnauthorizedInputs.Value++; return; }
+            _bytesIn += 17;
             _p1Queue.Enqueue(_serverTime, InputDelaySeconds, input);
         }
 
@@ -150,21 +126,35 @@ namespace BeMyArms.M2
         public void SubmitP2ServerRpc(M2P2Input input, ServerRpcParams rpcParams = default)
         {
             if (!HasRole(rpcParams.Receive.SenderClientId, RoleP2)) { UnauthorizedInputs.Value++; return; }
+            _bytesIn += 14;
             _p2Queue.Enqueue(_serverTime, InputDelaySeconds, input);
         }
 
-        bool HasRole(ulong clientId, byte role)
-            => _connectionRole.TryGetValue(clientId, out byte r) && r == role;
+        bool HasRole(ulong clientId, byte role) => _roles.HasRole(clientId, role);
+
+        const float FixedDeltaTime = 1f / 60f;
+        float _accumulator;
 
         void Update()
         {
             if (!IsServer || _sim == null) return;
 
+            _accumulator += Time.deltaTime;
+            int safety = 0;
+            while (_accumulator >= FixedDeltaTime && safety++ < 8)
+            {
+                ServerTick(FixedDeltaTime);
+                _accumulator -= FixedDeltaTime;
+            }
+        }
+
+        void ServerTick(float dt)
+        {
             _tickWatch.Restart();
-            _serverTime += Time.deltaTime;
+            _serverTime += dt;
 
             // Move the target and record the lag-compensation history.
-            _targetPhase += Time.deltaTime;
+            _targetPhase += dt;
             float tx = Mathf.Sin(_targetPhase * 0.7f) * 6f;
             float tz = 10f;
             _lag.Record(_serverTime, _sim.State.BodyYaw, tx, tz);
@@ -174,7 +164,7 @@ namespace BeMyArms.M2
             bool appliedP1 = false;
             while (_p1Queue.TryDequeue(_serverTime, out M2P1Input p1))
             {
-                _sim.ApplyP1(p1, Time.deltaTime);
+                _sim.ApplyP1(p1, dt);
                 LastAckedP1Sequence.Value = p1.Sequence;
                 appliedP1 = true;
             }
@@ -186,6 +176,7 @@ namespace BeMyArms.M2
 
             _weapon.Tick(_serverTime);
             if (appliedP1) State.Value = _sim.State;
+            _bytesOut += 36; // approximate: replicated BodyState + target position per tick
 
             float tickMs = (float)_tickWatch.Elapsed.TotalMilliseconds;
             _metricAccum += tickMs;
@@ -193,9 +184,13 @@ namespace BeMyArms.M2
             if (_serverTime >= _nextMetricTime)
             {
                 _nextMetricTime = _serverTime + 2.0;
-                Debug.Log($"[M2-metrics] avg server tick {(_metricAccum / Mathf.Max(1, _metricTicks)):0.00} ms | hits {ValidatedHits.Value} rejected {RejectedFires.Value} unauthorized {UnauthorizedInputs.Value} | delay {InputDelaySeconds * 1000:0}ms loss {LossPercent:0}%");
+                float inKBs = _bytesIn / 2048f;
+                float outKBs = _bytesOut / 2048f;
+                Debug.Log($"[M2-metrics] tick {(_metricAccum / Mathf.Max(1, _metricTicks)):0.00}ms | hits {ValidatedHits.Value} rej {RejectedFires.Value} unauth {UnauthorizedInputs.Value} | fromClients {inKBs:0.0} KB/s toClients {outKBs:0.0} KB/s (approx) | delay {InputDelaySeconds * 1000:0}ms loss {LossPercent:0}%");
                 _metricAccum = 0f;
                 _metricTicks = 0;
+                _bytesIn = 0;
+                _bytesOut = 0;
             }
 
             transform.position = new Vector3(_sim.State.PosX, transform.position.y, _sim.State.PosZ);

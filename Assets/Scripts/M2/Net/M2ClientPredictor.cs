@@ -61,6 +61,15 @@ namespace BeMyArms.M2
         Vector3 _visualPosition;
         float _visualYaw;
 
+        float _errorAccum;
+        float _errorMax;
+        int _errorCount;
+        float _nextErrorLog;
+        float _correctionMax;
+        float _snapMax;
+        float _lastAim;
+        float _nextAimLog;
+
         public M2BodyState Predicted => _reconciler != null ? _reconciler.Predicted : default;
         public float LocalAimYaw { get; private set; }
         public float LocalAimPitch { get; private set; }
@@ -102,22 +111,33 @@ namespace BeMyArms.M2
                 Debug.Log($"[M2] registered client with role {(Role == M2NetworkBody.RoleP1 ? "P1" : "P2")} token '{RoleToken}'");
             }
 
+            if (Time.time < _nextSendTime) { ApplyPresentation(); return; }
+            _nextSendTime = Time.time + 1f / Mathf.Max(1f, SendRateHz);
+            float deltaTime = 1f / Mathf.Max(1f, SendRateHz);
+
             _snapshotQueue.Enqueue(Time.timeAsDouble, SnapshotDelaySeconds, new M2Snapshot
             {
                 State = Body.State.Value,
                 Ack = Body.LastAckedP1Sequence.Value
             });
-
-            // Apply delayed snapshots to prediction (P1) only.
-            if (Role == M2NetworkBody.RoleP1)
-                ApplyDelayedSnapshots();
-
-            if (Time.time < _nextSendTime) { ApplyPresentation(); return; }
-            _nextSendTime = Time.time + 1f / Mathf.Max(1f, SendRateHz);
-            float deltaTime = 1f / Mathf.Max(1f, SendRateHz);
+            if (Role == M2NetworkBody.RoleP1) ApplyDelayedSnapshots();
 
             if (Role == M2NetworkBody.RoleP1) SendP1(deltaTime);
             else SendP2();
+
+            if (M2Config.WrongRoleTest)
+            {
+                // Authorization test: deliberately send the OTHER role's input. The server must
+                // reject it and count it as unauthorized.
+                if (Role == M2NetworkBody.RoleP1)
+                {
+                    Body.SubmitP2ServerRpc(new M2P2Input { Sequence = ++_p2Sequence, AimYaw = Body.State.Value.BodyYaw, Fire = true });
+                }
+                else
+                {
+                    Body.SubmitP1ServerRpc(new M2P1Input { Sequence = ++_p1Sequence, MoveZ = 1f });
+                }
+            }
 
             ApplyPresentation();
         }
@@ -126,10 +146,28 @@ namespace BeMyArms.M2
         {
             while (_snapshotQueue.TryDequeue(Time.timeAsDouble, out M2Snapshot snapshot))
             {
+                // Measure the correction the server is about to apply to our prediction.
+                M2BodyState before = _reconciler.Predicted;
+                float dx = before.PosX - snapshot.State.PosX;
+                float dz = before.PosZ - snapshot.State.PosZ;
+                float dyaw = Mathf.Abs(M2BodySim.Normalize(before.BodyYaw - snapshot.State.BodyYaw));
+                float error = Mathf.Sqrt(dx * dx + dz * dz) + dyaw * 0.01f;
+                _errorAccum += error;
+                if (error > _errorMax) _errorMax = error;
+                _errorCount++;
+
                 _lastServerState = snapshot.State;
                 _lastAcked = snapshot.Ack;
                 _reconciler.Reconcile(snapshot.State, snapshot.Ack, _predictSim);
                 _hasServerState = true;
+            }
+
+            if (Time.time >= _nextErrorLog)
+            {
+                _nextErrorLog = Time.time + 2.0f;
+                if (_errorCount > 0)
+                    Debug.Log($"[M2-prediction] reconcile error avg {(_errorAccum / _errorCount):0.000} max {_errorMax:0.000} over {_errorCount} snapshots");
+                _errorAccum = 0f; _errorMax = 0f; _errorCount = 0;
             }
         }
 
@@ -146,10 +184,27 @@ namespace BeMyArms.M2
             M2P2Input p2 = BuildP2();
             p2.Sequence = ++_p2Sequence;
             float bodyYaw = Body.State.Value.BodyYaw;
+            float rawAim = p2.AimYaw;
             p2.AimYaw = M2BodySim.ClampToSector(p2.AimYaw, bodyYaw, SectorHalfDegrees);
+
+            // P2 camera correction: how far the shared body's sector pulled the aim this frame.
+            float correction = Mathf.Abs(M2BodySim.Normalize(p2.AimYaw - rawAim));
+            float snap = Mathf.Abs(M2BodySim.Normalize(p2.AimYaw - _lastAim));
+            if (correction > _correctionMax) _correctionMax = correction;
+            if (snap > _snapMax) _snapMax = snap;
+            _lastAim = p2.AimYaw;
+
             LocalAimYaw = p2.AimYaw;
             LocalAimPitch = Mathf.Clamp(p2.AimPitch, -MaxPitchDegrees, MaxPitchDegrees);
             Body.SubmitP2ServerRpc(p2);
+
+            if (Time.time >= _nextAimLog)
+            {
+                _nextAimLog = Time.time + 2.0f;
+                Debug.Log($"[M2-camera] P2 aim correction max {_correctionMax:0.0} deg/frame, per-frame snap max {_snapMax:0.0} deg (threshold 5.0)");
+                _correctionMax = 0f;
+                _snapMax = 0f;
+            }
         }
 
         M2P1Input BuildP1(float deltaTime)

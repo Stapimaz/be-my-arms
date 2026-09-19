@@ -22,5 +22,13 @@ namespace BeMyArms.M2
         public static float LagRewindSeconds = 0.1f;
 
         public static bool AutoDrive = true;
+
+        /// <summary>When true, the client deliberately also sends the other role's input for an auth test.</summary>
+        public static bool WrongRoleTest;
+
+        /// <summary>Use the transport-level simulator instead of the application conditioner.</summary>
+        public static bool UseTransportSimulation;
+        public static int TransportDelayMs = 50;
+        public static int TransportLossPercent = 2;
     }
 }

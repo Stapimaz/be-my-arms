@@ -43,6 +43,8 @@ namespace BeMyArms.M2
             var transport = manager.GetComponent<UnityTransport>();
             if (transport != null) transport.SetConnectionData("127.0.0.1", Port, "0.0.0.0");
 
+            if (M2Config.UseTransportSimulation) ApplyTransportSimulation(manager);
+
             if (Role != M2Role.Client) manager.OnServerStarted += OnServerStarted;
 
             switch (Role)
@@ -99,6 +101,32 @@ namespace BeMyArms.M2
 
             string auto = GetArg("-m2-auto");
             if (!string.IsNullOrEmpty(auto)) M2Config.AutoDrive = auto != "0";
+
+            string wrong = GetArg("-m2-wrongrole");
+            if (!string.IsNullOrEmpty(wrong)) M2Config.WrongRoleTest = wrong != "0";
+
+            string tsim = GetArg("-m2-transport-sim");
+            if (!string.IsNullOrEmpty(tsim) && tsim != "0")
+            {
+                M2Config.UseTransportSimulation = true;
+                // Avoid double-conditioning: the transport simulator owns latency/loss.
+                M2Config.OneWayDelaySeconds = 0f;
+                M2Config.LossPercent = 0f;
+            }
+        }
+
+        void ApplyTransportSimulation(NetworkManager manager)
+        {
+            var simulator = manager.gameObject.AddComponent<Unity.Multiplayer.Tools.NetworkSimulator.Runtime.NetworkSimulator>();
+            simulator.ConnectionPreset = new Unity.Multiplayer.Tools.NetworkSimulator.Runtime.NetworkSimulatorPreset
+            {
+                Name = "m2",
+                PacketDelayMs = M2Config.TransportDelayMs,
+                PacketJitterMs = 0,
+                PacketLossInterval = 0,
+                PacketLossPercent = M2Config.TransportLossPercent
+            };
+            Debug.Log($"[M2] transport simulator enabled: delay {M2Config.TransportDelayMs}ms loss {M2Config.TransportLossPercent}%");
         }
 
         static string GetArg(string name)

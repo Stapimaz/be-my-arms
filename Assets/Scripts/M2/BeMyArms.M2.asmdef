@@ -4,7 +4,8 @@
     "references": [
         "BeMyArms.M0",
         "Unity.Netcode.Runtime",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Unity.Multiplayer.Tools.NetworkSimulator.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
