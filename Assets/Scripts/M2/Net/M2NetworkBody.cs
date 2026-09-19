@@ -136,8 +136,15 @@ namespace BeMyArms.M2
             _lag.Record(_serverTime, _sim.State.BodyYaw, tx, tz);
             TargetPosition.Value = new Vector2(tx, tz);
 
-            // Apply delay-conditioned inputs (oldest ready).
+            // Apply delay-conditioned inputs (oldest ready). A role whose human is disconnected is
+            // driven by a trivial server-side bot until the human reconnects.
             bool appliedP1 = false;
+            var service = M2RoleService.Instance;
+            if (service != null && service.Registry.IsBot(RoleP1))
+            {
+                _sim.ApplyP1(new M2P1Input { MoveZ = 1f, LookYawDelta = 12f * dt }, dt);
+                appliedP1 = true;
+            }
             while (_p1Queue.TryDequeue(_serverTime, out M2P1Input p1))
             {
                 _sim.ApplyP1(p1, dt);
@@ -148,6 +155,10 @@ namespace BeMyArms.M2
             {
                 ProcessP2(in p2, tx, tz);
                 LastAckedP2Sequence.Value = p2.Sequence;
+            }
+            if (service != null && service.Registry.IsBot(RoleP2))
+            {
+                ProcessP2(new M2P2Input { AimYaw = _sim.State.BodyYaw, AimPitch = 0f, Fire = true }, tx, tz);
             }
 
             _weapon.Tick(_serverTime);
@@ -198,7 +209,10 @@ namespace BeMyArms.M2
             {
                 RejectedFires.Value++;
                 if (!legalHistorically)
-                    Debug.Log($"[M2-validation] rejected fire: aim {input.AimYaw:0.0} outside historical sector around {historicalBodyYaw:0.0} (current {_sim.State.BodyYaw:0.0})");
+                {
+                    if (RejectedFires.Value % 120 == 0)
+                        Debug.Log($"[M2-validation] rejected fire: aim {input.AimYaw:0.0} outside historical sector around {historicalBodyYaw:0.0}");
+                }
                 return;
             }
 
@@ -213,7 +227,8 @@ namespace BeMyArms.M2
             if (hit)
             {
                 ValidatedHits.Value++;
-                Debug.Log($"[M2-lagcomp] validated hit: aim {input.AimYaw:0.0} vs historical yaw {historicalBodyYaw:0.0} (current {_sim.State.BodyYaw:0.0}); target rewound to ({histTargetX:0.0},{histTargetZ:0.0})");
+                if (ValidatedHits.Value % 60 == 0)
+                    Debug.Log($"[M2-lagcomp] validated hit: aim {input.AimYaw:0.0} vs historical yaw {historicalBodyYaw:0.0}; target rewound to ({histTargetX:0.0},{histTargetZ:0.0})");
             }
             float bodyMoved = Mathf.Abs(M2BodySim.Normalize(_sim.State.BodyYaw - historicalBodyYaw));
             if (bodyMoved > 5f)

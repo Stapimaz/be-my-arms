@@ -41,9 +41,16 @@ namespace BeMyArms.M2
             }
 
             var transport = manager.GetComponent<UnityTransport>();
-            if (transport != null) transport.SetConnectionData("127.0.0.1", Port, "0.0.0.0");
+            if (transport != null)
+            {
+                transport.SetConnectionData("127.0.0.1", Port, "0.0.0.0");
+                transport.DisconnectTimeoutMS = M2Config.DisconnectTimeoutMs;
+            }
 
             if (M2Config.UseTransportSimulation) ApplyTransportSimulation(manager);
+
+            manager.OnClientConnectedCallback += id => Debug.Log($"[M2-trace] t={Time.realtimeSinceStartup:0.000} CLIENT connected (id={id})");
+            manager.OnClientDisconnectCallback += id => Debug.Log($"[M2-trace] t={Time.realtimeSinceStartup:0.000} CLIENT disconnected (id={id}) reason='{manager.DisconnectReason}'");
 
             if (Role != M2Role.Client) manager.OnServerStarted += OnServerStarted;
 
@@ -125,6 +132,22 @@ namespace BeMyArms.M2
                 M2Config.OneWayDelaySeconds = 0f;
                 M2Config.LossPercent = 0f;
             }
+
+            if (float.TryParse(GetArg("-m2-exit-after"), out float exitAfter))
+                M2Config.ExitAfterSeconds = exitAfter;
+
+            if (int.TryParse(GetArg("-m2-disconnect-timeout"), out int disconnectMs))
+                M2Config.DisconnectTimeoutMs = Mathf.Max(200, disconnectMs);
+        }
+
+        void Update()
+        {
+            if (M2Config.ExitAfterSeconds <= 0f) return;
+            if (Time.realtimeSinceStartup < M2Config.ExitAfterSeconds) return;
+            Debug.Log($"[M2-trace] t={Time.realtimeSinceStartup:0.000} CLIENT graceful shutdown requested");
+            NetworkManager manager = Manager != null ? Manager : NetworkManager.Singleton;
+            if (manager != null && manager.IsListening) manager.Shutdown();
+            Application.Quit();
         }
 
         void ApplyTransportSimulation(NetworkManager manager)

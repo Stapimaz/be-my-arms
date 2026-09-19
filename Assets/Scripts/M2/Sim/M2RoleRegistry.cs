@@ -15,6 +15,7 @@ namespace BeMyArms.M2
 
         readonly Dictionary<ulong, byte> _connectionRole = new Dictionary<ulong, byte>();
         readonly Dictionary<string, byte> _tokenRole = new Dictionary<string, byte>();
+        readonly HashSet<byte> _botRoles = new HashSet<byte>();
 
         /// <summary>
         /// Assign a role to a connection. Returns the assigned role and, when a role is reclaimed
@@ -50,8 +51,23 @@ namespace BeMyArms.M2
 
             _connectionRole[clientId] = target;
             if (!string.IsNullOrEmpty(token) && target != RoleNone) _tokenRole[token] = target;
+            if (target != RoleNone) _botRoles.Remove(target); // a human owner always clears any bot
             return target;
         }
+
+        /// <summary>Temporarily hand a role to a bot (e.g. while its human is disconnected).</summary>
+        public void SetBot(byte role)
+        {
+            if (role != RoleNone) _botRoles.Add(role);
+        }
+
+        public void ClearBot(byte role) => _botRoles.Remove(role);
+
+        public bool IsBot(byte role) => _botRoles.Contains(role);
+
+        /// <summary>True when exactly one owner (human or bot) holds the role — never two.</summary>
+        public bool HasSingleOwner(byte role)
+            => role != RoleNone && (IsBot(role) ^ RoleTaken(role));
 
         public byte Release(ulong clientId)
         {

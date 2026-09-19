@@ -30,5 +30,11 @@ namespace BeMyArms.M2
         public static bool UseTransportSimulation;
         public static int TransportDelayMs = 50;
         public static int TransportLossPercent = 2;
+
+        /// <summary>If > 0, the client disconnects gracefully and quits after this many seconds.</summary>
+        public static float ExitAfterSeconds;
+
+        /// <summary>Transport disconnect timeout (ms). Short enough to detect a force-kill, long enough to avoid false drops.</summary>
+        public static int DisconnectTimeoutMs = 5000;
     }
 }

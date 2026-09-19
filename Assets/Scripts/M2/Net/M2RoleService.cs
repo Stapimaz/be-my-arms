@@ -5,10 +5,12 @@ using UnityEngine;
 namespace BeMyArms.M2
 {
     /// <summary>
-    /// Server-side connection-to-role authority, assigned during NGO connection approval. Because
-    /// the role is bound before any replicated body exists, a late-joining or reconnecting client is
-    /// authorized even if it cannot yet see the body — which is what made the earlier reconnect test
-    /// fail. Token-based restore and the double-role reclaim live here.
+    /// Server-side connection-to-role authority, assigned during NGO connection approval (so a
+    /// reconnecting client is authorized before any replicated body exists). Also owns the
+    /// temporary bot substitution: when a human disconnects their role is handed to a bot, and the
+    /// next human connection with the same token atomically takes it back.
+    ///
+    /// Every step is traced so the reconnect path can be diagnosed layer by layer.
     /// </summary>
     public class M2RoleService : MonoBehaviour
     {
@@ -21,6 +23,7 @@ namespace BeMyArms.M2
         public readonly M2RoleRegistry Registry = new M2RoleRegistry();
 
         NetworkManager _manager;
+        float _nextStatusLog;
 
         void Awake()
         {
@@ -34,35 +37,61 @@ namespace BeMyArms.M2
             if (_manager == null) return;
             _manager.NetworkConfig.ConnectionApproval = true;
             _manager.ConnectionApprovalCallback = OnApproval;
+            _manager.OnClientConnectedCallback += OnNgoClientConnected;
             _manager.OnClientDisconnectCallback += OnDisconnect;
+        }
+
+        void OnNgoClientConnected(ulong id)
+        {
+            Trace($"NGO client connected id={id} count={_manager.ConnectedClientsIds.Count}");
         }
 
         void OnApproval(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
         {
             Decode(request.Payload, out string token, out byte desired);
+            Trace($"approval ENTER id={request.ClientNetworkId} token='{token}' desired={Name(desired)} connected={_manager.ConnectedClientsIds.Count}");
 
             byte role = Registry.Assign(request.ClientNetworkId, token, desired, out ulong displaced);
             if (displaced != ulong.MaxValue)
             {
-                Debug.Log($"[M2] reclaim: role {Name(role)} taken by client {request.ClientNetworkId}; dropping stale client {displaced}");
+                Trace($"reclaim role {Name(role)} -> client {request.ClientNetworkId}; dropping stale {displaced}");
                 _manager.DisconnectClient(displaced);
             }
 
-            Debug.Log($"[M2] approved client {request.ClientNetworkId} -> {Name(role)} (token '{token}')");
             response.Approved = true;
             response.CreatePlayerObject = false;
+            Trace($"approval EXIT id={request.ClientNetworkId} role={Name(role)} botActive={Registry.IsBot(role)} singleOwner={Registry.HasSingleOwner(role)}");
         }
 
         void OnDisconnect(ulong clientId)
         {
             byte role = Registry.Release(clientId);
             if (role != RoleNone)
-                Debug.Log($"[M2] client {clientId} disconnected from role {Name(role)} (role freed)");
+            {
+                Registry.SetBot(role);
+                Trace($"client {clientId} disconnected -> role {Name(role)} to BOT (singleOwner={Registry.HasSingleOwner(role)})");
+            }
+            else
+            {
+                Trace($"client {clientId} disconnected with no role");
+            }
+        }
+
+        void Update()
+        {
+            if (!_manager || !_manager.IsServer) return;
+            if (Time.realtimeSinceStartup < _nextStatusLog) return;
+            _nextStatusLog = Time.realtimeSinceStartup + 5f;
+            Trace($"status listening={_manager.IsListening} connected={_manager.ConnectedClientsIds.Count} " +
+                  $"P1[bot={Registry.IsBot(RoleP1)} human={Registry.RoleTaken(RoleP1)}] " +
+                  $"P2[bot={Registry.IsBot(RoleP2)} human={Registry.RoleTaken(RoleP2)}]");
         }
 
         public bool HasRole(ulong clientId, byte role) => Registry.HasRole(clientId, role);
 
         public static string Name(byte role) => role == RoleP1 ? "P1" : role == RoleP2 ? "P2" : "spectator";
+
+        static void Trace(string message) => Debug.Log($"[M2-trace] t={Time.realtimeSinceStartup:0.000} {message}");
 
         public static byte[] Encode(string token, byte desiredRole)
         {
