@@ -220,9 +220,8 @@ This is not part of the initial competitive core.
 
 ## 6.1 Aim Sector — CURRENT DIRECTION
 
-P2 cannot rotate infinitely around the body.
-
-P2's horizontal aim is constrained relative to P1's body-forward direction.
+P2 cannot rotate infinitely around the body. P2's horizontal aim must stay within an allowed
+sector centered on P1's body-forward direction; P2 cannot aim outside that sector.
 
 Draft prototype target:
 
@@ -243,10 +242,14 @@ This creates the game's most important mechanical dependency:
 
 P1 therefore controls opportunities; P2 converts them into damage.
 
-How P2's view behaves while P1 rotates is not a locked design rule. The currently prototyped
-direction (world-stabilized aim inside the sector, referred to as "Model C") and its
-alternatives are described in `TECHNICAL_PLAN.md` §2. The model remains provisional until the
-M1 playtest, and choosing it is a decision gate in `ROADMAP.md`.
+**The sector bound is the design rule; the coupling behavior inside the sector is not locked.**
+How P2's aim responds while P1 rotates — staying world-stable, moving rigidly with the body, or
+otherwise — is still open. The draft boundary behavior above (slow near the limit, then clamp)
+is likewise provisional. The currently prototyped direction is **Model C**: world-stabilized aim
+that the sector boundary pushes with the body. Model C is the current prototyped/preferred
+direction, not a locked decision. Its alternatives are described in `TECHNICAL_PLAN.md` §2; the
+model remains provisional until the M1 playtest, and choosing it is a decision gate in
+`ROADMAP.md`.
 
 ## 6.2 High-Skill Coordination Goal — LOCKED
 
