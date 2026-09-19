@@ -205,8 +205,9 @@ remote; simulated latency and packet loss.
    100 ms; maximum rewind is clamped.
 7. The server rejects out-of-sector fire, over-rate fire, excessive turn rate, impossible
    movement, and ammo/inventory tampering.
-8. Reconnect within the grace window restores the same role; a disconnected role
-   contributes no input.
+8. Reconnect within the grace window restores the same role; while a role is disconnected it is
+   temporarily **bot-controlled**, and the remaining human never gains control of both roles.
+   (Force-kill cross-disconnect is a classified package-level item — see `docs/NETWORKING_PROBE.md`.)
 9. Bandwidth per client and server CPU are measured at the target tick rate.
 
 ---

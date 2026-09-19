@@ -46,3 +46,20 @@ utility effects, and the NGO authority wiring remain.
   authoritatively by the server (and only mirrored on clients).
 - The force-kill cross-disconnect is a separate, classified package-level hardening item
   (`docs/NETWORKING_PROBE.md`) and does not block this milestone.
+
+## 5. Cleanup this pass
+
+- Disconnect wording corrected: a disconnected role is **temporarily bot-controlled** (never
+  "contributes no input" and never handed to the other human) — `ROADMAP.md` M2 criterion 8.
+- Removed the unused, design-inconsistent `Armor` placeholder from `M3BuyPhase` (concept §13.3:
+  no armor in the initial version).
+
+## 6. Remaining gate to close M3
+
+M3 is complete only when the Duel works **end-to-end in a real networked run** (not unit tests):
+two shared bodies, pre-match **role assignment**, server-authoritative **buy phase**, **live**
+combat, elimination/timeout, round end, next round, match end, with **utility**, **closing-zone
+damage/visualisation**, live **telemetry**, and the loop hosted authoritatively over the M2
+transport. That integration (director component + two networked bodies + scene) is designed in
+§1–§3 but not yet built/run.
+

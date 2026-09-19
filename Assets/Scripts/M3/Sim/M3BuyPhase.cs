@@ -6,8 +6,7 @@ namespace BeMyArms.M3
     {
         Primary,
         Secondary,
-        Utility,
-        Armor
+        Utility
     }
 
     public class M3ShopItem
