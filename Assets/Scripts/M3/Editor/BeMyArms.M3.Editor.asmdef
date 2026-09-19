@@ -3,6 +3,7 @@
     "rootNamespace": "BeMyArms.M3.EditorTools",
     "references": [
         "BeMyArms.M3",
+        "BeMyArms.M4",
         "BeMyArms.M2",
         "BeMyArms.M0",
         "Unity.Netcode.Runtime"

@@ -8,16 +8,17 @@ using UnityEngine.InputSystem;
 namespace BeMyArms.M3
 {
     /// <summary>
-    /// Role-aware client for one Duel body: P1 predicts/reconciles the body and P2 keeps aim local
-    /// (Model C), exactly like the M2 spike but driven by the M3 director's buy/live/round state.
-    /// It also presents every body from replicated state, and (for headless/multi-process test runs)
-    /// can auto-drive both roles. Only the local player's body sends inputs.
+    /// Role-aware client for one shared body (Duel or 2v2): P1 predicts/reconciles the body and P2
+    /// keeps aim local (Model C). It presents every body from replicated state and can auto-drive
+    /// both roles for headless multi-process runs. Only the local player's body sends inputs; the
+    /// local slot is assigned by the server (direct mode or matchmaker).
     /// </summary>
     public class M3DuelClient : NetworkBehaviour
     {
-        public static M3DuelSlot LocalSlot = M3DuelSlot.None;
+        /// <summary>Local slot index (team/body/role) assigned by the server; -1 until known.</summary>
+        public static int LocalSlotIndex = -1;
 
-        public static void SetLocalSlot(M3DuelSlot slot) => LocalSlot = slot;
+        public static void SetLocalSlot(int slot) => LocalSlotIndex = slot;
 
         public Transform Presentation;
 
@@ -42,7 +43,6 @@ namespace BeMyArms.M3
         public float LocalAimPitch { get; private set; }
 
         M3DuelBody _body;
-        M3DuelBody _enemy;
         M3DuelDirector _director;
         M2BodySim _predictSim;
         M2Reconciler _reconciler;
@@ -69,13 +69,17 @@ namespace BeMyArms.M3
         Camera _camera;
         Transform _eye;
 
-        public int EffectiveRole => M3DuelSlots.IsValid(LocalSlot) ? M3DuelSlots.Role(LocalSlot) : M3Config.ClientRole;
-        public int LocalTeam => M3DuelSlots.IsValid(LocalSlot) ? M3DuelSlots.Team(LocalSlot) : M3Config.ClientTeam;
-        public bool IsOwnBody => _body != null && _body.IsSpawned && _body.TeamIndex == LocalTeam;
+        int BodiesPerTeam => Mathf.Clamp(M3Config.BodiesPerTeam, 1, 2);
+        public int EffectiveRole => M3DuelSlots.IsValidSlot(LocalSlotIndex, BodiesPerTeam) ? M3DuelSlots.RoleOf(LocalSlotIndex) : M3Config.ClientRole;
+        public int LocalTeam => M3DuelSlots.IsValidSlot(LocalSlotIndex, BodiesPerTeam) ? M3DuelSlots.TeamOf(LocalSlotIndex, BodiesPerTeam) : M3Config.ClientTeam;
+        public int LocalBody => M3DuelSlots.IsValidSlot(LocalSlotIndex, BodiesPerTeam) ? M3DuelSlots.BodyOf(LocalSlotIndex, BodiesPerTeam) : M3Config.ClientBody;
+        public bool IsOwnBody => _body != null && _body.IsSpawned && _body.TeamIndex == LocalTeam && _body.BodyId == LocalBody;
 
         void Start()
         {
-            if (!M3DuelSlots.IsValid(LocalSlot)) LocalSlot = M3DuelSlots.FromTeamRole(M3Config.ClientTeam, M3Config.ClientRole);
+            if (!M3DuelSlots.IsValidSlot(LocalSlotIndex, BodiesPerTeam))
+                LocalSlotIndex = M3DuelSlots.Encode(M3Config.ClientTeam, M3Config.ClientBody, M3Config.ClientRole, BodiesPerTeam);
+
             AutoDrive = M3Config.AutoDrive;
             AutoBuy = M3Config.AutoBuy;
             AutoFire = M3Config.AutoFire;
@@ -147,12 +151,11 @@ namespace BeMyArms.M3
             _body.SubmitBuyServerRpc(6); // grenade (utility)
             _body.SubmitBuyServerRpc(4); // smoke (utility)
             _body.SubmitBuyServerRpc(5); // flash (utility)
-            Debug.Log($"[M3-client] team {(LocalTeam == 0 ? "A" : "B")} P2 auto-buy round {_boughtRound}");
+            Debug.Log($"[M3-client] {M3DuelSlots.Name(LocalSlotIndex, BodiesPerTeam)} auto-buy round {_boughtRound}");
         }
 
         void DrainSnapshots()
         {
-            // Snapshots arrive on the NGO tick; the pure reconciler is fed from the replicated state.
             _reconciler.Reconcile(_body.State.Value, _body.LastAckedP1Sequence.Value, _predictSim);
         }
 
@@ -207,19 +210,16 @@ namespace BeMyArms.M3
             if (!_grenadeSent && elapsed > 0.6f)
             {
                 _grenadeSent = true;
-                Debug.Log($"[M3-client] throw grenade team {LocalTeam}");
                 _body.SubmitUtilityServerRpc((byte)M3UtilityKind.Grenade);
             }
             if (!_smokeSent && elapsed > 1.2f)
             {
                 _smokeSent = true;
-                Debug.Log($"[M3-client] throw smoke team {LocalTeam}");
                 _body.SubmitUtilityServerRpc((byte)M3UtilityKind.Smoke);
             }
             if (!_flashSent && elapsed > 1.8f)
             {
                 _flashSent = true;
-                Debug.Log($"[M3-client] throw flash team {LocalTeam}");
                 _body.SubmitUtilityServerRpc((byte)M3UtilityKind.Flash);
             }
         }
@@ -228,10 +228,11 @@ namespace BeMyArms.M3
         {
             var input = new M2P1Input();
             _autoClock += dt;
-            if (FindEnemy() != null)
+            M3DuelBody target = NearestEnemy();
+            if (target != null)
             {
-                float dx = _enemy.State.Value.PosX - _predictSim.State.PosX;
-                float dz = _enemy.State.Value.PosZ - _predictSim.State.PosZ;
+                float dx = target.State.Value.PosX - _predictSim.State.PosX;
+                float dz = target.State.Value.PosZ - _predictSim.State.PosZ;
                 float desired = Mathf.Atan2(dx, dz) * Mathf.Rad2Deg;
                 float delta = Mathf.Clamp(M2BodySim.Normalize(desired - _predictSim.State.LookYaw), -25f, 25f);
                 input.LookYawDelta = delta;
@@ -245,10 +246,11 @@ namespace BeMyArms.M3
         M2P2Input BuildAutoP2()
         {
             var input = new M2P2Input();
-            if (FindEnemy() != null)
+            M3DuelBody target = NearestEnemy();
+            if (target != null)
             {
-                float dx = _enemy.State.Value.PosX - _body.State.Value.PosX;
-                float dz = _enemy.State.Value.PosZ - _body.State.Value.PosZ;
+                float dx = target.State.Value.PosX - _body.State.Value.PosX;
+                float dz = target.State.Value.PosZ - _body.State.Value.PosZ;
                 input.AimYaw = Mathf.Atan2(dx, dz) * Mathf.Rad2Deg;
                 input.Fire = AutoFire;
                 input.Reload = _body.Ammo.Value <= 1;
@@ -288,19 +290,22 @@ namespace BeMyArms.M3
             return input;
         }
 
-        M3DuelBody FindEnemy()
+        /// <summary>Closest living enemy body (2v2 has two).</summary>
+        M3DuelBody NearestEnemy()
         {
-            if (_enemy != null && _enemy.IsSpawned) return _enemy;
             M3DuelBody[] bodies = FindObjectsByType<M3DuelBody>();
+            M3DuelBody best = null;
+            float bestDistance = float.MaxValue;
             for (int i = 0; i < bodies.Length; i++)
             {
-                if (bodies[i].IsSpawned && bodies[i].TeamIndex != _body.TeamIndex)
-                {
-                    _enemy = bodies[i];
-                    return _enemy;
-                }
+                M3DuelBody candidate = bodies[i];
+                if (!candidate.IsSpawned || !candidate.Alive.Value || candidate.TeamIndex == _body.TeamIndex) continue;
+                float dx = candidate.State.Value.PosX - _body.State.Value.PosX;
+                float dz = candidate.State.Value.PosZ - _body.State.Value.PosZ;
+                float d = dx * dx + dz * dz;
+                if (d < bestDistance) { bestDistance = d; best = candidate; }
             }
-            return null;
+            return best;
         }
 
         void ApplyPresentation(float dt)
@@ -333,8 +338,7 @@ namespace BeMyArms.M3
         void EnsureCamera()
         {
             if (Application.isBatchMode || _camera != null) return;
-            bool own = IsOwnBody;
-            if (!own) return;
+            if (!IsOwnBody) return;
 
             var go = new GameObject(EffectiveRole == 0 ? "M3_P1Camera" : "M3_P2Camera");
             _camera = go.AddComponent<Camera>();

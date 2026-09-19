@@ -86,9 +86,10 @@ path, buy-slot/budget enforcement and per-round resets.
 
 ## 5. Tests
 
-- EditMode **61/61** (was 51). The 10 new M3 Duel tests cover:
+- EditMode **62/62** (Duel tests). The M3 Duel tests cover:
   - four-slot roster assignment, free-slot fallback, token reclaim + displacement, bot single
-    ownership and human-clears-bot, and two-body team formation from the role queue;
+    ownership and human-clears-bot, the pre-match **queue → slot** path, and two-body team
+    formation from the role queue;
   - smoke line-of-sight blocking (including expiry), grenade fuse/detonation/radial falloff, flash
     blind falloff;
   - loadout resolution (primary wins, else secondary, else pistol) and server stat validity.
@@ -115,6 +116,11 @@ Useful flags: `-m3-buy/-m3-live/-m3-roundend`, `-m3-zone-start/-end/-close/-dura
 
 ## 7. Notes and scope boundaries
 
+- **Generalised for 2v2 (M4).** The match layer was later parameterised by **bodies per team**, so
+  the Duel is the `BodiesPerTeam = 1` case of the same server-authoritative director/body/roster used
+  by 2v2 (`BodiesPerTeam = 2`). Slot encoding is `(team × bodiesPerTeam + body) × 2 + role`; a team
+  loses a round only when all of its bodies are eliminated. The verified 4-client Duel above still
+  passes on the generalised layer. See `docs/M4_2V2_MATCHMAKING.md`.
 - The two bodies are capsule placeholders and the arena is greybox; this is temporary development
   geometry, not final presentation.
 - Hitscan uses a capsule/radius hit test against the enemy body. The M1 critical head region is not

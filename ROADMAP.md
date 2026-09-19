@@ -58,7 +58,7 @@ document wins. If they conflict on **implementation order**, this roadmap wins.
 | **M1** — local vertical slice | Implemented; automated verification passing (19 EditMode, 2 PlayMode); human two-duo playtest gate deferred; see `docs/M1_VERTICAL_SLICE.md` |
 | **M2** — networked spike | **Complete** (architecture proof). Real 3-process run: approval-based role authorization, wrong-role rejection, bandwidth + prediction-error + camera metrics, transport-level conditioning, sector + lag-comp validation; disconnect→bot→reconnect handoff verified on graceful disconnect; force-kill reconnect limitation documented (UTP detection/acceptance) for M3+; see `docs/M2_NETWORKING_SPIKE.md` |
 | **M3** — PvP round loop | **Complete (acceptance level).** End-to-end dedicated-server + 4-client Duel verified: role assignment, server-authoritative buy, live combat, elimination/timeout, utility, closing zone, round/match transitions and telemetry; EditMode 61/61. See `docs/M3_PVP_ROUND_LOOP.md` |
-| **M4** — 2v2 and matchmaking | In progress — ranked-ready structure (role ratings, derived body MMR, parties, 2v2 team rating, provider-neutral allocation); live services integration pending |
+| **M4** — 2v2 and matchmaking | **Complete (acceptance level).** Real dedicated-server + 8-client 2v2 verified end-to-end: matchmaking, provider-neutral allocation, parties, four shared bodies and post-match role-specific ratings; EditMode 76/76. Production hosting/services integration is deferred and non-blocking. See `docs/M4_2V2_MATCHMAKING.md` |
 | **M5** — product systems | Not started |
 | **M6–M10** — production to release | Not started |
 
@@ -238,13 +238,17 @@ server allocation.
 
 **Acceptance criteria:** ranked-ready structure with provider-neutral server allocation.
 
-**Progress:** the ranked-ready structure is implemented and unit-tested in `BeMyArms.M4`:
-role-specific Elo, derived body MMR and 2v2 team rating, a pure Duel/2v2 matchmaker that honors
-role preferences and parties and relaxes with queue time, and a provider-neutral
-`IM4ServerAllocator` with a local implementation, plus a bridge onto the shipped M3 slots/rating
-updates. EditMode 75/75. Remaining: a networked 2v2 run,
-the live Multiplayer Services integration, and a real hosting-provider adapter. Details:
-`docs/M4_2V2_MATCHMAKING.md`.
+**Progress:** implemented and verified end-to-end. The M3 match layer is generalised from a Duel to
+**N bodies per team**, so Duel (1 body/team) and 2v2 (2 bodies/team, eight humans) share one
+server-authoritative loop; a team loses only when all its bodies are eliminated. `BeMyArms.M4`
+provides role-specific Elo, derived body/team MMR, a pure Duel/2v2 matchmaker (role preferences,
+premade parties, balanced team split, queue-time relaxation) and a provider-neutral
+`IM4ServerAllocator`. A server-side `M4MatchHost` runs the pure matchmaker and allocation for a live
+match and applies post-match role-rating updates. Verified: one dedicated server + eight clients,
+`quality=0` team split (1050 vs 1050), all eight slots assigned from preferences, premade duos kept
+on one body, full match loop to first-to-3, and per-role rating deltas. EditMode 76/76. Live
+Multiplayer Services and a real hosting provider remain deferred, non-blocking integrations.
+Details: `docs/M4_2V2_MATCHMAKING.md`.
 
 ---
 

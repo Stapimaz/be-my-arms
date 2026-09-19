@@ -5,10 +5,13 @@ using UnityEngine;
 namespace BeMyArms.M3
 {
     /// <summary>
-    /// Server-side connection-to-slot authority for the Duel, assigned during NGO connection
-    /// approval so a reconnecting client is authorized before any replicated body exists. Also owns
-    /// temporary bot substitution: when a human disconnects their slot goes to a bot, and the next
-    /// connection with the same token atomically takes it back (same policy as M2, four slots).
+    /// Server-side connection authority. Two modes:
+    ///  - direct/dev: a connection is assigned a slot at NGO connection approval from its requested
+    ///    team/body/role;
+    ///  - matchmaker: a connection is **enqueued** at approval and the M4 matchmaker assigns its slot
+    ///    once a match proposal exists.
+    /// In both modes a token restores its slot on reconnect and a disconnected slot becomes a
+    /// temporary bot (never handed to another human).
     /// </summary>
     public class M3DuelRoleService : MonoBehaviour
     {
@@ -29,6 +32,7 @@ namespace BeMyArms.M3
         {
             if (_manager == null) _manager = GetComponent<NetworkManager>();
             if (_manager == null) return;
+            Registry.BodiesPerTeam = M3Config.BodiesPerTeam;
             _manager.NetworkConfig.ConnectionApproval = true;
             _manager.ConnectionApprovalCallback = OnApproval;
             _manager.OnClientConnectedCallback += OnNgoClientConnected;
@@ -40,33 +44,37 @@ namespace BeMyArms.M3
         void OnApproval(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
         {
             Decode(request.Payload, out string token, out byte desired);
-            int team = (byte)(desired / M3DuelSlots.RolesPerTeam);
-            int role = (byte)(desired % M3DuelSlots.RolesPerTeam);
-            Trace($"approval ENTER id={request.ClientNetworkId} token='{token}' desired={(desired == 255 ? "any" : M3DuelSlots.Name((M3DuelSlot)desired))}");
-
-            M3DuelSlot slot = Registry.Assign(request.ClientNetworkId, token, team, role, out ulong displaced);
-            if (displaced != ulong.MaxValue)
-            {
-                Trace($"reclaim slot {M3DuelSlots.Name(slot)} -> client {request.ClientNetworkId}; dropping stale {displaced}");
-                _manager.DisconnectClient(displaced);
-            }
-
             response.Approved = true;
             response.CreatePlayerObject = false;
-            Trace($"approval EXIT id={request.ClientNetworkId} slot={M3DuelSlots.Name(slot)} botActive={Registry.IsBot(slot)} singleOwner={Registry.HasSingleOwner(slot)}");
+
+            if (M3Config.UseMatchmaker)
+            {
+                Registry.Enqueue(request.ClientNetworkId, token, desired, Time.realtimeSinceStartup, "local");
+                Trace($"approval ENTER id={request.ClientNetworkId} token='{token}' pref={(desired > 2 ? "any" : desired == 0 ? "P1" : desired == 1 ? "P2" : "Either")} -> queued ({Registry.QueuedCount} queued)");
+                return;
+            }
+
+            int slot = Registry.AssignPreferred(request.ClientNetworkId, token, desired, out ulong displaced);
+            if (displaced != ulong.MaxValue)
+            {
+                Trace($"reclaim slot {M3DuelSlots.Name(slot, Registry.BodiesPerTeam)} -> client {request.ClientNetworkId}; dropping stale {displaced}");
+                _manager.DisconnectClient(displaced);
+            }
+            Trace($"approval ENTER id={request.ClientNetworkId} token='{token}' desired={(desired == 255 ? "any" : M3DuelSlots.Name(desired, Registry.BodiesPerTeam))}");
+            Trace($"approval EXIT id={request.ClientNetworkId} slot={M3DuelSlots.Name(slot, Registry.BodiesPerTeam)} botActive={Registry.IsBot(slot)} singleOwner={Registry.HasSingleOwner(slot)}");
         }
 
         void OnDisconnect(ulong clientId)
         {
-            M3DuelSlot slot = Registry.Release(clientId);
-            if (slot != M3DuelSlot.None)
+            int slot = Registry.Release(clientId);
+            if (slot >= 0)
             {
                 Registry.SetBot(slot);
-                Trace($"client {clientId} disconnected -> slot {M3DuelSlots.Name(slot)} to BOT (singleOwner={Registry.HasSingleOwner(slot)})");
+                Trace($"client {clientId} disconnected -> slot {M3DuelSlots.Name(slot, Registry.BodiesPerTeam)} to BOT (singleOwner={Registry.HasSingleOwner(slot)})");
             }
             else
             {
-                Trace($"client {clientId} disconnected with no slot");
+                Trace($"client {clientId} disconnected with no slot (dequeued)");
             }
         }
 
@@ -75,26 +83,44 @@ namespace BeMyArms.M3
             if (!_manager || !_manager.IsServer) return;
             if (Time.realtimeSinceStartup < _nextStatusLog) return;
             _nextStatusLog = Time.realtimeSinceStartup + 10f;
-            Trace($"status connected={_manager.ConnectedClientsIds.Count} assigned={Registry.AssignedCount} " +
-                  $"A[P1={(Registry.SlotTaken(M3DuelSlot.TeamAP1) ? "human" : Registry.IsBot(M3DuelSlot.TeamAP1) ? "bot" : "-")} " +
-                  $"P2={(Registry.SlotTaken(M3DuelSlot.TeamAP2) ? "human" : Registry.IsBot(M3DuelSlot.TeamAP2) ? "bot" : "-")}] " +
-                  $"B[P1={(Registry.SlotTaken(M3DuelSlot.TeamBP1) ? "human" : Registry.IsBot(M3DuelSlot.TeamBP1) ? "bot" : "-")} " +
-                  $"P2={(Registry.SlotTaken(M3DuelSlot.TeamBP2) ? "human" : Registry.IsBot(M3DuelSlot.TeamBP2) ? "bot" : "-")}]");
+
+            var parts = new StringBuilder();
+            for (int team = 0; team < M3DuelSlots.Teams; team++)
+            {
+                for (int body = 0; body < Registry.BodiesPerTeam; body++)
+                {
+                    for (int role = 0; role < M3DuelSlots.RolesPerTeam; role++)
+                    {
+                        int slot = M3DuelSlots.Encode(team, body, role, Registry.BodiesPerTeam);
+                        string state = Registry.SlotTaken(slot) ? "human" : Registry.IsBot(slot) ? "bot" : "-";
+                        parts.Append($"{M3DuelSlots.Name(slot, Registry.BodiesPerTeam)}={state} ");
+                    }
+                }
+            }
+            Trace($"status connected={_manager.ConnectedClientsIds.Count} assigned={Registry.AssignedCount} queued={Registry.QueuedCount} | {parts}");
         }
 
-        public bool HasSlot(ulong clientId, M3DuelSlot slot) => Registry.HasSlot(clientId, slot);
+        public bool HasSlot(ulong clientId, int slot) => Registry.HasSlot(clientId, slot);
 
-        public bool IsBot(M3DuelSlot slot) => Registry.IsBot(slot);
+        public bool IsBot(int slot) => Registry.IsBot(slot);
+
+        /// <summary>Moves a queued connection into a match slot (used by the matchmaker host).</summary>
+        public int AssignFromMatch(ulong clientId, string token, int slot, out ulong displaced)
+        {
+            int assigned = Registry.AssignSlot(clientId, token, slot, out displaced);
+            if (displaced != ulong.MaxValue && _manager != null) _manager.DisconnectClient(displaced);
+            return assigned;
+        }
 
         static void Trace(string message) => Debug.Log($"[M3-trace] t={Time.realtimeSinceStartup:0.000} {message}");
 
-        public static byte[] Encode(string token, byte desiredSlot)
+        public static byte[] Encode(string token, byte desired)
         {
             string t = token ?? "";
             int count = Encoding.UTF8.GetByteCount(t);
             var bytes = new byte[count + 1];
             Encoding.UTF8.GetBytes(t, 0, t.Length, bytes, 0);
-            bytes[count] = desiredSlot;
+            bytes[count] = desired;
             return bytes;
         }
 
@@ -103,7 +129,7 @@ namespace BeMyArms.M3
             if (payload == null || payload.Length == 0)
             {
                 token = "";
-                desired = (byte)M3DuelSlot.None;
+                desired = 255;
                 return;
             }
             desired = payload[payload.Length - 1];

@@ -1,20 +1,32 @@
+using System;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
 namespace BeMyArms.M3
 {
+    /// <summary>A slot the server should fill for a match (produced by the matchmaker host).</summary>
+    public struct M3SlotAssignment
+    {
+        public int Slot;
+        public string PlayerId;
+        public bool IsBot;
+    }
+
     /// <summary>
-    /// Server-authoritative Duel director. Hosts the M3 round-loop core (match/round state machine,
-    /// buy economy, closing zone, utility, telemetry), spawns the two shared bodies, drives the
-    /// pre-match slot assignment and broadcasts the replicated match state to clients. One Duel =
-    /// two bodies = four humans (team A P1/P2 vs team B P1/P2). All match state is server-owned; the
-    /// clients only mirror it. M3 is not complete without this real networked run.
+    /// Server-authoritative match director for one or more shared bodies per team (Duel = 1, 2v2 = 2).
+    /// Hosts the M3 round-loop core (match/round state machine, closing zone, utility, telemetry),
+    /// spawns and binds the bodies, drives direct or matchmaker-based slot assignment, and broadcasts
+    /// the replicated match state. All match state is server-owned; clients only mirror it.
     /// </summary>
     public class M3DuelDirector : NetworkBehaviour
     {
         public static M3DuelDirector Instance { get; private set; }
 
         public GameObject BodyPrefab;
+
+        [Header("Match shape (TUNING; overridden from command line)")]
+        public int BodiesPerTeam = 1;
 
         [Header("Round loop (TUNING; overridden from command line)")]
         public float BuySeconds = 10f;
@@ -39,33 +51,38 @@ namespace BeMyArms.M3
         public NetworkVariable<int> MatchWinner = new(-1, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         public NetworkVariable<float> ZoneRadius = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         public NetworkVariable<int> UnauthorizedInputs = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        public NetworkVariable<int> BodiesAliveA = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        public NetworkVariable<int> BodiesAliveB = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
         public M3Phase CurrentPhase => (M3Phase)Phase.Value;
         public bool IsBuy => CurrentPhase == M3Phase.Buy;
         public bool IsLive => CurrentPhase == M3Phase.Live;
         public bool InputsAccepted => CurrentPhase == M3Phase.Live;
+        public bool MatchStarted => _matchStarted;
+        public int SlotCount => M3DuelSlots.SlotCount(BodiesPerTeam);
         public M3UtilitySystem Utility { get; } = new M3UtilitySystem();
+
+        /// <summary>Raised on the server when the match ends: winner (-1 draw). Used by the rating host.</summary>
+        public event Action<int> MatchCompleted;
 
         readonly M3MatchState _match = new M3MatchState();
         readonly M3ClosingZone _zone = new M3ClosingZone();
-        readonly M3BuyPhase[] _buy = { new M3BuyPhase(), new M3BuyPhase() };
         readonly M3Telemetry _telemetry = new M3Telemetry();
-        readonly int[][] _utilityCharges = { new int[3], new int[3] };
+        readonly List<M3DuelBody>[] _bodies = { new List<M3DuelBody>(), new List<M3DuelBody>() };
 
-        M3DuelBody _bodyA;
-        M3DuelBody _bodyB;
         bool _matchStarted;
         bool _firstContact;
         double _liveStartTime;
         float _serverStartTime;
+        string _ticket = "";
 
         public override void OnNetworkSpawn()
         {
             Instance = this;
             _serverStartTime = Time.realtimeSinceStartup;
 
-            // Round-loop timing comes from M3Config (command line) so a dedicated run can be tuned
-            // without a rebuild; the inspector values are the in-editor defaults.
+            BodiesPerTeam = Mathf.Clamp(M3Config.BodiesPerTeam, 1, 2);
+
             BuySeconds = M3Config.BuySeconds;
             LiveSeconds = M3Config.LiveSeconds;
             RoundEndSeconds = M3Config.RoundEndSeconds;
@@ -115,49 +132,139 @@ namespace BeMyArms.M3
             }
         }
 
+        // ---- Spawn ----
+
         void SpawnBodies()
         {
             if (BodyPrefab == null)
             {
-                Debug.LogError("[M3] Duel director has no body prefab assigned.");
+                Debug.LogError("[M3] match director has no body prefab assigned.");
                 return;
             }
 
-            _bodyA = SpawnBody(team: 0);
-            _bodyB = SpawnBody(team: 1);
-            if (_bodyA != null && _bodyB != null)
+            for (int team = 0; team < M3DuelSlots.Teams; team++)
+                for (int body = 0; body < BodiesPerTeam; body++)
+                    _bodies[team].Add(SpawnBody(team, body));
+
+            for (int team = 0; team < M3DuelSlots.Teams; team++)
             {
-                _bodyA.ServerBind(this, _bodyB);
-                _bodyB.ServerBind(this, _bodyA);
+                for (int i = 0; i < _bodies[team].Count; i++)
+                {
+                    M3DuelBody self = _bodies[team][i];
+                    if (self == null) continue;
+                    self.ServerBind(this, BuildEnemyList(team));
+                }
             }
-            Log($"bodies spawned: A={_bodyA != null} B={_bodyB != null}");
+
+            Log($"bodies spawned: {BodiesPerTeam} per team ({_bodies[0].Count + _bodies[1].Count} total)");
         }
 
-        M3DuelBody SpawnBody(int team)
+        M3DuelBody[] BuildEnemyList(int team)
+        {
+            int other = team == 0 ? 1 : 0;
+            return _bodies[other].ToArray();
+        }
+
+        M3DuelBody SpawnBody(int team, int body)
         {
             GameObject go = Instantiate(BodyPrefab);
-            var body = go.GetComponent<M3DuelBody>();
+            var component = go.GetComponent<M3DuelBody>();
             NetworkObject networkObject = go.GetComponent<NetworkObject>();
             networkObject.Spawn(true);
-            body.ServerConfigure(team);
-            return body;
+            component.ServerConfigure(team, body, M3DuelSlots.Encode(team, body, 0, BodiesPerTeam));
+            return component;
         }
 
         void OnClientConnected(ulong clientId)
         {
             if (!IsServer || M3DuelRoleService.Instance == null) return;
-            M3DuelSlot slot = M3DuelRoleService.Instance.Registry.SlotFor(clientId);
-            if (!M3DuelSlots.IsValid(slot)) return;
+            int slot = M3DuelRoleService.Instance.Registry.SlotFor(clientId);
+            if (!M3DuelSlots.IsValidSlot(slot, BodiesPerTeam)) return;
+            SendSlot(clientId, slot);
+        }
 
+        void SendSlot(ulong clientId, int slot)
+        {
             var target = new ClientRpcParams { Send = new ClientRpcSendParams { TargetClientIds = new[] { clientId } } };
             AssignSlotClientRpc((byte)slot, target);
-            Log($"client {clientId} assigned {M3DuelSlots.Name(slot)}");
+            Log($"client {clientId} assigned {M3DuelSlots.Name(slot, BodiesPerTeam)}");
         }
 
         [ClientRpc]
         void AssignSlotClientRpc(byte slot, ClientRpcParams rpcParams = default)
         {
-            M3DuelClient.SetLocalSlot((M3DuelSlot)slot);
+            M3DuelClient.SetLocalSlot(slot);
+        }
+
+        // ---- Matchmaking hook ----
+
+        /// <summary>
+        /// Server-only: fill the match from a matchmaker proposal and start it. Slots not present in
+        /// the proposal become bots. Called by the M4 matchmaker host; direct/dev mode uses
+        /// <see cref="TryStartMatch"/> instead.
+        /// </summary>
+        public void ServerBeginMatch(IReadOnlyList<M3SlotAssignment> assignments, string ticket)
+        {
+            if (!IsServer || _matchStarted) return;
+            _ticket = ticket ?? "";
+
+            var roster = M3DuelRoleService.Instance != null ? M3DuelRoleService.Instance.Registry : null;
+            if (roster == null) return;
+
+            var filled = new bool[SlotCount];
+            int humans = 0;
+            for (int i = 0; i < assignments.Count; i++)
+            {
+                M3SlotAssignment a = assignments[i];
+                if (!M3DuelSlots.IsValidSlot(a.Slot, BodiesPerTeam) || filled[a.Slot]) continue;
+                filled[a.Slot] = true;
+
+                if (a.IsBot || string.IsNullOrEmpty(a.PlayerId))
+                {
+                    roster.SetBot(a.Slot);
+                    continue;
+                }
+
+                ulong clientId = roster.TryGetQueuedClient(a.PlayerId, out ulong queuedClient)
+                    ? queuedClient
+                    : roster.ClientForToken(a.PlayerId);
+                if (clientId == ulong.MaxValue)
+                {
+                    roster.SetBot(a.Slot);
+                    continue;
+                }
+
+                int assigned = M3DuelRoleService.Instance.AssignFromMatch(clientId, a.PlayerId, a.Slot, out ulong displaced);
+                if (assigned >= 0)
+                {
+                    humans++;
+                    SendSlot(clientId, assigned);
+                }
+            }
+
+            for (int slot = 0; slot < SlotCount; slot++)
+                if (!roster.SlotTaken(slot)) roster.SetBot(slot);
+
+            _matchStarted = true;
+            Log($"match starting ticket='{_ticket}' humans={humans} bodiesPerTeam={BodiesPerTeam}");
+            _match.StartMatch();
+        }
+
+        void TryStartMatch()
+        {
+            var roster = M3DuelRoleService.Instance != null ? M3DuelRoleService.Instance.Registry : null;
+            if (roster == null) return;
+
+            bool ready = roster.AssignedCount >= M3Config.RequiredPlayers;
+            bool timedOut = Time.realtimeSinceStartup - _serverStartTime >= M3Config.StartDelaySeconds;
+            if (!ready && !timedOut) return;
+
+            for (int slot = 0; slot < SlotCount; slot++)
+                if (!roster.SlotTaken(slot)) roster.SetBot(slot);
+
+            _matchStarted = true;
+            Log($"match starting ({roster.AssignedCount} human slots; empty slots bot-filled)");
+            _match.StartMatch();
         }
 
         // ---- Round loop ----
@@ -170,8 +277,8 @@ namespace BeMyArms.M3
 
             if (!_matchStarted)
             {
-                TryStartMatch();
-                return;
+                if (!M3Config.UseMatchmaker) TryStartMatch();
+                return; // matchmaker mode is started by the M4 host via ServerBeginMatch
             }
 
             _match.Tick(Time.deltaTime);
@@ -187,46 +294,25 @@ namespace BeMyArms.M3
             MirrorState();
         }
 
-        void TryStartMatch()
-        {
-            var roster = M3DuelRoleService.Instance != null ? M3DuelRoleService.Instance.Registry : null;
-            if (roster == null) return;
-
-            bool ready = roster.AssignedCount >= M3Config.RequiredPlayers;
-            bool timedOut = Time.realtimeSinceStartup - _serverStartTime >= M3Config.StartDelaySeconds;
-            if (!ready && !timedOut) return;
-
-            for (int i = 0; i < M3DuelSlots.Teams * M3DuelSlots.RolesPerTeam; i++)
-            {
-                var slot = (M3DuelSlot)i;
-                if (!roster.SlotTaken(slot)) roster.SetBot(slot);
-            }
-
-            _matchStarted = true;
-            Log($"match starting ({roster.AssignedCount} human slots; empty slots bot-filled)");
-            _match.StartMatch();
-        }
-
         void OnRoundStarted(int round)
         {
-            for (int team = 0; team < 2; team++)
-            {
-                _buy[team].ResetForRound();
-                _utilityCharges[team][0] = _utilityCharges[team][1] = _utilityCharges[team][2] = 0;
-            }
             Utility.Clear();
             _firstContact = false;
 
-            ResetBody(_bodyA, 0, new Vector3(0f, 0f, -10f), 0f);
-            ResetBody(_bodyB, 1, new Vector3(0f, 0f, 10f), 180f);
+            for (int team = 0; team < M3DuelSlots.Teams; team++)
+            {
+                for (int i = 0; i < _bodies[team].Count; i++)
+                {
+                    M3DuelBody body = _bodies[team][i];
+                    if (body == null) continue;
+                    float offset = (i - (BodiesPerTeam - 1) * 0.5f) * 4f;
+                    float z = team == 0 ? -10f : 10f;
+                    body.ServerResetRound(offset, z, team == 0 ? 0f : 180f);
+                }
+            }
+
             MirrorState();
             Log($"round {round} started: buy phase {BuySeconds:0}s");
-        }
-
-        void ResetBody(M3DuelBody body, int team, Vector3 position, float yaw)
-        {
-            if (body == null) return;
-            body.ServerResetRound(position.x, position.z, yaw);
         }
 
         void OnLiveStarted(int round)
@@ -247,12 +333,14 @@ namespace BeMyArms.M3
             MatchWinner.Value = winner;
             Log($"MATCH END winner={(winner < 0 ? "draw" : winner == 0 ? "A" : "B")} score A={TeamAWins.Value} B={TeamBWins.Value} " +
                 $"avgRound={_telemetry.AverageRoundSeconds():0.00}s avgFirstContact={_telemetry.AverageTimeToFirstContact():0.00}s rounds={_telemetry.RoundsPlayed}");
+            MatchCompleted?.Invoke(winner);
         }
 
         void ApplyZone(float radius, float dt)
         {
-            ApplyZoneTo(_bodyA, radius, dt);
-            ApplyZoneTo(_bodyB, radius, dt);
+            for (int team = 0; team < M3DuelSlots.Teams; team++)
+                for (int i = 0; i < _bodies[team].Count; i++)
+                    ApplyZoneTo(_bodies[team][i], radius, dt);
         }
 
         void ApplyZoneTo(M3DuelBody body, float radius, float dt)
@@ -270,7 +358,7 @@ namespace BeMyArms.M3
                 if (Time.timeAsDouble >= _nextZoneLog)
                 {
                     _nextZoneLog = Time.timeAsDouble + 1.0;
-                    Log($"closing zone {radius:0.0}m: team {(body.TeamIndex == 0 ? "A" : "B")} body outside at {distance:0.0}m, damage {damage:0.00}");
+                    Log($"closing zone {radius:0.0}m: {M3DuelSlots.Name(body.SlotP1, BodiesPerTeam)} outside at {distance:0.0}m, damage {damage:0.00}");
                 }
             }
         }
@@ -285,6 +373,16 @@ namespace BeMyArms.M3
             TeamBWins.Value = _match.TeamBWins;
             TimeRemaining.Value = Mathf.Max(0f, _match.PhaseTimeRemaining);
             LastRoundWinner.Value = _match.LastRoundWinner;
+            BodiesAliveA.Value = CountAlive(0);
+            BodiesAliveB.Value = CountAlive(1);
+        }
+
+        int CountAlive(int team)
+        {
+            int count = 0;
+            for (int i = 0; i < _bodies[team].Count; i++)
+                if (_bodies[team][i] != null && _bodies[team][i].Alive.Value) count++;
+            return count;
         }
 
         // ---- Called by bodies ----
@@ -308,49 +406,26 @@ namespace BeMyArms.M3
 
         public void OnBodyEliminated(int team)
         {
-            Log($"team {(team == 0 ? "A" : "B")} body eliminated");
-            if (_match.IsLive) _match.ReportTeamEliminated(team);
+            int alive = CountAlive(team);
+            Log($"team {(team == 0 ? "A" : "B")} body eliminated ({alive} left)");
+            if (alive == 0 && _match.IsLive) _match.ReportTeamEliminated(team);
         }
 
-        public void ServerBuy(int team, int catalogIndex)
-        {
-            if (!IsBuy) return;
-            if (catalogIndex < 0 || catalogIndex >= _buy[team].Catalog.Count) return;
-
-            M3ShopItem item = _buy[team].Catalog[catalogIndex];
-            if (!_buy[team].TryBuy(item.Id)) return;
-
-            if (item.Kind == M3ShopKind.Utility)
-            {
-                M3UtilityKind kind = item.Id == "grenade" ? M3UtilityKind.Grenade : item.Id == "flash" ? M3UtilityKind.Flash : M3UtilityKind.Smoke;
-                _utilityCharges[team][(int)kind]++;
-            }
-
-            M3DuelBody body = BodyFor(team);
-            if (body != null) body.ServerApplyLoadout(M3Loadouts.ActiveWeapon(_buy[team]));
-            Log($"team {(team == 0 ? "A" : "B")} bought {item.Id} (spent {_buy[team].Spent}/{_buy[team].Budget})");
-        }
-
-        public void ServerThrowUtility(int team, M3UtilityKind kind, float x, float z, float aimYaw)
+        /// <summary>Server-only: apply a utility effect thrown by a body.</summary>
+        public void ServerApplyUtility(int team, M3UtilityKind kind, float x, float z, float aimYaw)
         {
             if (!IsLive) return;
-            if (_utilityCharges[team][(int)kind] <= 0)
-            {
-                Log($"throw {kind} rejected for team {(team == 0 ? "A" : "B")}: no charge");
-                return;
-            }
-            _utilityCharges[team][(int)kind]--;
-
             Utility.Throw(kind, team, Time.timeAsDouble, x, z, aimYaw);
-            Log($"team {(team == 0 ? "A" : "B")} threw {kind} (remaining {_utilityCharges[team][(int)kind]})");
+            Log($"team {(team == 0 ? "A" : "B")} threw {kind} from ({x:0.0},{z:0.0})");
 
             if (kind == M3UtilityKind.Flash)
             {
                 float rad = aimYaw * Mathf.Deg2Rad;
                 float tx = x + Mathf.Sin(rad) * Utility.ThrowDistance;
                 float tz = z + Mathf.Cos(rad) * Utility.ThrowDistance;
-                BlindIfNear(_bodyA, tx, tz);
-                BlindIfNear(_bodyB, tx, tz);
+                for (int t = 0; t < M3DuelSlots.Teams; t++)
+                    for (int i = 0; i < _bodies[t].Count; i++)
+                        BlindIfNear(_bodies[t][i], tx, tz);
             }
         }
 
@@ -365,10 +440,11 @@ namespace BeMyArms.M3
 
         void OnGrenadeDetonated(int team, float x, float z)
         {
-            if (!IsLive) return; // no post-round utility damage; the round result is already sealed
+            if (!IsLive) return;
             Log($"team {(team == 0 ? "A" : "B")} grenade detonated at ({x:0.0},{z:0.0})");
-            DamageWithGrenade(_bodyA, x, z);
-            DamageWithGrenade(_bodyB, x, z);
+            for (int t = 0; t < M3DuelSlots.Teams; t++)
+                for (int i = 0; i < _bodies[t].Count; i++)
+                    DamageWithGrenade(_bodies[t][i], x, z);
         }
 
         void DamageWithGrenade(M3DuelBody body, float x, float z)
@@ -378,7 +454,14 @@ namespace BeMyArms.M3
             if (damage > 0f) body.ServerTakeDamage(damage, null);
         }
 
-        M3DuelBody BodyFor(int team) => team == 0 ? _bodyA : _bodyB;
+        public bool TryGetSlotPlayer(int slot, out string playerId)
+        {
+            playerId = null;
+            var roster = M3DuelRoleService.Instance != null ? M3DuelRoleService.Instance.Registry : null;
+            if (roster == null || !M3DuelSlots.IsValidSlot(slot, BodiesPerTeam)) return false;
+            playerId = roster.TokenForSlot(slot);
+            return !string.IsNullOrEmpty(playerId);
+        }
 
         static void Log(string message) => Debug.Log($"[M3] t={Time.realtimeSinceStartup:0.000} {message}");
     }

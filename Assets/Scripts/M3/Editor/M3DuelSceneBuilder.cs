@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using BeMyArms.M4;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEditor;
@@ -103,6 +104,10 @@ namespace BeMyArms.M3.EditorTools
 
             var hudGo = new GameObject("M3_DuelHud");
             hudGo.AddComponent<M3DuelHud>();
+
+            // The server-side matchmaking/rating host. Inert unless matchmaker mode is enabled.
+            var hostGo = new GameObject("M4_MatchHost");
+            hostGo.AddComponent<M4MatchHost>();
         }
 
         static GameObject BuildBodyPrefab()

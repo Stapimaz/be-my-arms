@@ -6,10 +6,10 @@ using UnityEngine;
 namespace BeMyArms.M3
 {
     /// <summary>
-    /// One shared body of a Duel (team A or B). Server-authoritative: it reuses the M2 pure body
+    /// One shared body of a match (Duel or 2v2). Server-authoritative: it reuses the M2 pure body
     /// simulation (decoupled look / neck limit / Model-C sector clamp), adds role-tagged P1/P2 input
-    /// RPCs authorized by <see cref="M3DuelRoleService"/>, buy/utility RPCs, lag-compensated hitscan
-    /// against the enemy body, HP/elimination and round resets. The round loop itself is owned by
+    /// RPCs authorized by <see cref="M3DuelRoleService"/>, owns its buy/utility economy, and does
+    /// lag-compensated hitscan against every enemy body. The round loop itself is owned by
     /// <see cref="M3DuelDirector"/>.
     /// </summary>
     public class M3DuelBody : NetworkBehaviour
@@ -32,6 +32,7 @@ namespace BeMyArms.M3
         public float TargetRadius = 0.6f;
 
         public NetworkVariable<byte> Team = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        public NetworkVariable<byte> BodyIndex = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         public NetworkVariable<M2BodyState> State = new(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         public NetworkVariable<bool> Alive = new(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         public NetworkVariable<byte> WeaponId = new((byte)M3WeaponId.Pistol, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -44,19 +45,21 @@ namespace BeMyArms.M3
         public NetworkVariable<uint> LastAckedP1Sequence = new(0u, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         public NetworkVariable<uint> LastAckedP2Sequence = new(0u, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-        public int RejectedFires => _rejectedFires;
-        public int ValidatedHits => _validatedHits;
+        public int TeamIndex => Team.Value;
+        public int BodyId => BodyIndex.Value;
+        public int SlotP1 { get; private set; } = -1;
+        public int SlotP2 { get; private set; } = -1;
 
         M2BodySim _sim;
         M2WeaponState _weapon;
-        M2LagCompensation _lag;
+        M2LagCompensation[] _lag = Array.Empty<M2LagCompensation>();
         readonly M2DelayQueue<M2P1Input> _p1Queue = new M2DelayQueue<M2P1Input>();
         readonly M2DelayQueue<M2P2Input> _p2Queue = new M2DelayQueue<M2P2Input>();
+        readonly M3BuyPhase _buy = new M3BuyPhase();
+        readonly int[] _utilityCharges = new int[3];
 
         M3DuelDirector _director;
-        M3DuelBody _enemy;
-        M3DuelSlot _slotP1 = M3DuelSlot.None;
-        M3DuelSlot _slotP2 = M3DuelSlot.None;
+        M3DuelBody[] _enemies = Array.Empty<M3DuelBody>();
 
         M3WeaponId _activeWeapon = M3WeaponId.Pistol;
         float _blindRemaining;
@@ -67,8 +70,6 @@ namespace BeMyArms.M3
         int _validatedHits;
 
         const float FixedDeltaTime = 1f / 60f;
-
-        public int TeamIndex => Team.Value;
 
         public override void OnNetworkSpawn()
         {
@@ -87,41 +88,41 @@ namespace BeMyArms.M3
                 MaxPitchDegrees = MaxPitchDegrees,
                 MaxHealth = MaxHealthDefault
             };
-            _sim.Initialize(Team.Value == 0 ? 0f : 180f, Team.Value == 0 ? -10f : 10f, 0f);
+            _sim.Initialize(0f, 0f, 0f);
 
             _weapon = new M2WeaponState();
-            _lag = new M2LagCompensation { MaxRewindSeconds = Mathf.Max(0.2f, LagRewindSeconds * 2f) };
             _p1Queue.LossPercent = LossPercent;
             _p2Queue.LossPercent = LossPercent;
-
-            _slotP1 = M3DuelSlots.FromTeamRole(Team.Value, 0);
-            _slotP2 = M3DuelSlots.FromTeamRole(Team.Value, 1);
 
             if (IsServer)
             {
                 State.Value = _sim.State;
                 Alive.Value = true;
-                ApplyActiveWeapon(force: true);
+                ApplyActiveWeapon();
             }
         }
 
-        /// <summary>Server-only: set the team after spawning (a NetworkVariable cannot be written
-        /// before the object is spawned) and re-initialize the team-dependent state.</summary>
-        public void ServerConfigure(int team)
+        /// <summary>Server-only: set team/body and the P1 slot base after spawning (a NetworkVariable
+        /// cannot be written before the object is spawned).</summary>
+        public void ServerConfigure(int team, int body, int slotP1)
         {
             if (!IsServer) return;
             Team.Value = (byte)team;
-            _slotP1 = M3DuelSlots.FromTeamRole(team, 0);
-            _slotP2 = M3DuelSlots.FromTeamRole(team, 1);
+            BodyIndex.Value = (byte)body;
+            SlotP1 = slotP1;
+            SlotP2 = slotP1 + 1;
             _sim.Initialize(team == 0 ? 0f : 180f, team == 0 ? -10f : 10f, 0f);
             State.Value = _sim.State;
         }
 
-        /// <summary>Server-only: bind the director and opposing body after both bodies spawn.</summary>
-        public void ServerBind(M3DuelDirector director, M3DuelBody enemy)
+        /// <summary>Server-only: bind the director and the opposing bodies after all bodies spawn.</summary>
+        public void ServerBind(M3DuelDirector director, M3DuelBody[] enemies)
         {
             _director = director;
-            _enemy = enemy;
+            _enemies = enemies ?? Array.Empty<M3DuelBody>();
+            _lag = new M2LagCompensation[_enemies.Length];
+            for (int i = 0; i < _lag.Length; i++)
+                _lag[i] = new M2LagCompensation { MaxRewindSeconds = Mathf.Max(0.2f, LagRewindSeconds * 2f) };
         }
 
         // ---- Input RPCs ----
@@ -130,7 +131,7 @@ namespace BeMyArms.M3
         public void SubmitP1ServerRpc(M2P1Input input, ServerRpcParams rpcParams = default)
         {
             if (_director == null || _director.CurrentPhase == M3Phase.Warmup || !Alive.Value) return;
-            if (!HasSlot(rpcParams.Receive.SenderClientId, _slotP1)) { _director.NoteUnauthorized(); return; }
+            if (!HasSlot(rpcParams.Receive.SenderClientId, SlotP1)) { _director.NoteUnauthorized(); return; }
             if (!_director.InputsAccepted) return; // buy/round-end freeze
             _p1Queue.Enqueue(_serverTime, InputDelaySeconds, input);
         }
@@ -139,7 +140,7 @@ namespace BeMyArms.M3
         public void SubmitP2ServerRpc(M2P2Input input, ServerRpcParams rpcParams = default)
         {
             if (_director == null || _director.CurrentPhase == M3Phase.Warmup || !Alive.Value) return;
-            if (!HasSlot(rpcParams.Receive.SenderClientId, _slotP2)) { _director.NoteUnauthorized(); return; }
+            if (!HasSlot(rpcParams.Receive.SenderClientId, SlotP2)) { _director.NoteUnauthorized(); return; }
             if (!_director.InputsAccepted) return;
             _p2Queue.Enqueue(_serverTime, InputDelaySeconds, input);
         }
@@ -148,22 +149,23 @@ namespace BeMyArms.M3
         public void SubmitBuyServerRpc(int catalogIndex, ServerRpcParams rpcParams = default)
         {
             if (_director == null || !_director.IsBuy) return;
-            if (!HasSlot(rpcParams.Receive.SenderClientId, _slotP2)) { _director.NoteUnauthorized(); return; }
-            _director.ServerBuy(Team.Value, catalogIndex);
+            if (!HasSlot(rpcParams.Receive.SenderClientId, SlotP2)) { _director.NoteUnauthorized(); return; }
+            ServerBuy(catalogIndex);
         }
 
         [ServerRpc(RequireOwnership = false)]
         public void SubmitUtilityServerRpc(byte utilityKind, ServerRpcParams rpcParams = default)
         {
             if (_director == null || !_director.IsLive || !Alive.Value) return;
-            if (!HasSlot(rpcParams.Receive.SenderClientId, _slotP2)) { _director.NoteUnauthorized(); return; }
-            _director.ServerThrowUtility(Team.Value, (M3UtilityKind)utilityKind, _sim.State.PosX, _sim.State.PosZ, _sim.State.AimYaw);
+            if (!HasSlot(rpcParams.Receive.SenderClientId, SlotP2)) { _director.NoteUnauthorized(); return; }
+            M3UtilityKind kind = (M3UtilityKind)utilityKind;
+            if (TryConsumeUtility(kind)) _director.ServerApplyUtility(TeamIndex, kind, _sim.State.PosX, _sim.State.PosZ, _sim.State.AimYaw);
         }
 
-        bool HasSlot(ulong clientId, M3DuelSlot slot)
+        bool HasSlot(ulong clientId, int slot)
             => M3DuelRoleService.Instance != null && M3DuelRoleService.Instance.HasSlot(clientId, slot);
 
-        public bool IsSlotBot(M3DuelSlot slot)
+        public bool IsSlotBot(int slot)
             => M3DuelRoleService.Instance != null && M3DuelRoleService.Instance.IsBot(slot);
 
         // ---- Server tick ----
@@ -191,13 +193,18 @@ namespace BeMyArms.M3
                 BlindRemaining.Value = _blindRemaining;
             }
 
-            // Record the shooter's orientation and the enemy position so a fire can be validated
-            // against what the shooter saw (historical sector + rewound target).
-            float enemyX = _enemy != null ? _enemy.State.Value.PosX : 0f;
-            float enemyZ = _enemy != null ? _enemy.State.Value.PosZ : 0f;
-            _lag.Record(_serverTime, _sim.State.BodyYaw, enemyX, enemyZ);
+            // Record the shooter's orientation and each enemy position so a fire can be validated
+            // against what the shooter saw (historical sector + rewound targets).
+            for (int i = 0; i < _enemies.Length; i++)
+            {
+                M3DuelBody e = _enemies[i];
+                float ex = e != null ? e.State.Value.PosX : 0f;
+                float ez = e != null ? e.State.Value.PosZ : 0f;
+                if (e != null && e.Alive.Value) _lag[i].Record(_serverTime, _sim.State.BodyYaw, ex, ez);
+                else _lag[i].Record(_serverTime, _sim.State.BodyYaw, ex, ez);
+            }
 
-            if (IsSlotBot(_slotP1) && _director != null && _director.IsLive)
+            if (IsSlotBot(SlotP1) && _director != null && _director.IsLive)
             {
                 _sim.ApplyP1(BuildBotP1(dt), dt);
             }
@@ -212,7 +219,7 @@ namespace BeMyArms.M3
                 ProcessP2(in p2);
                 LastAckedP2Sequence.Value = p2.Sequence;
             }
-            if (IsSlotBot(_slotP2) && _director != null && _director.IsLive) ProcessP2(BuildBotP2());
+            if (IsSlotBot(SlotP2) && _director != null && _director.IsLive) ProcessP2(BuildBotP2());
 
             _weapon.Tick(_serverTime);
             Ammo.Value = _weapon.Ammo;
@@ -231,7 +238,8 @@ namespace BeMyArms.M3
 
             if (!input.Fire || _blindRemaining > 0f) { _sim.ApplyP2(in input); return; }
 
-            if (!_lag.TryRewind(_serverTime - LagRewindSeconds, out float historicalBodyYaw, out float histTargetX, out float histTargetZ))
+            // All lag samples share the shooter's own yaw; use the first for sector legality.
+            if (_lag.Length == 0 || !_lag[0].TryRewind(_serverTime - LagRewindSeconds, out float historicalBodyYaw, out _, out _))
             {
                 _sim.ApplyP2(in input);
                 return;
@@ -249,21 +257,38 @@ namespace BeMyArms.M3
             }
 
             M3WeaponStats stats = M3Loadouts.Stats(_activeWeapon);
+            Vector3 dir = new Vector3(Mathf.Sin(input.AimYaw * Mathf.Deg2Rad), 0f, Mathf.Cos(input.AimYaw * Mathf.Deg2Rad));
 
-            // Smoke blocks the hitscan line (last authoritative smoke state).
-            bool blocked = _director != null && _director.Utility.BlocksLine(_serverTime, _sim.State.PosX, _sim.State.PosZ, histTargetX, histTargetZ);
-            if (!blocked && _enemy != null && _enemy.Alive.Value)
+            M3DuelBody bestTarget = null;
+            float bestForward = float.MaxValue;
+            float bestX = 0f, bestZ = 0f;
+            for (int i = 0; i < _enemies.Length; i++)
             {
-                Vector3 dir = new Vector3(Mathf.Sin(input.AimYaw * Mathf.Deg2Rad), 0f, Mathf.Cos(input.AimYaw * Mathf.Deg2Rad));
-                float toX = histTargetX - _sim.State.PosX;
-                float toZ = histTargetZ - _sim.State.PosZ;
+                M3DuelBody enemy = _enemies[i];
+                if (enemy == null || !enemy.Alive.Value) continue;
+                if (!_lag[i].TryRewind(_serverTime - LagRewindSeconds, out _, out float ex, out float ez)) continue;
+
+                float toX = ex - _sim.State.PosX;
+                float toZ = ez - _sim.State.PosZ;
                 float forward = toX * dir.x + toZ * dir.z;
                 float lateral = Mathf.Abs(toX * dir.z - toZ * dir.x);
                 bool hit = forward > 0f && forward <= stats.RangeMeters && lateral <= TargetRadius;
-                if (hit)
+                if (hit && forward < bestForward)
+                {
+                    bestForward = forward;
+                    bestTarget = enemy;
+                    bestX = ex;
+                    bestZ = ez;
+                }
+            }
+
+            if (bestTarget != null)
+            {
+                bool blocked = _director != null && _director.Utility.BlocksLine(_serverTime, _sim.State.PosX, _sim.State.PosZ, bestX, bestZ);
+                if (!blocked)
                 {
                     _validatedHits++;
-                    _director.ServerApplyDamage(_enemy, stats.Damage, this);
+                    _director.ServerApplyDamage(bestTarget, stats.Damage, this);
                 }
             }
 
@@ -284,14 +309,14 @@ namespace BeMyArms.M3
             if (_sim.State.Health < 0) _sim.State.Health = 0;
             State.Value = _sim.State;
 
-            if (_director != null) _director.NoteDamage(Team.Value, attacker != null ? attacker.Team.Value : -1);
+            if (_director != null) _director.NoteDamage(TeamIndex, attacker != null ? attacker.TeamIndex : -1);
 
             if (_sim.State.Health <= 0)
             {
                 Alive.Value = false;
                 State.Value = _sim.State;
                 if (attacker != null) attacker.Kills.Value++;
-                if (_director != null) _director.OnBodyEliminated(Team.Value);
+                if (_director != null) _director.OnBodyEliminated(TeamIndex);
             }
         }
 
@@ -303,10 +328,35 @@ namespace BeMyArms.M3
             BlindRemaining.Value = _blindRemaining;
         }
 
-        /// <summary>Server-only: regenerate the shot cadence state for the active weapon.</summary>
-        public void ApplyActiveWeapon(bool force)
+        /// <summary>Server-only: buy an item during the buy phase (owned per body/P2).</summary>
+        public void ServerBuy(int catalogIndex)
         {
-            if (!IsServer) return;
+            if (!IsServer || !_director.IsBuy) return;
+            if (catalogIndex < 0 || catalogIndex >= _buy.Catalog.Count) return;
+
+            M3ShopItem item = _buy.Catalog[catalogIndex];
+            if (!_buy.TryBuy(item.Id)) return;
+
+            if (item.Kind == M3ShopKind.Utility)
+            {
+                M3UtilityKind kind = item.Id == "grenade" ? M3UtilityKind.Grenade : item.Id == "flash" ? M3UtilityKind.Flash : M3UtilityKind.Smoke;
+                _utilityCharges[(int)kind]++;
+            }
+
+            ServerApplyLoadout(M3Loadouts.ActiveWeapon(_buy));
+            Log($"bought {item.Id} (spent {_buy.Spent}/{_buy.Budget})");
+        }
+
+        public bool TryConsumeUtility(M3UtilityKind kind)
+        {
+            int index = (int)kind;
+            if (index < 0 || index >= _utilityCharges.Length || _utilityCharges[index] <= 0) return false;
+            _utilityCharges[index]--;
+            return true;
+        }
+
+        void ApplyActiveWeapon()
+        {
             M3WeaponStats stats = M3Loadouts.Stats(_activeWeapon);
             _weapon.Magazine = stats.Magazine;
             _weapon.SecondsBetweenShots = stats.SecondsBetweenShots;
@@ -318,15 +368,14 @@ namespace BeMyArms.M3
             Reloading.Value = false;
         }
 
-        /// <summary>Server-only: set the loadout chosen during the buy phase.</summary>
         public void ServerApplyLoadout(M3WeaponId weapon)
         {
             if (!IsServer || _activeWeapon == weapon) return;
             _activeWeapon = weapon;
-            ApplyActiveWeapon(force: true);
+            ApplyActiveWeapon();
         }
 
-        /// <summary>Server-only: full reset at the start of a round.</summary>
+        /// <summary>Server-only: full reset at the start of a round, including economy.</summary>
         public void ServerResetRound(float x, float z, float yaw)
         {
             if (!IsServer) return;
@@ -338,8 +387,10 @@ namespace BeMyArms.M3
             Alive.Value = true;
             OutsideZone.Value = false;
             _activeWeapon = M3WeaponId.Pistol;
-            ApplyActiveWeapon(force: true);
-            _lag.Clear();
+            ApplyActiveWeapon();
+            _buy.ResetForRound();
+            _utilityCharges[0] = _utilityCharges[1] = _utilityCharges[2] = 0;
+            for (int i = 0; i < _lag.Length; i++) _lag[i].Clear();
             _p1Queue.Clear();
             _p2Queue.Clear();
             State.Value = _sim.State;
@@ -347,27 +398,48 @@ namespace BeMyArms.M3
             transform.rotation = Quaternion.Euler(0f, yaw, 0f);
         }
 
+        M3DuelBody NearestEnemy(out float distance)
+        {
+            M3DuelBody best = null;
+            float bestDistance = float.MaxValue;
+            for (int i = 0; i < _enemies.Length; i++)
+            {
+                M3DuelBody e = _enemies[i];
+                if (e == null || !e.Alive.Value) continue;
+                float dx = e.State.Value.PosX - _sim.State.PosX;
+                float dz = e.State.Value.PosZ - _sim.State.PosZ;
+                float d = Mathf.Sqrt(dx * dx + dz * dz);
+                if (d < bestDistance) { bestDistance = d; best = e; }
+            }
+            distance = bestDistance;
+            return best;
+        }
+
         M2P1Input BuildBotP1(float dt)
         {
-            if (_enemy == null || !_enemy.Alive.Value) return new M2P1Input { MoveZ = 0.5f };
-            float dx = _enemy.State.Value.PosX - _sim.State.PosX;
-            float dz = _enemy.State.Value.PosZ - _sim.State.PosZ;
+            M3DuelBody target = NearestEnemy(out float distance);
+            if (target == null) return new M2P1Input { MoveZ = 0.5f };
+            float dx = target.State.Value.PosX - _sim.State.PosX;
+            float dz = target.State.Value.PosZ - _sim.State.PosZ;
             float desired = Mathf.Atan2(dx, dz) * Mathf.Rad2Deg;
             float delta = Mathf.Clamp(M2BodySim.Normalize(desired - _sim.State.LookYaw), -20f, 20f);
-            float distance = Mathf.Sqrt(dx * dx + dz * dz);
             return new M2P1Input { MoveZ = distance > 8f ? 1f : 0f, LookYawDelta = delta, AlignBody = Mathf.Abs(delta) > 1f };
         }
 
         M2P2Input BuildBotP2()
         {
             var input = new M2P2Input { AimPitch = 0f, Fire = false };
-            if (_enemy == null || !_enemy.Alive.Value) { input.AimYaw = _sim.State.BodyYaw; return input; }
-            float dx = _enemy.State.Value.PosX - _sim.State.PosX;
-            float dz = _enemy.State.Value.PosZ - _sim.State.PosZ;
+            M3DuelBody target = NearestEnemy(out _);
+            if (target == null) { input.AimYaw = _sim.State.BodyYaw; return input; }
+            float dx = target.State.Value.PosX - _sim.State.PosX;
+            float dz = target.State.Value.PosZ - _sim.State.PosZ;
             input.AimYaw = Mathf.Atan2(dx, dz) * Mathf.Rad2Deg;
             input.Fire = true;
             input.Reload = _weapon.Ammo <= 0;
             return input;
         }
+
+        void Log(string message)
+            => Debug.Log($"[M3] t={Time.realtimeSinceStartup:0.000} {M3DuelSlots.Name(SlotP1, _director != null ? _director.BodiesPerTeam : 1)} {message}");
     }
 }

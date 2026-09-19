@@ -5,7 +5,8 @@
         "BeMyArms.M3",
         "BeMyArms.M2",
         "BeMyArms.M0",
-        "BeMyArms.M1"
+        "BeMyArms.M1",
+        "Unity.Netcode.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

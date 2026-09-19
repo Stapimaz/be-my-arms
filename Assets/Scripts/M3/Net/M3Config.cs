@@ -1,17 +1,46 @@
 namespace BeMyArms.M3
 {
+    using System.Collections.Generic;
+
     /// <summary>
-    /// Process-wide M3 Duel configuration, populated from command-line args by
+    /// Process-wide match configuration, populated from command-line args by
     /// <see cref="M3DuelBootstrap"/> before networking starts. One role per process, so the
-    /// statics are safe.
+    /// statics are safe. The M4 layer reads the matchmaking/rating fields from here.
     /// </summary>
     public static class M3Config
     {
-        /// <summary>Desired team (0 = A, 1 = B).</summary>
+        /// <summary>Shared bodies per team: 1 = Duel, 2 = 2v2 (concept §14.1).</summary>
+        public static int BodiesPerTeam = 1;
+
+        /// <summary>When true the server enqueues connections and lets the matchmaker assign slots.</summary>
+        public static bool UseMatchmaker;
+
+        /// <summary>Preferred number of human players (bodies per team * 2 players per body * 2 teams).</summary>
+        public static int ExpectedPlayers = 4;
+
+        /// <summary>Role-specific MMR seed per player token; used for post-match rating updates.</summary>
+        public static readonly Dictionary<string, float> PlayerMmr = new Dictionary<string, float>();
+
+        public static float MmrFor(string token)
+            => !string.IsNullOrEmpty(token) && PlayerMmr.TryGetValue(token, out float mmr) ? mmr : 1000f;
+
+        /// <summary>Premade party id per player token; a duo shares one body.</summary>
+        public static readonly Dictionary<string, string> PlayerParty = new Dictionary<string, string>();
+
+        public static string PartyFor(string token)
+            => !string.IsNullOrEmpty(token) && PlayerParty.TryGetValue(token, out string party) ? party : null;
+
+        /// <summary>Desired team (0 = A, 1 = B). Only used in direct/dev slot mode.</summary>
         public static int ClientTeam = 0;
+
+        /// <summary>Desired body within the team (direct/dev slot mode).</summary>
+        public static int ClientBody = 0;
 
         /// <summary>Desired role (0 = P1, 1 = P2).</summary>
         public static int ClientRole = 0;
+
+        /// <summary>Matchmaker role preference: 0 = P1, 1 = P2, 2 = Either.</summary>
+        public static int ClientPreference = 0;
 
         /// <summary>Stable identity used to restore a slot on reconnect.</summary>
         public static string ClientToken = "";

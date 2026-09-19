@@ -18,18 +18,24 @@ namespace BeMyArms.M3
             M3DuelDirector director = M3DuelDirector.Instance;
             if (director == null || Application.isBatchMode) return;
 
+            int bodiesPerTeam = director.BodiesPerTeam;
+            int slot = M3DuelClient.LocalSlotIndex;
+            int team = M3DuelSlots.IsValidSlot(slot, bodiesPerTeam) ? M3DuelSlots.TeamOf(slot, bodiesPerTeam) : M3Config.ClientTeam;
+            int bodyIndex = M3DuelSlots.IsValidSlot(slot, bodiesPerTeam) ? M3DuelSlots.BodyOf(slot, bodiesPerTeam) : M3Config.ClientBody;
+
             if (_own == null || !_own.IsSpawned)
             {
-                int team = M3DuelSlots.IsValid(M3DuelClient.LocalSlot) ? M3DuelSlots.Team(M3DuelClient.LocalSlot) : M3Config.ClientTeam;
                 M3DuelBody[] bodies = FindObjectsByType<M3DuelBody>();
                 for (int i = 0; i < bodies.Length; i++)
-                    if (bodies[i].IsSpawned && bodies[i].TeamIndex == team) { _own = bodies[i]; break; }
+                    if (bodies[i].IsSpawned && bodies[i].TeamIndex == team && bodies[i].BodyId == bodyIndex) { _own = bodies[i]; break; }
             }
 
             GUILayout.BeginArea(new Rect(12f, 12f, Width, Height), GUI.skin.box);
             M3Phase phase = director.CurrentPhase;
-            GUILayout.Label($"DUEL  |  {phase}  |  round {director.RoundIndex.Value}");
+            string mode = bodiesPerTeam >= 2 ? "2v2" : "DUEL";
+            GUILayout.Label($"{mode}  |  {phase}  |  round {director.RoundIndex.Value}  |  {M3DuelSlots.Name(slot, bodiesPerTeam)}");
             GUILayout.Label($"score   A {director.TeamAWins.Value}  -  B {director.TeamBWins.Value}   (first to 3, max 5)");
+            GUILayout.Label($"bodies alive   A {director.BodiesAliveA.Value}  -  B {director.BodiesAliveB.Value}");
 
             if (phase == M3Phase.Buy || phase == M3Phase.Live)
                 GUILayout.Label($"time remaining  {director.TimeRemaining.Value:0.0}s");
@@ -44,7 +50,7 @@ namespace BeMyArms.M3
 
             if (_own != null)
             {
-                GUILayout.Label($"you: team {(_own.TeamIndex == 0 ? "A" : "B")} {(M3DuelSlots.IsValid(M3DuelClient.LocalSlot) ? (M3DuelSlots.Role(M3DuelClient.LocalSlot) == 0 ? "P1" : "P2") : "")}");
+                GUILayout.Label($"you: team {(team == 0 ? "A" : "B")} body {bodyIndex} {(M3DuelSlots.IsValidSlot(slot, bodiesPerTeam) ? (M3DuelSlots.RoleOf(slot) == 0 ? "P1" : "P2") : "")}");
                 GUILayout.Label($"health {_own.State.Value.Health}   alive {_own.Alive.Value}   kills {_own.Kills.Value}");
                 GUILayout.Label($"weapon {(M3WeaponId)_own.WeaponId.Value}   ammo {_own.Ammo.Value}/{_own.Magazine.Value}");
                 if (_own.BlindRemaining.Value > 0f) GUILayout.Label($"FLASHED {_own.BlindRemaining.Value:0.0}s");
@@ -52,7 +58,7 @@ namespace BeMyArms.M3
             }
 
             if (phase == M3Phase.Buy)
-                GUILayout.Label("BUY (P2, auto in headless): rifle+ammo 700 / smg 500 / shotgun 450 / pistol 150 / smoke 150 / flash 150 / grenade 200");
+                GUILayout.Label("BUY (P2, auto in headless): rifle 700 / smg 500 / shotgun 450 / pistol 150 / smoke 150 / flash 150 / grenade 200");
 
             GUILayout.EndArea();
         }
