@@ -38,10 +38,13 @@ individual players, and that distinction is kept explicit in the data model.
   on the interface only; the local stub returns loopback endpoints and bounded match ids for
   development and tests. A real adapter (Unity Multiplayer Services, an external cloud, or a local
   fleet manager) implements the same interface without touching gameplay.
+- `M4MatchBridge` — connects the pure proposal to the shipped game: maps a Duel proposal onto the
+  four M3 role slots the networked director uses, and applies a match result to every player's
+  played role (2v2-aware opponent averaging).
 
 ## 3. Tests
 
-EditMode **73/73** (was 61). The 12 new M4 tests cover:
+EditMode **75/75** (was 61). The 14 new M4 tests cover:
 
 - role-specific rating: only the played role updates, expected score is fair/monotonic, upsets gain
   more;
@@ -52,7 +55,9 @@ EditMode **73/73** (was 61). The 12 new M4 tests cover:
 - 2v2: four bodies, two per team, with strong and weak bodies split across teams to a zero rating
   gap;
 - constraint relaxation with queue time;
-- provider-neutral allocation: tickets are unique, carry an endpoint/token, and release correctly.
+- provider-neutral allocation: tickets are unique, carry an endpoint/token, and release correctly;
+- the bridge: a Duel proposal maps to the four unique M3 slots and a result updates only each
+  player's played role.
 
 ## 4. Remaining M4 work (not claimed)
 

@@ -230,5 +230,61 @@ namespace BeMyArms.M4.Tests
             local.Release(first.MatchId);
             Assert.AreEqual(1, local.ActiveMatches);
         }
+
+        // ---- Bridge to the shipped Duel ----
+
+        [Test]
+        public void Bridge_DuelProposal_MapsToFourUniqueSlots()
+        {
+            var entries = new List<M4QueueEntry>
+            {
+                E("a1", M3RolePreference.P1, 1000f, 1000f),
+                E("a2", M3RolePreference.P2, 1000f, 1000f),
+                E("b1", M3RolePreference.P1, 1000f, 1000f),
+                E("b2", M3RolePreference.P2, 1000f, 1000f),
+            };
+            Assert.IsTrue(M4Matchmaker.TryMatch(entries, M4MatchMode.Duel, Config(), out M4MatchProposal proposal));
+
+            Assert.IsTrue(M4MatchBridge.TryBuildDuelSlots(proposal, out Dictionary<M3DuelSlot, string> slots));
+            Assert.AreEqual(4, slots.Count);
+            Assert.AreEqual(4, slots.Values.Distinct().Count(), "Every slot holds a distinct player.");
+            Assert.IsTrue(slots.ContainsKey(M3DuelSlot.TeamAP1) && slots.ContainsKey(M3DuelSlot.TeamAP2));
+            Assert.IsTrue(slots.ContainsKey(M3DuelSlot.TeamBP1) && slots.ContainsKey(M3DuelSlot.TeamBP2));
+        }
+
+        [Test]
+        public void Bridge_ApplyResult_UpdatesOnlyPlayedRoles()
+        {
+            var entries = new List<M4QueueEntry>
+            {
+                E("a1", M3RolePreference.P1, 1000f, 1000f),
+                E("a2", M3RolePreference.P2, 1000f, 1000f),
+                E("b1", M3RolePreference.P1, 1000f, 1000f),
+                E("b2", M3RolePreference.P2, 1000f, 1000f),
+            };
+            Assert.IsTrue(M4Matchmaker.TryMatch(entries, M4MatchMode.Duel, Config(), out M4MatchProposal proposal));
+
+            var profiles = new Dictionary<string, M4PlayerProfile>();
+            for (int i = 0; i < entries.Count; i++)
+                profiles[entries[i].PlayerId] = new M4PlayerProfile { PlayerId = entries[i].PlayerId, P1Mmr = entries[i].P1Mmr, P2Mmr = entries[i].P2Mmr };
+
+            M4MatchBridge.ApplyResult(proposal, winningTeam: 0, profiles);
+
+            foreach (M4SlotAssignment a in proposal.Assignments)
+            {
+                M4PlayerProfile p = profiles[a.PlayerId];
+                bool winner = a.Slot.Team == 0;
+                if (a.Slot.Role == 0)
+                {
+                    Assert.AreEqual(winner, p.P1Mmr > 1000f, $"P1 rating moved for {a.PlayerId}.");
+                    Assert.AreEqual(1000f, p.P2Mmr, 0.0001f, "Unplayed role is untouched.");
+                }
+                else
+                {
+                    Assert.AreEqual(winner, p.P2Mmr > 1000f, $"P2 rating moved for {a.PlayerId}.");
+                    Assert.AreEqual(1000f, p.P1Mmr, 0.0001f, "Unplayed role is untouched.");
+                }
+            }
+        }
     }
 }

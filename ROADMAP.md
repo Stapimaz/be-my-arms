@@ -241,7 +241,8 @@ server allocation.
 **Progress:** the ranked-ready structure is implemented and unit-tested in `BeMyArms.M4`:
 role-specific Elo, derived body MMR and 2v2 team rating, a pure Duel/2v2 matchmaker that honors
 role preferences and parties and relaxes with queue time, and a provider-neutral
-`IM4ServerAllocator` with a local implementation. EditMode 73/73. Remaining: a networked 2v2 run,
+`IM4ServerAllocator` with a local implementation, plus a bridge onto the shipped M3 slots/rating
+updates. EditMode 75/75. Remaining: a networked 2v2 run,
 the live Multiplayer Services integration, and a real hosting-provider adapter. Details:
 `docs/M4_2V2_MATCHMAKING.md`.
 
