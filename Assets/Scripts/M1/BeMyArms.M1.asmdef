@@ -1,0 +1,17 @@
+{
+    "name": "BeMyArms.M1",
+    "rootNamespace": "BeMyArms.M1",
+    "references": [
+        "BeMyArms.M0",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

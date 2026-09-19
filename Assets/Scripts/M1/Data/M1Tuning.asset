@@ -1,0 +1,102 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90c9f25266702674eb76961de87e4b7b, type: 3}
+  m_Name: M1Tuning
+  m_EditorClassIdentifier: BeMyArms.M1::BeMyArms.M1.M1Tuning
+  sectorHalfDegrees: 70
+  maxPitchDegrees: 80
+  p1MouseSensitivity: 0.12
+  gamepadYawSpeed: 220
+  gamepadPitchSpeed: 160
+  p1FreeLook: 0
+  walkSpeed: 4.5
+  sprintSpeed: 7
+  gravity: -20
+  jumpSpeed: 6
+  dodgeSpeed: 11
+  dodgeDuration: 0.22
+  dodgeCooldown: 0.9
+  slideEntrySpeed: 9
+  slideFriction: 6
+  slideMinDuration: 0.35
+  slideMaxDuration: 1.1
+  vaultDuration: 0.45
+  vaultReachMeters: 1.4
+  vaultHeightMeters: 1.2
+  lightKickDuration: 0.35
+  lightKickCooldown: 0.5
+  lightKickDamage: 12
+  heavyKickDuration: 0.7
+  heavyKickCooldown: 1.6
+  heavyKickDamage: 28
+  kickRangeMeters: 2.4
+  weapons:
+  - displayName: Rifle
+    kind: 0
+    damage: 18
+    headshotMultiplier: 2.5
+    roundsPerMinute: 480
+    magazine: 30
+    reloadSeconds: 2.2
+    rangeMeters: 150
+    baseSpreadDegrees: 1.2
+    recoilPerShot: 0.35
+    swapSeconds: 0.5
+    meleeRangeMeters: 2.2
+  - displayName: Pistol
+    kind: 1
+    damage: 24
+    headshotMultiplier: 2.5
+    roundsPerMinute: 300
+    magazine: 12
+    reloadSeconds: 1.6
+    rangeMeters: 150
+    baseSpreadDegrees: 1
+    recoilPerShot: 0.5
+    swapSeconds: 0.35
+    meleeRangeMeters: 2.2
+  - displayName: Knife
+    kind: 2
+    damage: 40
+    headshotMultiplier: 1
+    roundsPerMinute: 120
+    magazine: 1
+    reloadSeconds: 0.1
+    rangeMeters: 150
+    baseSpreadDegrees: 0
+    recoilPerShot: 0
+    swapSeconds: 0.3
+    meleeRangeMeters: 2.2
+  startingWeaponIndex: 0
+  accuracyByState:
+  - state: 0
+    spreadMultiplier: 1
+  - state: 1
+    spreadMultiplier: 1.6
+  - state: 2
+    spreadMultiplier: 3
+  - state: 3
+    spreadMultiplier: 4
+  - state: 4
+    spreadMultiplier: 4
+  - state: 5
+    spreadMultiplier: 4
+  - state: 6
+    spreadMultiplier: 4.5
+  - state: 7
+    spreadMultiplier: 3.5
+  - state: 8
+    spreadMultiplier: 5
+  maxHealth: 100
+  p1CameraDistance: 4.5
+  p1CameraHeight: 1.6
+  p2ShoulderOffset: {x: 0, y: 1.45, z: 0.22}

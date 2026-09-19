@@ -55,7 +55,7 @@ document wins. If they conflict on **implementation order**, this roadmap wins.
 |---|---|
 | **M0** — local shared-body spike | Implemented; automated verification passing (12 EditMode, 2 PlayMode); single-tester spot-check confirmed the Model C coupling; the two-human feel playtest was intentionally deferred to the M1 gate |
 | **M0.5** — netcode bake-off | **Complete — chose Netcode for GameObjects** with a custom prediction/lag-comp layer; see `docs/M05_NETCODE_BAKEOFF.md`. NfE isolated on branch `m0.5/nfe` |
-| **M1** — local vertical slice | Not started |
+| **M1** — local vertical slice | Implemented; automated verification passing (19 EditMode, 2 PlayMode); human two-duo playtest gate deferred; see `docs/M1_VERTICAL_SLICE.md` |
 | **M2** — networked spike | Not started |
 | **M3** — PvP round loop | Not started |
 | **M4** — 2v2 and matchmaking | Not started |
@@ -173,6 +173,10 @@ Netcode for Entities remains isolated on branch `m0.5/nfe` and is not merged.
    for a prediction layer).
 5. Tuning values can change without recompiling.
 6. The P1 free-look question is resolved and documented.
+
+**Outcome:** implemented and automatically verified. The human two-duo playtest gate
+(criterion 3) is **deferred and not passed**. P1 free-look is documented as camera-locked for M1
+and remains a decision gate. Details and limitations: `docs/M1_VERTICAL_SLICE.md`.
 
 ---
 
