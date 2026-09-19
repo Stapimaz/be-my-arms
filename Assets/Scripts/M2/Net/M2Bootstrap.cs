@@ -13,8 +13,14 @@ namespace BeMyArms.M2
     }
 
     /// <summary>
-    /// Starts the M2 spike as host, dedicated server or client. Role can be forced with
-    /// <c>-m2-role server|client|host</c> so a headless server build and a client run separately.
+    /// Starts the M2 spike and configures role + network conditioning from command line, so a
+    /// dedicated server and separate P1 / P2 clients can run as independent processes:
+    ///   -m2-role server|client|host
+    ///   -m2-position p1|p2
+    ///   -m2-token &lt;id&gt;          (stable identity for reconnect)
+    ///   -m2-delay &lt;ms&gt;           (one-way)
+    ///   -m2-loss &lt;percent&gt;
+    ///   -m2-auto 0|1
     /// </summary>
     public class M2Bootstrap : MonoBehaviour
     {
@@ -25,8 +31,7 @@ namespace BeMyArms.M2
 
         void Start()
         {
-            string roleArg = GetArg("-m2-role");
-            if (!string.IsNullOrEmpty(roleArg)) Role = ParseRole(roleArg);
+            ParseArgs();
 
             NetworkManager manager = Manager != null ? Manager : NetworkManager.Singleton;
             if (manager == null)
@@ -47,7 +52,7 @@ namespace BeMyArms.M2
                 default: manager.StartHost(); break;
             }
 
-            Debug.Log($"[M2] bootstrap role={Role} port={Port} tickRate={manager.NetworkConfig.TickRate}");
+            Debug.Log($"[M2] bootstrap role={Role} position={(M2Config.ClientRole == M2NetworkBody.RoleP1 ? "P1" : "P2")} token='{M2Config.ClientToken}' port={Port} delay={M2Config.OneWayDelaySeconds * 1000:0}ms loss={M2Config.LossPercent:0}% auto={M2Config.AutoDrive}");
         }
 
         void OnServerStarted()
@@ -63,22 +68,45 @@ namespace BeMyArms.M2
             Debug.Log("[M2] body spawned");
         }
 
+        void ParseArgs()
+        {
+            string role = GetArg("-m2-role");
+            if (!string.IsNullOrEmpty(role))
+            {
+                switch (role.ToLowerInvariant())
+                {
+                    case "server": Role = M2Role.Server; break;
+                    case "client": Role = M2Role.Client; break;
+                    default: Role = M2Role.Host; break;
+                }
+            }
+
+            string position = GetArg("-m2-position");
+            M2Config.ClientRole = !string.IsNullOrEmpty(position) && position.ToLowerInvariant() == "p2"
+                ? M2NetworkBody.RoleP2
+                : M2NetworkBody.RoleP1;
+
+            M2Config.ClientToken = GetArg("-m2-token") ?? "";
+
+            if (float.TryParse(GetArg("-m2-delay"), out float delayMs))
+                M2Config.OneWayDelaySeconds = Mathf.Max(0f, delayMs) / 1000f;
+
+            if (float.TryParse(GetArg("-m2-loss"), out float loss))
+                M2Config.LossPercent = Mathf.Clamp(loss, 0f, 100f);
+
+            if (float.TryParse(GetArg("-m2-rewind"), out float rewindMs))
+                M2Config.LagRewindSeconds = Mathf.Max(0f, rewindMs) / 1000f;
+
+            string auto = GetArg("-m2-auto");
+            if (!string.IsNullOrEmpty(auto)) M2Config.AutoDrive = auto != "0";
+        }
+
         static string GetArg(string name)
         {
             string[] args = Environment.GetCommandLineArgs();
             for (int i = 0; i < args.Length - 1; i++)
                 if (string.Equals(args[i], name, StringComparison.OrdinalIgnoreCase)) return args[i + 1];
             return null;
-        }
-
-        static M2Role ParseRole(string value)
-        {
-            switch (value.ToLowerInvariant())
-            {
-                case "server": return M2Role.Server;
-                case "client": return M2Role.Client;
-                default: return M2Role.Host;
-            }
         }
     }
 }

@@ -28,6 +28,7 @@ namespace BeMyArms.M2
         public float AimYaw;
         public float AimPitch;
         public bool Fire;
+        public bool Reload;
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
@@ -35,6 +36,7 @@ namespace BeMyArms.M2
             serializer.SerializeValue(ref AimYaw);
             serializer.SerializeValue(ref AimPitch);
             serializer.SerializeValue(ref Fire);
+            serializer.SerializeValue(ref Reload);
         }
     }
 
