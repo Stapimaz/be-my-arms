@@ -57,7 +57,7 @@ document wins. If they conflict on **implementation order**, this roadmap wins.
 | **M0.5** — netcode bake-off | **Complete — chose Netcode for GameObjects** with a custom prediction/lag-comp layer; see `docs/M05_NETCODE_BAKEOFF.md`. NfE isolated on branch `m0.5/nfe` |
 | **M1** — local vertical slice | Implemented; automated verification passing (19 EditMode, 2 PlayMode); human two-duo playtest gate deferred; see `docs/M1_VERTICAL_SLICE.md` |
 | **M2** — networked spike | **Complete** (architecture proof). Real 3-process run: approval-based role authorization, wrong-role rejection, bandwidth + prediction-error + camera metrics, transport-level conditioning, sector + lag-comp validation; disconnect→bot→reconnect handoff verified on graceful disconnect; force-kill reconnect limitation documented (UTP detection/acceptance) for M3+; see `docs/M2_NETWORKING_SPIKE.md` |
-| **M3** — PvP round loop | In progress — first task: connection-lifecycle hardening (force-kill must not drop the other client; reconnect restores the role from the bot); then the round loop |
+| **M3** — PvP round loop | In progress — authoritative round-loop core (match/round state machine with first-to-3/max-5, buy economy, closing zone, role queue, telemetry) implemented + tested (51/51); in-scene playable integration, utility effects and NGO authority wiring pending; see `docs/M3_PVP_ROUND_LOOP.md` |
 | **M4** — 2v2 and matchmaking | Not started |
 | **M5** — product systems | Not started |
 | **M6–M10** — production to release | Not started |

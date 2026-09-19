@@ -1,0 +1,17 @@
+{
+    "name": "BeMyArms.M3",
+    "rootNamespace": "BeMyArms.M3",
+    "references": [
+        "BeMyArms.M0",
+        "BeMyArms.M1"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
