@@ -81,9 +81,18 @@ namespace BeMyArms.M3.EditorTools
 
         static void BuildNetworkManager(GameObject bodyPrefab, GameObject directorPrefab)
         {
+            AddNetworkedMatchSetup(bodyPrefab, directorPrefab);
+        }
+
+        /// <summary>
+        /// Adds the networked match setup (transport, NetworkManager, bootstrap) to the active scene.
+        /// Shared by the M3 Duel scene and the M7 production arenas so the same match runs on any map.
+        /// </summary>
+        public static void AddNetworkedMatchSetup(GameObject bodyPrefab, GameObject directorPrefab, ushort port = 7779)
+        {
             var go = new GameObject("NetworkManager");
             var transport = go.AddComponent<UnityTransport>();
-            transport.SetConnectionData("127.0.0.1", 7779, "0.0.0.0");
+            transport.SetConnectionData("127.0.0.1", port, "0.0.0.0");
 
             var manager = go.AddComponent<NetworkManager>();
             manager.NetworkConfig.NetworkTransport = transport;
@@ -95,6 +104,15 @@ namespace BeMyArms.M3.EditorTools
             bootstrap.Manager = manager;
             bootstrap.DirectorPrefab = directorPrefab;
             bootstrap.Role = M3DuelRole.Host;
+        }
+
+        /// <summary>Ensures the shared body/director prefabs exist and returns them (without a scene).</summary>
+        public static void EnsurePrefabs(out GameObject bodyPrefab, out GameObject directorPrefab)
+        {
+            bodyPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(BodyPrefabPath);
+            if (bodyPrefab == null) bodyPrefab = BuildBodyPrefab();
+            directorPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(DirectorPrefabPath);
+            if (directorPrefab == null) directorPrefab = BuildDirectorPrefab(bodyPrefab);
         }
 
         static void BuildPresentation()

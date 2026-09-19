@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
+using BeMyArms.M3;
+using BeMyArms.M3.EditorTools;
 using BeMyArms.M7;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -101,8 +103,8 @@ namespace BeMyArms.M7.EditorTools
                 cover += Place(root, "BMA_Map_Cover_Low", new Vector3(g, 0f, g), 0f);
                 cover += Place(root, "BMA_Map_Cover_Low", new Vector3(-g, 0f, -g), 0f);
             }
-            cover += Place(root, "BMA_Map_Cover_High", new Vector3(0f, 0f, -half + 3f), 0f);
-            cover += Place(root, "BMA_Map_Cover_High", new Vector3(0f, 0f, half - 3f), 0f);
+            cover += Place(root, "BMA_Map_Cover_High", new Vector3(0f, 0f, -half + 6f), 0f);
+            cover += Place(root, "BMA_Map_Cover_High", new Vector3(0f, 0f, half - 6f), 0f);
             cover += Place(root, "BMA_Map_Pillar", new Vector3(half - 4f, 0f, 0f), 0f);
             cover += Place(root, "BMA_Map_Pillar", new Vector3(-half + 4f, 0f, 0f), 0f);
 
@@ -142,16 +144,36 @@ namespace BeMyArms.M7.EditorTools
                 }
             }
 
+            record.MinSpawnClearance = MeasureSpawnClearance(root, record.Spawns);
+
             EditorUtility.SetDirty(record);
             AssetDatabase.SaveAssets();
 
             var info = new GameObject("MapInfo");
             info.AddComponent<M7MapSceneLink>().Map = record;
 
+            // Map-provided spawns for the networked director, plus the shared match setup so this
+            // arena can run as a real dedicated-server/client match scene.
+            var spawnsGo = new GameObject("MapSpawns");
+            var mapSpawns = spawnsGo.AddComponent<M3MapSpawns>();
+            mapSpawns.BoundsSize = record.BoundsSize;
+            for (int i = 0; i < record.Spawns.Count; i++)
+            {
+                M7Spawn s = record.Spawns[i];
+                mapSpawns.Spawns.Add(new M3MapSpawn { Team = s.Team, Body = s.Body, Role = s.Role, Position = s.Position, Yaw = s.Yaw });
+            }
+
+            M3DuelSceneBuilder.EnsurePrefabs(out GameObject bodyPrefab, out GameObject directorPrefab);
+            M3DuelSceneBuilder.AddNetworkedMatchSetup(bodyPrefab, directorPrefab, 7780);
+
+            // Server-side matchmaking/rating host (inert unless matchmaker mode is enabled).
+            var hostGo = new GameObject("M4_MatchHost");
+            hostGo.AddComponent<BeMyArms.M4.M4MatchHost>();
+
             Directory.CreateDirectory(Path.GetDirectoryName(scenePath));
             EditorSceneManager.SaveScene(scene, scenePath);
             AddSceneToBuildSettings(scenePath);
-            Debug.Log($"[M7] built {scenePath} (cover={record.CoverCount} lanes={record.LaneCount} verticality={record.MaxVerticality:0.00} spawns={record.Spawns.Count})");
+            Debug.Log($"[M7] built {scenePath} (cover={record.CoverCount} lanes={record.LaneCount} verticality={record.MaxVerticality:0.00} spawns={record.Spawns.Count} clearance={record.MinSpawnClearance:0.00})");
         }
 
         static void AddSpawn(M7MapDefinition record, int team, int body, int role, Vector3 position, float yaw)
@@ -179,6 +201,43 @@ namespace BeMyArms.M7.EditorTools
             foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
                 maxY = Mathf.Max(maxY, renderer.bounds.max.y);
             return maxY;
+        }
+
+        /// <summary>Minimum horizontal distance from any spawn to a non-floor obstacle.</summary>
+        static float MeasureSpawnClearance(Transform root, List<M7Spawn> spawns)
+        {
+            var obstacles = new List<Bounds>();
+            foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                string piece = PieceName(renderer.transform, root);
+                if (piece.StartsWith("BMA_Map_Floor") || piece.StartsWith("BMA_Map_SpawnPad")) continue;
+                obstacles.Add(renderer.bounds);
+            }
+
+            float min = float.MaxValue;
+            for (int i = 0; i < spawns.Count; i++)
+            {
+                Vector3 p = spawns[i].Position;
+                for (int o = 0; o < obstacles.Count; o++)
+                {
+                    float d = HorizontalDistance(p, obstacles[o]);
+                    if (d < min) min = d;
+                }
+            }
+            return min == float.MaxValue ? 0f : min;
+        }
+
+        static float HorizontalDistance(Vector3 p, Bounds b)
+        {
+            float dx = Mathf.Max(0f, Mathf.Max(b.min.x - p.x, p.x - b.max.x));
+            float dz = Mathf.Max(0f, Mathf.Max(b.min.z - p.z, p.z - b.max.z));
+            return Mathf.Sqrt(dx * dx + dz * dz);
+        }
+
+        static string PieceName(Transform t, Transform root)
+        {
+            while (t.parent != null && t.parent != root) t = t.parent;
+            return t.name;
         }
 
         static M7MapDefinition LoadOrCreateRecord(string path)

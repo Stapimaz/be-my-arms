@@ -915,8 +915,8 @@ The exact art direction is still open and should be resolved through:
 An M6 production test authored a first-pass stylized/readable direction purely to prove the
 Blender → Unity pipeline; it is a production test, **not** a final art-direction decision
 (`docs/M6_ART_PIPELINE.md`). M7 refined the character forms (articulated joints, layered armour,
-exposed P1 head) and proposed a grounded stylized tactical-sci-fi direction pending product
-sign-off (`docs/M7_ART_DIRECTION.md`).
+exposed P1 head) and adopted a grounded stylized tactical-sci-fi **working production baseline**
+(refinable) (`docs/M7_ART_DIRECTION.md`).
 
 ## 20.2 Visual Priorities
 

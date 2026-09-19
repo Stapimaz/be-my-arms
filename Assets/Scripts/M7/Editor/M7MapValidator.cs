@@ -77,8 +77,9 @@ namespace BeMyArms.M7.EditorTools
             if (map.LaneCount < 2) report.Errors.Add($"{label}: lanes {map.LaneCount} < 2");
             if (map.MaxVerticality < 1.0f) report.Errors.Add($"{label}: verticality {map.MaxVerticality:0.00} < 1.0");
             if (map.MaxVerticality > 6.0f) report.Errors.Add($"{label}: verticality {map.MaxVerticality:0.00} too high");
+            if (map.MinSpawnClearance < 0.8f) report.Errors.Add($"{label}: spawn clearance {map.MinSpawnClearance:0.00} < 0.8 (cover/wall overlaps a spawn)");
 
-            report.Notes.Add($"{label}: {map.Family} spawns={map.Spawns.Count} cover={map.CoverCount} lanes={map.LaneCount} verticality={map.MaxVerticality:0.00}");
+            report.Notes.Add($"{label}: {map.Family} spawns={map.Spawns.Count} cover={map.CoverCount} lanes={map.LaneCount} verticality={map.MaxVerticality:0.00} clearance={map.MinSpawnClearance:0.00}");
         }
     }
 }

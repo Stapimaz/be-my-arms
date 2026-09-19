@@ -36,6 +36,8 @@ namespace BeMyArms.M7
         public int CoverCount;
         public int LaneCount;
         public float MaxVerticality;
+        /// <summary>Minimum horizontal distance from any spawn to non-floor geometry (metres).</summary>
+        public float MinSpawnClearance;
 
         public int RequiredSpawns => Family == M7MapFamily.Duel ? 4 : 8;
 

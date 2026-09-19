@@ -1,8 +1,10 @@
 # M7 — Art Direction Pass (character readability)
 
-**Status:** **PROPOSED direction — requires product sign-off.** This is a coherent production-test
-direction, not a locked final identity. The pipeline and anatomy contract are unchanged; this pass
-refines the prototype-looking forms so content can be produced consistently.
+**Status:** **WORKING PRODUCTION BASELINE (refinable).** This direction is adopted as the baseline
+for continued content production. It is not a permanent lock on every visual detail — the
+product/art owner can still refine it — but new content should be authored consistently with it so
+the match set reads coherently. The pipeline and anatomy contract are unchanged; this pass refines
+the prototype-looking forms.
 
 ---
 
@@ -44,9 +46,10 @@ All gameplay constraints are preserved: the M5 rig contract, anchors, authoritat
 gameplay-stat invariance, the 1:1 Blender → Unity pipeline and the weapon-grip check are unchanged
 and still pass.
 
-## 4. Decision to surface (do not treat as locked)
+## 4. Status of this decision
 
-**Final art direction is a product decision.** The direction above is recommended as the baseline
-for continuing production, but the final style target, theme, exact palette and material language
-should be confirmed by the product/art owner before content scales further. No production art
-identity is silently locked by M7.
+The direction above is the **working production baseline** for continuing content work (character
+skins, map theming, material language). It is deliberately not a final lock: refinements to palette,
+theme and material detail are expected and allowed. What should remain stable is the *readability
+contract* (§1) and the M5/M6 rig contract, both of which are enforced by validators. No blanket
+visual identity is treated as permanently frozen by M7.

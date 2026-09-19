@@ -1,7 +1,9 @@
+using BeMyArms.M3;
 using BeMyArms.M7;
 using BeMyArms.M7.EditorTools;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEngine;
 
 namespace BeMyArms.M7.Tests
 {
@@ -91,6 +93,22 @@ namespace BeMyArms.M7.Tests
         {
             M7ContentReport report = M7ContentValidator.Evaluate();
             Assert.IsTrue(report.IsValid, report.ToString());
+        }
+
+        [Test]
+        public void MapSpawns_BodyPoseIsRoleMidpoint()
+        {
+            var go = new GameObject("m7_map_spawns");
+            var spawns = go.AddComponent<M3MapSpawns>();
+            spawns.Spawns.Add(new M3MapSpawn { Team = 0, Body = 0, Role = 0, Position = new Vector3(-0.9f, 0f, -9f), Yaw = 0f });
+            spawns.Spawns.Add(new M3MapSpawn { Team = 0, Body = 0, Role = 1, Position = new Vector3(0.9f, 0f, -9f), Yaw = 0f });
+
+            Assert.IsTrue(spawns.TryGetBodyPose(0, 0, out Vector3 position, out float yaw));
+            Assert.AreEqual(0f, position.x, 0.0001f, "body spawns at the role midpoint");
+            Assert.AreEqual(-9f, position.z, 0.0001f);
+            Assert.AreEqual(0f, yaw, 0.0001f);
+
+            Object.DestroyImmediate(go);
         }
     }
 }

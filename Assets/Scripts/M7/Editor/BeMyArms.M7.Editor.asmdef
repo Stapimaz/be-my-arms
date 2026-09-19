@@ -6,7 +6,9 @@
         "BeMyArms.M6",
         "BeMyArms.M6.Editor",
         "BeMyArms.M5",
+        "BeMyArms.M4",
         "BeMyArms.M3",
+        "BeMyArms.M3.Editor",
         "BeMyArms.M2",
         "BeMyArms.M0",
         "Unity.Netcode.Runtime"

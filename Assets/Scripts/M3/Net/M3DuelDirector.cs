@@ -299,17 +299,29 @@ namespace BeMyArms.M3
             Utility.Clear();
             _firstContact = false;
 
+            M3MapSpawns mapSpawns = FindAnyObjectByType<M3MapSpawns>();
             for (int team = 0; team < M3DuelSlots.Teams; team++)
             {
                 for (int i = 0; i < _bodies[team].Count; i++)
                 {
                     M3DuelBody body = _bodies[team][i];
                     if (body == null) continue;
-                    float offset = (i - (BodiesPerTeam - 1) * 0.5f) * 4f;
-                    float z = team == 0 ? -10f : 10f;
-                    body.ServerResetRound(offset, z, team == 0 ? 0f : 180f);
+
+                    Vector3 position;
+                    float yaw;
+                    if (mapSpawns != null && mapSpawns.TryGetBodyPose(team, i, out position, out yaw))
+                    {
+                        body.ServerResetRound(position.x, position.z, yaw);
+                    }
+                    else
+                    {
+                        float offset = (i - (BodiesPerTeam - 1) * 0.5f) * 4f;
+                        float z = team == 0 ? -10f : 10f;
+                        body.ServerResetRound(offset, z, team == 0 ? 0f : 180f);
+                    }
                 }
             }
+            if (mapSpawns != null) Log($"using map spawns ({mapSpawns.Spawns.Count})");
 
             MirrorState();
             Log($"round {round} started: buy phase {BuySeconds:0}s");
