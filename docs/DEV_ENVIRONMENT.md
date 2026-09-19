@@ -113,3 +113,8 @@ Milestone-gated additions (see `ROADMAP.md`):
   decision.
 - Unity Transport — **M0.5/M2** with the chosen stack (pulled in as a dependency).
 - Multiplayer Services SDK (sessions/lobby/matchmaking) — **M4**.
+
+**Bake-off isolation:** Netcode for GameObjects and Netcode for Entities define colliding
+assembly names (`Unity.Netcode.Runtime`, `Unity.Netcode.Editor`), so they cannot be installed in
+the same project. The M0.5 bake-off must evaluate them one at a time — Netcode for Entities on a
+separate branch or project.
