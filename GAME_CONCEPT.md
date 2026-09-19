@@ -1241,11 +1241,15 @@ Competitive design must eventually define:
 - surrender/remake policy,
 - intentional leave penalties.
 
-### Current principle
+### Current principle — LOCKED
 
-Do not let the remaining player permanently gain full control of both roles in normal ranked play; that would change the game's core competitive model.
+A disconnected role is **temporarily controlled by a bot** until that player reconnects. Only the
+disconnected role is bot-controlled; the remaining human **never** gains control of both roles.
+The shared body and the match stay alive while a role is substituted. When the original player
+reconnects with a valid session/token, that role transfers **atomically** from the bot back to the
+player, preserving body/role state. There must never be two active owners of the same role.
 
-Possible temporary solutions during reconnect can be designed later.
+Exact grace-window length, bot competence, and AFK/leave policy are **TUNING / product decisions**.
 
 ---
 

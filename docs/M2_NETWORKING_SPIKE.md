@@ -68,6 +68,12 @@ transport-level behaviour that prevents the *ideal immediate* reconnect at the M
   Unity/UTP connection-lifecycle behaviour, not something the M2 gameplay layer controls.
 - A too-aggressive timeout (1.5 s) caused **false** disconnects of a healthy client, so the timeout
   is kept at a sane 5 s.
+- **Decisive baseline (no kill):** with no client killed, both clients stayed connected for 35 s
+  (`status listening=True connected=2`), so clients do not drop on their own. Killing one client
+  then caused the server to close the **other** client within ~1 s (that client reported
+  `ClosedByRemote`), before the killed client's own timeout fired; afterwards the server stopped
+  accepting new connections. This is the concrete UTP/NGO connection-lifecycle behaviour to
+  harden in M3.
 
 **Safe workaround adopted:** role ownership is decided at **connection approval** and is
 token-based; a role is never left ownerless (it goes to a bot), and reclaim/duplicate-role handling

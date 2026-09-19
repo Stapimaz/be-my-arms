@@ -215,9 +215,16 @@ question with evidence. All three are **[SPIKE]**; Model C is not permanently lo
   region, shutdown and health reporting. Do not build on Unity Multiplay Game Server
   Hosting, which was deprecated in April 2026. Unity Matchmaker can allocate external
   providers through Cloud Code allocation modules.
-- **Reconnect/disconnect:** a grace window plus "a disconnected role contributes no input."
-  Do not hand full control to the remaining player **[LOCKED]**. The concrete mid-round
-  policy is unresolved and must be decided before M3/M4.
+- **Reconnect/disconnect [LOCKED]:** a disconnected role is temporarily bot-controlled; only that
+  role, never the remaining human's, and the body/match stays alive. A reconnect with the same
+  identity/token transfers the role atomically from the bot back to the player (state preserved);
+  never two active owners. A disconnected role contributes human input only while owned. The
+  concrete grace window is unresolved and must be decided before M3/M4.
+- **Connection lifecycle (M3 hardening):** roles are bound at NGO connection approval from a
+  token, so ownership is independent of the replicated body. A short transport disconnect timeout
+  (~5 s, provisional) detects force-kills; a client auto-reconnects and reclaims its role. See
+  `docs/M2_NETWORKING_SPIKE.md` §5 for the observed UTP cross-disconnect behaviour that still needs
+  production hardening.
 
 ---
 

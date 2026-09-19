@@ -58,6 +58,12 @@ namespace BeMyArms.M2
             if (roleService == null) roleService = manager.gameObject.AddComponent<M2RoleService>();
             roleService.InstallServerHooks();
 
+            // We spawn the body ourselves; NGO scene/prefab synchronisation on connect adds
+            // connection-establishment failure modes we do not need (and which correlated with one
+            // client's disconnect upsetting another).
+            manager.NetworkConfig.EnableSceneManagement = false;
+            manager.NetworkConfig.ForceSamePrefabs = false;
+
             switch (Role)
             {
                 case M2Role.Server:
@@ -142,13 +148,38 @@ namespace BeMyArms.M2
 
         void Update()
         {
-            if (M2Config.ExitAfterSeconds <= 0f) return;
-            if (Time.realtimeSinceStartup < M2Config.ExitAfterSeconds) return;
-            Debug.Log($"[M2-trace] t={Time.realtimeSinceStartup:0.000} CLIENT graceful shutdown requested");
+            if (M2Config.ExitAfterSeconds > 0f && Time.realtimeSinceStartup >= M2Config.ExitAfterSeconds)
+            {
+                Debug.Log($"[M2-trace] t={Time.realtimeSinceStartup:0.000} CLIENT graceful shutdown requested");
+                NetworkManager m = Manager != null ? Manager : NetworkManager.Singleton;
+                if (m != null && m.IsListening) m.Shutdown();
+                Application.Quit();
+                return;
+            }
+
+            // Safety net: if this client is (unexpectedly) disconnected, retry the connection so the
+            // session survives; the token reclaims the same role from the bot.
+            if (Role != M2Role.Client || M2Config.ExitAfterSeconds > 0f) return;
             NetworkManager manager = Manager != null ? Manager : NetworkManager.Singleton;
-            if (manager != null && manager.IsListening) manager.Shutdown();
-            Application.Quit();
+            if (manager == null) return;
+            if (!manager.IsConnectedClient)
+            {
+                _reconnectTimer += Time.deltaTime;
+                if (_reconnectTimer >= 2f)
+                {
+                    _reconnectTimer = 0f;
+                    if (manager.IsListening) manager.Shutdown();
+                    Debug.Log($"[M2-trace] t={Time.realtimeSinceStartup:0.000} CLIENT reconnect attempt (token '{M2Config.ClientToken}')");
+                    manager.StartClient();
+                }
+            }
+            else
+            {
+                _reconnectTimer = 0f;
+            }
         }
+
+        float _reconnectTimer;
 
         void ApplyTransportSimulation(NetworkManager manager)
         {
