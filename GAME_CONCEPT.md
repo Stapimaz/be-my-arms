@@ -1,10 +1,9 @@
-# COOP SHOOTER — GAME CONCEPT
+# BE MY ARMS — GAME CONCEPT
 
-**Document status:** Product/technical concept  
-**Working title:** Coop Shooter (codename; final name not chosen)  
+**Document status:** Product and game-design concept  
+**Working title:** Be My Arms (working title; not legally cleared and not final)  
 **Engine:** Unity 6  
 **Current production project:** `C:\Users\stapi\GameDev\be-my-arms` (`be-my-arms`)  
-**Historical / stale:** the earlier `C:\Users\stapi\coop-shooter` project and its prototype are historical context only; they are not part of the current production project.  
 **Primary launch target:** PC / Steam  
 **Future platform intent:** Mobile; consoles are a possible later target  
 **Last updated:** 2026-09-19
@@ -21,7 +20,10 @@ This document separates decisions by confidence level so future developers and A
 - **TUNING** — numeric values and detailed balance that must be determined through playtests.
 - **FUTURE / EXPERIMENTAL** — deliberately outside the initial competitive core.
 
-The project should be built toward the **full multiplayer product**, not permanently constrained by the current prototype. The old zombie/wave-survival prototype is historical test infrastructure, not the current game identity.
+The project is built toward the **full multiplayer product**. Development order, milestone
+status and acceptance criteria are owned by `ROADMAP.md`; implementation architecture is owned
+by `TECHNICAL_PLAN.md`. This document does not maintain a parallel roadmap or architecture
+plan.
 
 ---
 
@@ -37,7 +39,7 @@ This is not simply a normal shooter with two control schemes. Two separate playe
 
 The game should be immediately understandable at a social level — “two people control one fighter” — while producing a high coordination skill ceiling in competitive play.
 
-The product should not be permanently defined as a zombie game, battle royale, hero shooter, Counter-Strike clone, or arena shooter. Those may describe individual modes or inspirations. The persistent identity is the shared-body multiplayer mechanic.
+The product should not be permanently defined by a single genre or mode. Battle royale, hero shooter, Counter-Strike clone and arena shooter may describe individual modes or inspirations; the persistent identity is the shared-body multiplayer mechanic.
 
 ## 1.2 Product Ambition
 
@@ -222,7 +224,7 @@ P2 cannot rotate infinitely around the body.
 
 P2's horizontal aim is constrained relative to P1's body-forward direction.
 
-Historical prototype target:
+Draft prototype target:
 
 - approximately ±70°,
 - approximately 140° total horizontal sector.
@@ -240,6 +242,11 @@ This creates the game's most important mechanical dependency:
 - but P1 must orient the shared body correctly to expose that target.
 
 P1 therefore controls opportunities; P2 converts them into damage.
+
+How P2's view behaves while P1 rotates is not a locked design rule. The currently prototyped
+direction (world-stabilized aim inside the sector, referred to as "Model C") and its
+alternatives are described in `TECHNICAL_PLAN.md` §2. The model remains provisional until the
+M1 playtest, and choosing it is a decision gate in `ROADMAP.md`.
 
 ## 6.2 High-Skill Coordination Goal — LOCKED
 
@@ -789,7 +796,7 @@ The eventual formula may consider:
 
 Input weighting is a matchmaking/tuning problem, not a reason to split the game into unrelated platform versions.
 
-## 18.5 Performance-Based Rating — CURRENT DIRECTION
+## 18.6 Performance-Based Rating — CURRENT DIRECTION
 
 Do not initially reward ranked rating directly for:
 
@@ -802,7 +809,7 @@ Primary rating result should come from match outcome and expected opponent stren
 
 Reason: individual-stat Elo incentives could make P1/P2 chase selfish metrics instead of coordinating as one body.
 
-## 18.6 Overall Rank — OPEN
+## 18.7 Overall Rank — OPEN
 
 An optional general/profile rank may exist.
 
@@ -1115,126 +1122,28 @@ This shared-body relationship is one of the project's highest-risk networking fe
 
 ---
 
-# 24. Unity Networking Stack
+# 24. Networking Stack Selection — OPEN
 
-## 24.1 Current Research Recommendation — TECH RECOMMENDATION, NOT YET LOCKED
-
-As of September 2026, Unity's current official multiplayer stack provides two main netcode choices:
-
-### Netcode for GameObjects (NGO)
-
-Pros:
-
-- natural fit with existing GameObject/MonoBehaviour project code,
-- simpler integration,
-- suitable for smaller player counts,
-- current Unity 6 support.
-
-Risk for this project:
-
-- a serious competitive shooter still needs robust prediction, reconciliation and lag compensation engineering.
-
-### Netcode for Entities (NfE)
-
-Pros:
-
-- server-authoritative design,
-- built-in client prediction framework,
-- lag-compensation-oriented competitive networking,
-- Unity's current recommendation for fast competitive multiplayer.
-
-Tradeoff:
-
-- requires DOTS/ECS architecture and additional complexity compared with the existing GameObject prototype.
-
-## 24.2 Recommended Decision Process
-
-Do **not** choose solely based on whichever system is easiest to wire into the current prototype.
-
-Before production-scale gameplay work, build a focused networking spike that tests:
-
-1. two clients controlling one body,
-2. P1 predicted movement,
-3. P2 independent FPS aim,
-4. firing while P1 moves/dodges/kicks,
-5. aim-sector validation,
-6. latency simulation,
-7. packet loss,
-8. reconciliation,
-9. hit validation / lag compensation.
-
-### Current preference
-
-For a long-lived serious ranked shooter, **Netcode for Entities + Unity Transport is the preferred production candidate** because its model better matches server-authoritative predicted combat.
-
-However, this remains a technical decision to confirm with the spike.
-
-If NGO is retained, the project must explicitly budget for shooter-grade prediction/lag compensation rather than assuming basic transform synchronization is enough.
+Which netcode stack the project uses is **not selected**. The candidates are Netcode for
+GameObjects and Netcode for Entities, both on Unity Transport. The choice is made by the M0.5
+bake-off and confirmed by the M2 networking spike. See `ROADMAP.md` for the milestone gates and
+`TECHNICAL_PLAN.md` §8 for the comparison and the criteria the bake-off measures. No stack is
+chosen in advance, and no networking package is added before the milestone that needs it.
 
 ---
 
 # 25. Sessions, Matchmaking and Hosting
 
-## 25.1 Unity Multiplayer Services — CURRENT RECOMMENDATION
+Product constraints:
 
-Unity's unified Multiplayer Services SDK is a reasonable service layer for:
+- Ranked play runs on authoritative dedicated servers. Player-hosted or listen-server sessions
+  are for prototypes, private matches and casual play only, and do not define the ranked
+  architecture. **[LOCKED]**
+- The service layer, hosting provider and hosting vendor are not locked.
 
-- authentication integration,
-- sessions,
-- lobby,
-- matchmaking,
-- QoS/region data,
-- Relay for test/client-hosted sessions.
-
-Standalone Lobby/Relay/Matchmaker packages should not be the new architecture; Unity's current direction is the unified Multiplayer Services package.
-
-## 25.2 Dedicated Server Hosting — IMPORTANT 2026 NOTE
-
-Do **not** build the production plan around Unity Multiplay Game Server Hosting.
-
-Unity deprecated Multiplay Game Server Hosting in April 2026.
-
-Unity Matchmaker can still integrate external hosting providers through Cloud Code allocation modules.
-
-Possible providers include:
-
-- PlayFab Multiplayer Servers,
-- AWS GameLift,
-- Agones-based hosting,
-- Rocket Science Multiplay,
-- another compatible provider.
-
-The exact vendor is **not yet locked**.
-
-## 25.3 Hosting Abstraction — TECH REQUIREMENT
-
-Dedicated server builds should be containerizable/provider-neutral where practical.
-
-The game server should not contain unnecessary assumptions about one cloud vendor.
-
-A small hosting/orchestration adapter should own:
-
-- allocation,
-- server startup metadata,
-- match ID,
-- authentication credentials,
-- region,
-- shutdown,
-- health reporting.
-
-This makes future provider migration much less painful.
-
-## 25.4 Relay
-
-Relay is useful for:
-
-- prototype playtests,
-- temporary listen-server sessions,
-- friend/private matches if desired.
-
-It should not be confused with a dedicated server.
-
-Ranked play should use authoritative dedicated servers.
+Service and hosting implementation guidance — Unity Multiplayer Services, the provider-neutral
+hosting adapter, and the retirement of Unity Multiplay Game Server Hosting — is maintained in
+`TECHNICAL_PLAN.md` §7 and §9.
 
 ---
 
@@ -1289,38 +1198,10 @@ Exact backend storage/service vendor is not yet locked.
 
 # 28. Dedicated Server Build
 
-## 28.1 Server Build — TECH RECOMMENDATION
-
-Use Unity's Dedicated Server build workflow for headless server builds.
-
-Production server should ideally:
-
-- run without rendering/audio assets that are not needed,
-- expose structured logs,
-- accept match configuration at startup,
-- report health/readiness,
-- shut down cleanly after match completion,
-- support reconnect grace windows,
-- upload authoritative match result data.
-
-Containerization should be considered from the beginning of production multiplayer work.
-
-## 28.2 Initial Tick Target — DRAFT
-
-A **60 Hz server simulation target** is a reasonable starting hypothesis for this small-player-count competitive shooter.
-
-This is not locked.
-
-Benchmark:
-
-- server CPU cost,
-- bandwidth,
-- P1 movement quality,
-- P2 gun feel,
-- lag compensation,
-- mobile future feasibility.
-
-The final tick rate must come from network testing.
+Dedicated headless server builds, tick-rate targets and server operational requirements are
+implementation concerns maintained in `TECHNICAL_PLAN.md` §7 and §9. The product-level
+requirement is that ranked play uses authoritative dedicated servers rather than player-hosted
+ones (see §23 and §25).
 
 ---
 
@@ -1348,19 +1229,9 @@ Possible temporary solutions during reconnect can be designed later.
 
 ## 30.1 Server Validation — REQUIRED
 
-The first anti-cheat layer is authoritative architecture.
-
-Server validation should cover:
-
-- movement bounds,
-- cooldowns,
-- weapon fire rate,
-- ammo,
-- inventory/loadout,
-- utility counts,
-- aim-sector legality,
-- damage,
-- match result.
+The first anti-cheat layer is authoritative architecture: the server validates gameplay and
+rejects impossible or unauthorized actions. The specific list of validated domains is
+maintained in `TECHNICAL_PLAN.md` §9.
 
 ## 30.2 Client Anti-Cheat — OPEN
 
@@ -1398,136 +1269,7 @@ This data should be used to resolve tuning questions rather than inventing numbe
 
 ---
 
-# 32. Current Production Project / Development Tooling
-
-Current production project context:
-
-- Unity project: `C:\Users\stapi\GameDev\be-my-arms`
-- Unity: `6000.4.3f1` (URP)
-- Git repository exists
-- No networking packages installed yet
-- No gameplay code yet; this is a clean production project
-
-Planning documents in this project:
-
-- `GAME_CONCEPT.md` — game design source of truth
-- `ROADMAP.md` — development milestones and acceptance criteria
-- `TECHNICAL_PLAN.md` — technical direction and provisional networking plan
-- `docs/DEV_ENVIRONMENT.md` — tooling setup and Unity Pipeline workflow
-- `docs/M0_PLAYTEST.md` — M0 playtest guide and acceptance checklist
-
-## Stale Historical Context
-
-The following items describe the earlier `C:\Users\stapi\coop-shooter` project and its
-tooling. They are **historical and stale**, are not part of `be-my-arms`, and should not be
-treated as current:
-
-- Unity project: `C:\Users\stapi\coop-shooter`
-- OpenCode `v2.0.8`
-- DeepSeek V4.1 Flash
-- high reasoning
-- Unity CLI `1.0.0-beta.10`
-- Unity Pipeline `0.7.0-exp.1`
-- Unity Pipeline port `7800`
-- official `unity-cli` skill installed and verified
-- Verified automation chain: **OpenCode → DeepSeek → unity-cli skill → Unity CLI/Pipeline → live Unity Editor**
-
----
-
-# 33. Historical Prototype Context (Stale — Not Part of be-my-arms)
-
-The old prototype in `C:\Users\stapi\coop-shooter` may contain:
-
-- P1 third-person movement/camera,
-- P2 aim/shoot logic,
-- raycast hit framework,
-- ragdoll framework,
-- zombie targets,
-- jump/crosshair,
-- old wave-survival logic.
-
-These systems are historical context only. They belong to the old project, are not present
-in `be-my-arms`, and must not be assumed to be available. Reusing any of them would require
-an explicit, separate decision.
-
-However:
-
-> **Zombie wave survival is no longer the product identity.**
-
-Zombie objects may remain as temporary test targets until PvP networking/combat replaces them.
-
----
-
-# 34. Development Priorities
-
-The project should prove the riskiest identity-defining systems before spending heavily on content.
-
-## Phase A — Shared-Body Combat Slice
-
-Prove:
-
-- combined P1/P2 character,
-- P1 third-person movement,
-- P2 independent FPS camera,
-- aim sector,
-- gunplay,
-- shared HP,
-- headshots,
-- light/heavy kick,
-- movement accuracy effects,
-- one compact arena.
-
-## Phase B — Network Spike
-
-Prove under simulated latency:
-
-- two remote players controlling one body,
-- server authority,
-- P1 prediction/reconciliation,
-- P2 aiming/shooting,
-- shooting during kick/dodge,
-- lag compensation,
-- disconnect/reconnect basics.
-
-This phase should happen **before** building large quantities of production content.
-
-## Phase C — Real PvP Round Loop
-
-Add:
-
-- Duel,
-- round system,
-- first-to-3,
-- loadout/buy draft,
-- utility,
-- closing zone,
-- role queue.
-
-## Phase D — 2v2 and Matchmaking
-
-Add:
-
-- two bodies per team,
-- derived body MMR,
-- role-specific matchmaking,
-- parties,
-- dedicated server allocation.
-
-## Phase E — Product Layer
-
-Add:
-
-- account progression,
-- cosmetics,
-- mounting presentation,
-- social/friends,
-- reporting/moderation,
-- polished UI/UX,
-- ranked presentation.
-
----
-
-# 35. Explicit Non-Goals for the Initial Competitive Core
+# 32. Explicit Non-Goals for the Initial Competitive Core
 
 The initial serious version does **not** require:
 
@@ -1549,7 +1291,7 @@ These may be reconsidered later only if they strengthen the shared-body identity
 
 ---
 
-# 36. Open Decisions
+# 33. Open Decisions
 
 The following are intentionally unresolved and should not block the concept document.
 
@@ -1593,7 +1335,7 @@ The following are intentionally unresolved and should not block the concept docu
 
 ---
 
-# 37. Design Guardrails
+# 34. Design Guardrails
 
 Any future feature should be tested against these questions:
 
@@ -1613,13 +1355,13 @@ If a feature does not reinforce the shared-body experience, it should need a str
 
 ---
 
-# 38. One-Sentence Pitch
+# 35. One-Sentence Pitch
 
 > **A competitive multiplayer shooter where two human players physically combine into one fighter — one controls the body and movement, the other controls the arms, weapons and aim — forcing them to master coordination as if they were a single person.**
 
 ---
 
-# 39. Short Store/Presentation Pitch — Draft
+# 36. Short Store/Presentation Pitch — Draft
 
 Two players. One body.
 
@@ -1631,7 +1373,7 @@ At first, controlling one fighter together is chaos. At high level, the best duo
 
 ---
 
-# 40. Final Product Principle
+# 37. Final Product Principle
 
 The novelty gets people to try the game.
 

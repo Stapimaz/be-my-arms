@@ -7,9 +7,9 @@
 **Engine:** Unity `6000.4.3f1`, URP
 **Last updated:** 2026-09-19
 
-> This roadmap supersedes the phase ordering implied by `GAME_CONCEPT.md` §34 where the
-> two disagree. Design intent is unchanged; only the order and size of work is refined
-> so the highest-risk identity-defining systems are proven before content.
+> This roadmap owns implementation order, milestone status and acceptance criteria. Game design
+> belongs to `GAME_CONCEPT.md`, which defers sequencing to this document. Technical
+> architecture belongs to `TECHNICAL_PLAN.md`, and local tooling to `docs/DEV_ENVIRONMENT.md`.
 
 ---
 
@@ -40,10 +40,27 @@ document wins. If they conflict on **implementation order**, this roadmap wins.
    numbers. Do not write netcode-bound code before then.
 5. **Keep the architecture portable** to future mobile/console without optimizing the PC
    game around them.
+6. **Placeholder assets are temporary.** Greybox geometry, capsule bodies, proxy props and
+   untextured materials are development stand-ins only — never the intended final
+   presentation. Production art begins after the core and networking milestones pass; see
+   `TECHNICAL_PLAN.md` §13.
 
 ---
 
 ## 2. Milestones
+
+### Status
+
+| Milestone | Status |
+|---|---|
+| **M0** — local shared-body spike | Implemented; automated verification passing (12 EditMode, 2 PlayMode); single-tester spot-check confirmed the Model C coupling; the two-human feel playtest was intentionally deferred to the M1 gate |
+| **M0.5** — netcode bake-off | Not started |
+| **M1** — local vertical slice | Not started |
+| **M2** — networked spike | Not started |
+| **M3** — PvP round loop | Not started |
+| **M4** — 2v2 and matchmaking | Not started |
+| **M5** — product systems | Not started |
+| **M6–M10** — production to release | Not started |
 
 ### M0 — Very small local shared-body mechanic spike
 
@@ -82,6 +99,15 @@ document wins. If they conflict on **implementation order**, this roadmap wins.
    a quick A/B against Aim Model A.
 7. **Timebox:** roughly 1–2 weeks. This is a throwaway spike; do not harden it.
 
+**Status:** Implementation and automated verification are complete (details in
+`docs/M0_PLAYTEST.md`). Criteria 2–5 are covered by automated tests, criterion 1 was confirmed
+by a single-tester spot-check, and criterion 6 — the two-human feel judgement — was
+intentionally **deferred** and is **not** marked as passed. The definitive aim-model and
+game-feel validation remains the M1 playtest gate.
+
+**Assets:** the body is a placeholder capsule plus an arm proxy, and the arena is greybox. These
+are temporary development assets, not the intended final presentation.
+
 ---
 
 ### M0.5 — Timeboxed NGO vs NfE networking bake-off
@@ -116,7 +142,7 @@ document wins. If they conflict on **implementation order**, this roadmap wins.
 
 ### M1 — Proper local vertical slice on the chosen architecture
 
-**Purpose:** the real Phase A slice, now built on the architecture the bake-off selected.
+**Purpose:** the real local vertical slice, built on the architecture the bake-off selected.
 
 **Scope:**
 
@@ -128,7 +154,8 @@ document wins. If they conflict on **implementation order**, this roadmap wins.
 - Movement-state to accuracy table **[LOCKED direction]**.
 - Shared HP, no passive regeneration; P1 head is the only critical region; P2 arms,
   shoulders and upper chest take normal damage; cosmetics never change hitboxes.
-- Compact greybox arena: cover, readable sightlines, some verticality.
+- Compact greybox arena: cover, readable sightlines, some verticality. Greybox and proxy
+  assets remain temporary; final art is a later milestone.
 - All tuning in data assets.
 
 **Acceptance criteria:**
@@ -158,10 +185,10 @@ remote; simulated latency and packet loss.
    loss; residual visual error stays under a defined threshold.
 2. P2 aim adds 0 ms of latency; camera correction stays under the defined snap threshold.
 3. Firing during sprint, slide, dodge and kick is validated server-side.
-4. Sector legality is checked against the **historical `BodyYaw`** at the fire tick; P2's
-   aim direction remains world-absolute.
-5. Network correction causes no phantom aim offset, and the boundary push behaves as it did
-   in M0 across the wire.
+4. Sector legality is checked against the **historical body orientation** at the fire tick,
+   consistent with whichever aim model the M1 playtest selects.
+5. Network correction does not introduce aim error beyond the defined threshold, and the
+   boundary behavior matches the selected aim model across the wire.
 6. Lag-compensated hit/miss agreement is at least 95% versus the offline baseline at
    100 ms; maximum rewind is clamped.
 7. The server rejects out-of-sector fire, over-rate fire, excessive turn rate, impossible
@@ -191,13 +218,67 @@ server allocation.
 
 ---
 
-### M5 — Product layer
+### M5 — Product systems
 
 Account progression, cosmetics, mounting presentation, social/friends, reporting and
-moderation, polished UI/UX, ranked presentation.
+moderation, ranked presentation.
 
 **Acceptance criteria:** the rig and skin contract is enforced before cosmetic content
 scales; the shared-body identity is intact across all shipped combinations.
+
+---
+
+### M6 — Production art and content pipeline
+
+Establish the DCC/content pipeline and final asset standards before mass production. The
+pipeline tool is not chosen yet; Blender is a viable candidate among others.
+
+- Choose the DCC/content pipeline and define import, scale, naming, LOD and material conventions.
+- Finalize the standardized P1/P2 rig contract: gameplay skeleton, attachment sockets, camera
+  anchors, weapon and utility anchors, and hitbox definitions.
+- Produce the first production P1/P2 characters, weapons and environment kit tests.
+
+**Acceptance criteria:** a production character and weapon travel the pipeline into the game,
+and an arbitrary P1 skin combines with an arbitrary P2 skin without per-pair work.
+
+---
+
+### M7 — Audio, VFX, maps and content scale
+
+- Audio, music and VFX production.
+- The production map set for Duel and 2v2, following the map-family strategy.
+
+**Acceptance criteria:** content volume supports a shippable match set at production quality.
+
+---
+
+### M8 — UI/UX, accessibility and optimization
+
+- Final UI/UX, settings, onboarding, input polish and accessibility options.
+- Client and server performance optimization against defined targets.
+
+**Acceptance criteria:** defined frame-rate, memory and load targets are met, and an
+accessibility checklist passes.
+
+---
+
+### M9 — QA, security, anti-cheat and release hardening
+
+- Structured QA, regression and soak testing.
+- Client anti-cheat selection and integration, plus server validation hardening.
+- Backend, account and entitlement security review.
+
+**Acceptance criteria:** the release-candidate stability and competitive-integrity bar is met.
+
+---
+
+### M10 — Steam integration, store and release preparation
+
+- Steam authentication, friends, achievements, store, entitlements and community integration.
+- Store page, age ratings, and legal/publishing requirements.
+- Alpha, beta and release-readiness gates, launch operations and the live-service plan.
+
+**Acceptance criteria:** a releasable PC/Steam build passes launch-readiness review.
 
 ---
 
@@ -215,7 +296,7 @@ scales; the shared-body identity is intact across all shipped combinations.
 
 ## 4. Deferred until the core and networking are proven
 
-**[DEFERRED]**
+**[DEFERRED]** — then sequenced by §2 (production and release work is M6–M10).
 
 Content and art, cosmetics, mounting presentation, economy and buy-phase tuning, utility
 effects beyond stubs, closing zone, full round/match structure (until M3), 2v2 (until M4),

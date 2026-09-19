@@ -5,6 +5,12 @@
 **Goal:** decide whether the P1/P2 control relationship feels good, and whether Aim Model C
 (world-stabilized P2 aim inside a P1-owned firing sector) is the right direction.
 
+**Status (2026-09-19):** implementation and automated verification are complete — 12/12 EditMode
+and 2/2 PlayMode tests pass. A single tester manually inspected the prototype and confirmed that
+the Model C coupling behaves as intended. Extensive two-human feel/playtesting was
+**intentionally deferred**, so the feel criteria here are not all verified; the definitive
+aim-model and game-feel validation is the **M1 playtest gate**.
+
 ---
 
 ## 1. Setup
@@ -36,32 +42,28 @@ single tester drive P1 and observe the coupling.
 
 ## 3. Acceptance checklist
 
-Mark each item. Criterion numbers match `ROADMAP.md` M0.
+Items 2–5 are covered by automated tests, item 1 was spot-checked, and item 6 is deferred.
+Criterion numbers match `ROADMAP.md` M0.
 
-- [ ] **1. Two roles playable simultaneously on one machine.**
-      P1 and P2 both act at the same time without one blocking the other.
+- [x] **1. Two roles playable simultaneously on one machine.**
+      *(Single-tester spot-check. Full two-human pass deferred.)*
 
-- [ ] **2. A target outside the sector forces P1 rotation.**
+- [x] **2. A target outside the sector forces P1 rotation.**
       `Dummy_NeedsRotation` sits 110 degrees from the start facing (40 degrees beyond the
       +/-70 sector). P2 cannot bring the crosshair onto it until P1 rotates the body.
+      *(Automated: scene-layout test.)*
 
-- [ ] **3. P1 rotation does not drag P2's crosshair (inside the sector).**
-      Aim at `Dummy_Inside`, then hold P1 still on the aim and rotate P1's body left/right.
-      While the target remains inside the sector, the crosshair must stay on it.
+- [x] **3. P1 rotation does not drag P2's crosshair (inside the sector).**
       *(Automated: `AimSectorTests.BodyRotation_DoesNotMoveAimInsideSector`.)*
 
-- [ ] **4. Boundary push with no phantom offset.**
-      a) Push the aim hard against a sector edge, then rotate P1 further in that direction:
-         the crosshair is pushed along with the body and re-stabilizes in world space.
-      b) Against the edge, push further out, then reverse the stick. The crosshair must move
-         immediately inward with no wind-up.
+- [x] **4. Boundary push with no phantom offset.**
       *(Automated: `...NoPhantomOffset_WhenPushingOutwardThenInward` and
       `...BoundaryPush_RestabilizesInWorldSpace`.)*
 
-- [ ] **5. The body never rotates on its own toward P2's aim.**
-      With P2 aiming at a target, release all P1 input. `BodyYaw` in the HUD must not change.
+- [x] **5. The body never rotates on its own toward P2's aim.**
+      *(Automated: `P2Input_CannotMoveTheBody`.)*
 
-- [ ] **6. Feel judgment (write answers below).**
+- [ ] **6. Feel judgment — DEFERRED to the M1 playtest gate. Not passed.**
       - Is it fun and readable within the first minute?
       - Does P2 feel *gated by P1* rather than like a passenger?
       - Does P1 feel meaningfully responsible for P2's damage?
@@ -95,6 +97,9 @@ against a manual gamepad pass.
 ---
 
 ## 6. Result record
+
+**Status:** the two-human feel pass was intentionally deferred to the M1 playtest gate. Do not
+record it as passed here until it has actually been run.
 
 Playtest date:
 Testers:

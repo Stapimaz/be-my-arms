@@ -102,8 +102,9 @@ actually ran; the real result is reported by `test_status`
 ## 5. Package policy
 
 Gameplay and networking packages are added **only when the current milestone requires
-them**. At M0 that means: no Netcode for GameObjects, no Netcode for Entities, no transport
-packages. `com.unity.pipeline` is development tooling, not a gameplay dependency.
+them**. M0 needed none: the project has no Netcode for GameObjects, no Netcode for Entities
+and no transport package installed. `com.unity.pipeline` is development tooling, not a
+gameplay dependency.
 
 Milestone-gated additions (see `ROADMAP.md`):
 

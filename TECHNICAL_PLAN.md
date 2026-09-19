@@ -1,6 +1,6 @@
 # Be My Arms — Technical Plan
 
-**Status:** Approved working technical plan; networking direction provisional
+**Status:** Approved working technical plan; network stack not yet selected
 **Source of truth for game design:** `GAME_CONCEPT.md`
 **Companion document:** `ROADMAP.md`
 **Current production project:** `C:\Users\stapi\GameDev\be-my-arms`
@@ -15,22 +15,14 @@
 
 ## 0. Project context
 
-`be-my-arms` is the clean production project. It contains the URP template and the concept
-document only, with no gameplay code and no networking packages installed. All references to
-`coop-shooter` and its prototype systems are **stale historical context** and are not part of
-this project.
+`be-my-arms` is a clean production project. Current gameplay is the disposable M0 shared-body
+spike under `Assets/Scripts/M0`, with its tests under `Assets/Tests` and its generated scene
+`Assets/Scenes/M0SharedBody.unity`. No networking package is installed; the netcode stack is
+selected at M0.5.
 
-Verified current state:
-
-| Item | State |
-|---|---|
-| Unity | `6000.4.3f1`, URP |
-| Input | Input System 1.19, new Input System only |
-| Netcode | None installed (only Multiplayer Center advisor) |
-| Gameplay code | None |
-| Scenes | `SampleScene` only |
-| Physics tick | 50 Hz fixed step (to be decoupled from gameplay tick) |
-| Assemblies | Single `Assembly-CSharp`, no asmdefs |
+Tooling versions, the Unity Pipeline setup and the OpenCode skill are environment concerns and
+are documented once in `docs/DEV_ENVIRONMENT.md` — do not duplicate them here. Milestone status
+is owned by `ROADMAP.md`.
 
 ---
 
@@ -62,7 +54,7 @@ Suggested module boundaries (folders, not assemblies, until the netcode choice l
 
 ---
 
-## 2. Aim coupling — recommended model
+## 2. Aim coupling — prototyped direction
 
 P1 fully owns `BodyYaw`. `SectorHalf` (draft ±70°) is **[TUNING]**.
 
@@ -163,12 +155,12 @@ question with evidence. All three are **[SPIKE]**; Model C is not permanently lo
 
 ## 5. Animation and IK
 
-- **M0:** placeholders only — a capsule body and a simple arm/chest proxy with a muzzle
-  anchor.
-- **M1:** a two-layer rig — a P1 body layer plus a P2 arm/upper-body layer mounted at a
-  standardized socket. P2's shoulder mount rotates within the sector, arms IK to the weapon
-  grip, and the weapon anchor follows the hands. Additive recoil is animation-only;
-  authoritative aim is numeric.
+- **Placeholder stage (M0–M1):** a capsule body and a simple arm/chest proxy with a muzzle
+  anchor. A functional two-layer rig — a P1 body layer plus a P2 arm/upper-body layer mounted
+  at a standardized socket — is introduced when it is needed to validate aim/IK plumbing, using
+  temporary assets until production art begins.
+- P2's shoulder mount rotates within the sector, arms IK to the weapon grip, and the weapon
+  anchor follows the hands. Additive recoil is animation-only; authoritative aim is numeric.
 - Enforce a documented **rig contract**: gameplay skeleton, attachment socket(s) on P1's
   upper chest/clavicle, camera anchors, capsule hitboxes, weapon and utility anchors, and
   animation interfaces. All P1 skins must work with all P2 skins **[LOCKED]**. Draft the
@@ -245,15 +237,16 @@ question with evidence. All three are **[SPIKE]**; Model C is not permanently lo
 provides the authoritative predicted-combat model the concept wants, but places the game's
 differentiating strength (rich two-layer animation, IK and skin mounting) in the stack's
 weakest area. NGO gives animation authoring for free but means building and maintaining a
-competitive prediction and lag-comp layer, which must be budgeted explicitly, as the concept
-warns in §24.2.
+competitive prediction and lag-comp layer, which must be budgeted explicitly.
 
-**Recommended direction — provisional:** **Netcode for Entities plus Unity Transport as the
-primary candidate**, with **Netcode for GameObjects plus Unity Transport plus an explicitly
-budgeted custom prediction/lag-comp layer as the fallback**. The choice is made by the M0.5
-bake-off and confirmed by the M2 spike. Until then, no permanent netcode-bound code is
-written. Note that NfE does not remove the need for a custom kinematic character controller;
-it removes the need to write snapshot and rollback plumbing.
+**No stack is selected yet.** The M0.5 bake-off decides between the two and M2 confirms the
+result; the documentation records no winner before then, and no permanent netcode-bound code is
+written until the choice is made. The bake-off is judged on the criteria the M2 spike then
+verifies: two role-tagged input domains on one entity, prediction quality for the P1-owned
+portion, how much prediction and lag compensation the stack provides versus what must be
+written, CPU and bandwidth, and the cost of the animation/IK and skin-mounting work. Note that
+neither stack removes the need for a custom kinematic character controller; NfE would remove the
+need to write snapshot and rollback plumbing.
 
 ---
 
@@ -273,7 +266,8 @@ it removes the need to write snapshot and rollback plumbing.
   the RTT estimate, rewinds targets, validates the sector against the historical `BodyYaw`,
   reconstructs P2's world aim direction, then raycasts. Maximum rewind is clamped to bound
   the abuse window. Because Model C's aim is world-absolute, the direction does not need
-  body yaw to reconstruct — only validity does.
+  body yaw to reconstruct — only validity does. If a different aim model is chosen at M1, this
+  changes.
 - **Dedicated server build [PROPOSED]:** headless, excluding unneeded render and audio
   assets; structured logs; match configuration at startup; health and readiness endpoints;
   clean shutdown after the match; reconnect grace windows; authoritative result upload;
@@ -309,8 +303,9 @@ it removes the need to write snapshot and rollback plumbing.
 
 1. **Aim coupling.** Model C reduces comfort and lag-comp risk but may create a
    one-directional dependency. Highest product risk; settled by playtest at M1.
-2. **Netcode choice versus animation/IK/skin needs.** NfE is the better competitive fit but
-   conflicts with the mounting and cosmetic strengths.
+2. **Netcode choice versus animation/IK/skin needs.** The two candidates trade
+   competitive-networking capability against the animation, IK and skin-mounting work; the
+   bake-off must quantify both rather than assume either is free.
 3. **Overengineering.** The temptation to build a custom deterministic simulation or
    character controller before it is required. Guarded against explicitly.
 4. **Authoritative versus visual hitbox alignment** across skins, poses and animation
@@ -338,3 +333,21 @@ it removes the need to write snapshot and rollback plumbing.
 - Dedicated-server hosting vendor and the exact backend persistence stack.
 - Voice provider and anti-cheat provider.
 - Cross-play pool rules, input-weighting, controller aim-assist and touch-assistance tuning.
+
+---
+
+## 13. Production art and content pipeline
+
+M0, M0.5 and M1 use greybox and placeholder geometry only. Capsule bodies, arm proxies,
+untextured materials and blockout arenas are development assets and are **not** the intended
+final presentation; no agent should treat them as permanent art direction.
+
+- A DCC/content pipeline is established when production art begins. The tool is **not chosen
+  yet**; Blender is a viable candidate alongside other DCCs, and the choice can be made when
+  that phase starts.
+- Whatever pipeline is chosen must respect the standardized P1/P2 rig contract: gameplay
+  skeleton, attachment socket(s) on P1's upper chest/clavicle, camera anchors, weapon and
+  utility anchors, hitbox definitions, and animation interfaces — so that every P1 skin works
+  with every P2 skin.
+- The pipeline also defines import and scale conventions, naming, LODs and materials, and a
+  way to test arbitrary P1/P2 skin combinations.
