@@ -5,16 +5,19 @@ using UnityEngine.InputSystem;
 namespace BeMyArms.M1
 {
     /// <summary>
-    /// M1 orchestrator. Reads both role streams and steps the simulation in a fixed order:
-    /// P1 command -> BodyYaw + locomotion/melee, P2 command -> aim, then the weapon.
+    /// M1 orchestrator. Step order:
+    ///   P1 command -> look/body model (BodyYaw from decoupled look + follow + align),
+    ///   P1 motor (movement/melee, relative to BodyYaw),
+    ///   P2 command -> aim clamped to the sector around BodyYaw,
+    ///   weapon.
     ///
-    /// Simulation (motor/aim/weapon) is kept separate from presentation (cameras/HUD) so the NGO
-    /// prediction layer can drive the simulation later.
+    /// Simulation (look/motor/aim/weapon) is separate from presentation (cameras/HUD).
     /// </summary>
     public class M1BodyRoot : MonoBehaviour
     {
         [Header("Simulation")]
         public M1Tuning tuning;
+        public P1LookController look;
         public P1Motor motor;
         public P2AimRig aim;
         public WeaponController weapon;
@@ -22,7 +25,7 @@ namespace BeMyArms.M1
 
         [Header("Presentation")]
         public Transform aimEye;
-        public P1ThirdPersonCamera p1Camera;
+        public M1P1Camera p1Camera;
 
         [Header("Input")]
         public M1InputMode inputMode = M1InputMode.Device;
@@ -46,7 +49,10 @@ namespace BeMyArms.M1
             if (_p1 == null) Debug.LogError("[M1] No P1 input source assigned.");
             if (_p2 == null) Debug.LogError("[M1] No P2 input source assigned.");
 
+            motor.look = look;
+            look.Configure(tuning);
             motor.Configure(tuning);
+
             if (tuning != null)
             {
                 aim.SectorHalfDegrees = tuning.sectorHalfDegrees;
@@ -60,7 +66,8 @@ namespace BeMyArms.M1
             }
 
             weapon.Configure(tuning, aim, aimEye);
-            aim.Initialize(motor.BodyYaw);
+            look.Initialize(transform.eulerAngles.y);
+            aim.Initialize(look.BodyYaw);
         }
 
         void Update()
@@ -70,12 +77,13 @@ namespace BeMyArms.M1
             float deltaTime = Time.deltaTime;
 
             P1Command p1 = _p1.Read(deltaTime);
+            look.Step(p1.LookYawDelta, p1.AlignBody, deltaTime);
             if (p1Camera != null) p1Camera.AddPitch(p1.LookPitchDelta);
             motor.Step(p1, deltaTime);
 
             P2Command p2 = _p2.Read(deltaTime);
-            aim.Step(p2, motor.BodyYaw);
-            weapon.Step(p2, motor.BodyYaw, motor.State, deltaTime);
+            aim.Step(p2, look.BodyYaw);
+            weapon.Step(p2, look.BodyYaw, motor.State, deltaTime);
 
             if (Keyboard.current != null && Keyboard.current.bKey.wasPressedThisFrame && health != null)
                 health.ApplyDamage(10f, HitboxRegion.Region.Body);

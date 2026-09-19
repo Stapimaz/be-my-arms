@@ -38,6 +38,11 @@ namespace BeMyArms.M1
                 cmd.LookPitchDelta = -delta.y * sensitivity;
             }
 
+            // Explicit align-body action. Temporary/configurable binding (not a design decision).
+            bool alignOnMouse = tuning != null && tuning.alignBodyOnLeftMouse && mouse != null && mouse.leftButton.wasPressedThisFrame;
+            bool alignOnKey = tuning != null && keyboard != null && keyboard[tuning.alignBodyKey].wasPressedThisFrame;
+            cmd.AlignBody = alignOnMouse || alignOnKey;
+
             return cmd;
         }
     }

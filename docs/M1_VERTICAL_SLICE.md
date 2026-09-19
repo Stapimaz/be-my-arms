@@ -16,6 +16,9 @@
 - slide (sprint entry, friction decay, min/max duration);
 - vault (obstacle-detected, timed move);
 - light kick and heavy kick (timed, cooldown, melee damage, no hard stun).
+- **look/body model:** camera/head look decoupled from `BodyYaw` within a neck-offset limit; the
+  body smoothly follows the look past a threshold; explicit AlignBody action; WASD stays
+  body-relative.
 
 **P2 (arms):**
 - shoulder-anchored first-person camera;
@@ -40,8 +43,8 @@
 
 Open `Assets/Scenes/M1VerticalSlice.unity` and press Play (split view: left P1, right P2).
 
-- P1: WASD, mouse = `BodyYaw`, Shift sprint, Space jump, Q dodge, C slide, E vault, F light kick,
-  V heavy kick, B test damage.
+- P1: WASD move (body-relative), mouse = look/head, **LMB / Alt = align body to look**, Shift
+  sprint, Space jump, Q dodge, C slide, E vault, F light kick, V heavy kick, B test damage.
 - P2: gamepad right stick aim, RT fire, X reload, Y swap, B knife.
 
 For an automated/self-driving run, set `M1BodyRoot.inputMode = Scripted` (the scripted source
@@ -73,16 +76,21 @@ moves, sprints, jumps, dodges, slides, kicks, aims, fires and reloads).
 
 ---
 
-## 5. P1 free-look decision (documented, revisitable)
+## 5. P1 look/body model
 
-For M1, P1 look input drives `BodyYaw` directly (camera-locked), matching M0: the third-person
-camera follows the body yaw and mouse Y only pitches the camera. This keeps the shared-body
-coupling simple and readable and avoids a second yaw authority.
+P1's camera/head look is decoupled from `BodyYaw`:
 
-Decoupled free-look (camera yaw independent of `BodyYaw`) remains an **open decision gate**: it
-would change how P1 looks around while moving backward and how the aim sector is presented. It is
-not resolved by implementation alone — it needs the playtest. `M1Tuning.p1FreeLook` exists as a
-placeholder for that future work but is unused in M1.
+- mouse drives the look yaw; the third-person camera follows the look, not the body;
+- the look is clamped to `BodyYaw` ± `neckYawLimitDegrees`;
+- past `bodyFollowThresholdDegrees`, the body smoothly turns toward the look at
+  `bodyFollowSpeedDegreesPerSecond`;
+- the explicit AlignBody action turns `BodyYaw` to the look at `bodyAlignSpeedDegreesPerSecond`;
+- WASD movement stays relative to `BodyYaw`; P2's firing sector is relative to `BodyYaw`.
+
+All of these are tuning values in `M1Tuning`. The align binding (`alignBodyOnLeftMouse`,
+`alignBodyKey`) is temporary/configurable and is not a design decision.
+
+This supersedes the M0 assumption that mouse directly drove `BodyYaw`.
 
 ---
 

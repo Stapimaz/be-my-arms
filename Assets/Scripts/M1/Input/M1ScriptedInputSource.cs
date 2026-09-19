@@ -30,7 +30,9 @@ namespace BeMyArms.M1
             else if (cycle > 3.0f && cycle < 3.05f) cmd.Slide = true;
             else if (cycle > 4.0f && cycle < 4.05f) cmd.LightKick = true;
             else if (cycle > 5.0f && cycle < 5.05f) cmd.HeavyKick = true;
+            else if (cycle > 6.0f && cycle < 6.05f) cmd.AlignBody = true;
 
+            // Look rotates constantly so the body's follow/align behaviour is exercised.
             cmd.LookYawDelta = 18f * deltaTime;
             return cmd;
         }

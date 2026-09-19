@@ -56,7 +56,8 @@ Suggested module boundaries (folders, not assemblies, until the netcode choice l
 
 ## 2. Aim coupling — prototyped direction
 
-P1 fully owns `BodyYaw`. `SectorHalf` (draft ±70°) is **[TUNING]**.
+P1 fully owns `BodyYaw`, which is set by the P1 look/body model (see §4). `SectorHalf` (draft
+±70°) is **[TUNING]**. P2's sector is relative to `BodyYaw`, never to P1's camera/head direction.
 
 ### Model A — rigid mount
 
@@ -136,11 +137,13 @@ question with evidence. All three are **[SPIKE]**; Model C is not permanently lo
 
 ## 4. Cameras
 
-- **P1:** third-person camera. Spring arm with collision is required. Third-person camera
-  peeking is a competitive exploit surface to plan for.
-  - **Temporary M0 assumption:** P1 look input directly drives `BodyYaw` and the camera
-    follows that yaw. No free-look in M0. Whether P1 retains decoupled free-look is
-    **[SPIKE]** and is resolved by M1.
+- **P1:** third-person camera driven by a decoupled look yaw (`P1LookController`): the camera
+  look is limited to a neck offset around `BodyYaw`, the body smoothly follows the look past a
+  threshold, and an explicit align action turns `BodyYaw` to the look. Movement and P2's sector
+  use `BodyYaw` only, never the camera direction. Spring arm with collision is required;
+  third-person camera peeking is a competitive exploit surface to plan for. Neck limit, follow
+  threshold and follow/align speeds are **[TUNING]**; the align input binding is
+  temporary/configurable and not a design decision.
 - **P2:** first-person camera at the standardized gameplay anchor (shoulder/upper chest),
   explicitly independent of cosmetic sensor placement **[LOCKED]**.
 - Keep the three states the concept calls for in §23.3 separate: **authoritative body

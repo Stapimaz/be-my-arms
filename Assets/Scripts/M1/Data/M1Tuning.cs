@@ -53,8 +53,19 @@ namespace BeMyArms.M1
         public float p1MouseSensitivity = 0.12f;
         public float gamepadYawSpeed = 220f;
         public float gamepadPitchSpeed = 160f;
-        [Tooltip("M1 default: P1 look drives BodyYaw (camera-locked). Free-look is a decision gate.")]
-        public bool p1FreeLook = false;
+
+        [Header("P1 look/body model (all TUNING)")]
+        [Tooltip("Max head/camera yaw offset from BodyYaw.")]
+        public float neckYawLimitDegrees = 80f;
+        [Tooltip("Look offset past which the body starts following the look.")]
+        public float bodyFollowThresholdDegrees = 50f;
+        [Tooltip("Degrees/second the body turns to follow the look when past the threshold.")]
+        public float bodyFollowSpeedDegreesPerSecond = 120f;
+        [Tooltip("Degrees/second the body turns for the explicit AlignBody action.")]
+        public float bodyAlignSpeedDegreesPerSecond = 540f;
+        [Tooltip("Temporary/configurable binding for AlignBody; not a design decision.")]
+        public bool alignBodyOnLeftMouse = true;
+        public UnityEngine.InputSystem.Key alignBodyKey = UnityEngine.InputSystem.Key.LeftAlt;
 
         [Header("P1 locomotion")]
         public float walkSpeed = 4.5f;

@@ -16,6 +16,8 @@ namespace BeMyArms.M1
         public bool Vault;
         public bool LightKick;
         public bool HeavyKick;
+        /// <summary>Explicit "align body to look" action. Binding is temporary/configurable.</summary>
+        public bool AlignBody;
     }
 
     /// <summary>P2 role command: aim, weapons and utility/hands (hands are M3+).</summary>

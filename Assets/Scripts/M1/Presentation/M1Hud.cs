@@ -10,6 +10,7 @@ namespace BeMyArms.M1
         public P2AimRig aim;
         public WeaponController weapon;
         public SharedBodyHealth health;
+        public P1LookController look;
         public float SectorHalfDegrees = 70f;
 
         GUIStyle _style;
@@ -32,19 +33,24 @@ namespace BeMyArms.M1
                 : "no weapon";
             float hp = health != null ? health.Health : 0f;
 
+            string lookLine = look != null
+                ? $"BodyYaw {look.BodyYaw:0.0}  LookYaw {look.LookYaw:0.0}  Neck {look.NeckOffsetDegrees:0.0}" +
+                  (look.IsAligning ? "  [ALIGNING]" : look.IsBodyFollowing ? "  [FOLLOW]" : "")
+                : $"BodyYaw {motor.BodyYaw:0.0}";
+
             string text =
                 "M1 Local Vertical Slice\n" +
                 $"Shared HP: {hp:0}\n" +
-                $"P1 state: {motor.State}\n" +
-                $"BodyYaw {motor.BodyYaw:0.0}  AimYaw {aim.DesiredWorldYaw:0.0}  " +
-                $"Offset {offset:0.0} / +/-{SectorHalfDegrees:0}{(aim.IsPinned ? "  [PINNED]" : "")}\n" +
+                $"P1 state: {motor.State}   {lookLine}\n" +
+                $"AimYaw {aim.DesiredWorldYaw:0.0}  Offset {offset:0.0} / +/-{SectorHalfDegrees:0}" +
+                (aim.IsPinned ? "  [SECTOR PINNED]" : "") + "\n" +
                 weaponLine + "\n" +
-                "\nP1: WASD move | mouse=BodyYaw | Shift sprint | Space jump | Q dodge | C slide\n" +
-                "     E vault | F light kick | V heavy kick | B test damage\n" +
+                "\nP1: WASD move (body-relative) | mouse=look | LMB/Alt=align body\n" +
+                "     Shift sprint | Space jump | Q dodge | C slide | E vault | F/V kicks | B damage\n" +
                 "P2: gamepad right stick aim | RT fire | X reload | Y swap | B knife";
 
-            GUI.Box(new Rect(8f, 8f, 560f, 150f), GUIContent.none);
-            GUI.Label(new Rect(16f, 12f, 546f, 140f), text, _style);
+            GUI.Box(new Rect(8f, 8f, 620f, 168f), GUIContent.none);
+            GUI.Label(new Rect(16f, 12f, 606f, 158f), text, _style);
 
             DrawSectorBar(offset);
         }
@@ -54,7 +60,7 @@ namespace BeMyArms.M1
             const float width = 260f;
             const float height = 12f;
             float x = 16f;
-            float y = 164f;
+            float y = 182f;
 
             GUI.Box(new Rect(x, y, width, height), GUIContent.none);
             GUI.Box(new Rect(x, y - 4f, 2f, height + 8f), GUIContent.none);

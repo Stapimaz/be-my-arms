@@ -72,10 +72,9 @@ document wins. If they conflict on **implementation order**, this roadmap wins.
 - Placeholder body: capsule for P1 plus a simple arm/chest proxy and a muzzle anchor.
   No real rig, no skins.
 - **P1:** movement plus explicit `BodyYaw` control.
-  - **Temporary prototype assumption:** P1 look input directly controls `BodyYaw`, and the
-    third-person camera follows that yaw. There is **no free-look yet**. This is a
-    throwaway simplification for M0 only and is not a product decision. Whether P1 keeps
-    a decoupled free-look camera is **[SPIKE]** and is revisited no later than M1.
+  - **Superseded assumption:** M0 used a temporary simplification where P1 look input directly
+    controlled `BodyYaw`. This was replaced in M1 by the decoupled look/body model (neck limit,
+    smooth body follow, explicit align) — see the M1 section and `TECHNICAL_PLAN.md` §4.
 - **P2:** independent first-person camera at the standardized shoulder anchor; world-stable
   yaw inside the firing sector (Aim Model C); free pitch.
 - One hitscan weapon: fire plus fire rate. Reload/swap optional.
@@ -152,6 +151,9 @@ Netcode for Entities remains isolated on branch `m0.5/nfe` and is not merged.
 
 - **P1:** walk, unlimited sprint, jump, directional dodge (cooldown, no invincibility
   frames), slide, vault, light kick, heavy kick.
+- **P1 look/body model:** camera/head look decoupled from `BodyYaw` within a neck-offset limit;
+  the body smoothly follows the look past a threshold; an explicit "align body to look" action;
+  WASD stays body-relative. All values are tuning; the align binding is temporary/configurable.
 - **P2:** shoulder-anchored first-person camera; sector-clamped aim; rifle, pistol and
   knife; fire, reload and swap; hitscan spread and recoil; can fire during every P1
   movement or attack state (accuracy penalty only, never a hard lockout).
@@ -172,11 +174,13 @@ Netcode for Entities remains isolated on branch `m0.5/nfe` and is not merged.
    gameplay entities are ECS-ready; if NGO, the simulation/presentation boundary is ready
    for a prediction layer).
 5. Tuning values can change without recompiling.
-6. The P1 free-look question is resolved and documented.
+6. The P1 look/body model is implemented and documented (decoupled look, neck limit, smooth
+   follow, explicit align; movement and P2's sector use `BodyYaw` only).
 
-**Outcome:** implemented and automatically verified. The human two-duo playtest gate
-(criterion 3) is **deferred and not passed**. P1 free-look is documented as camera-locked for M1
-and remains a decision gate. Details and limitations: `docs/M1_VERTICAL_SLICE.md`.
+**Outcome:** implemented and automatically verified. P1's look/body model is implemented
+(decoupled look, neck limit, smooth follow, explicit align). The human two-duo playtest gate
+(criterion 3) is **deferred and not passed** — comprehensive human playtesting moves to the
+alpha/beta stage. Details and limitations: `docs/M1_VERTICAL_SLICE.md`.
 
 ---
 
@@ -295,7 +299,7 @@ accessibility checklist passes.
 | Gate | Milestone | Question | Evidence required |
 |---|---|---|---|
 | Aim coupling | M1 playtest | Model A, B or C | Playtest notes from at least three duos |
-| P1 camera | M1 | Does P1 keep free-look, or is `BodyYaw` always camera-locked? | Playtest notes |
+| P1 look/body tuning | M1 model resolved; numbers are TUNING | Neck limit, follow threshold/speed, align speed | Tuning playtest at alpha/beta |
 | Netcode stack | M0.5 (decided) | NGO chosen | `docs/M05_NETCODE_BAKEOFF.md`; M2 confirms prediction/lag-comp |
 | Simulation customisation | M2 | Is a custom character controller / deterministic sim actually required? | Bandwidth, prediction error, stack constraints |
 | Disconnect policy | before M3/M4 | What happens to a body when one role disconnects mid-round? | Design decision consistent with concept §29 |

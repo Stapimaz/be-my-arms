@@ -117,6 +117,26 @@ P1 must never feel like “the WASD player while P2 gets the real game.” P1's 
 
 ---
 
+## 3.3 Look and Body Model — CURRENT DIRECTION
+
+P1's camera/head look direction is **decoupled from the body's facing (`BodyYaw`)**:
+
+- mouse / right-stick controls the camera look direction;
+- the camera can turn independently up to a **neck-offset limit** around `BodyYaw`;
+- when the look offset grows past a threshold, the **body smoothly turns to follow** the look;
+- P1 has an explicit **"align body to look"** action that turns `BodyYaw` to the look quickly but
+  smoothly;
+- WASD movement stays relative to **`BodyYaw`**, so looking around does not change movement axes.
+
+P2's firing sector is tied to **`BodyYaw`**, never to P1's camera/head direction. Looking around
+inside the neck limit therefore does not move P2's sector; the sector rotates only when the body
+turns — either by naturally following the look or via the align action.
+
+Neck-offset limit, follow threshold and follow/align speeds are **TUNING**. The align action's
+input binding is temporary/configurable and is **not** a design decision.
+
+---
+
 # 4. P2 Physical Identity
 
 ## 4.1 Separate Form — LOCKED
@@ -221,7 +241,8 @@ This is not part of the initial competitive core.
 ## 6.1 Aim Sector — CURRENT DIRECTION
 
 P2 cannot rotate infinitely around the body. P2's horizontal aim must stay within an allowed
-sector centered on P1's body-forward direction; P2 cannot aim outside that sector.
+sector centered on P1's body-forward direction (`BodyYaw`, not P1's camera/head direction — see
+§3.3); P2 cannot aim outside that sector.
 
 Draft prototype target:
 

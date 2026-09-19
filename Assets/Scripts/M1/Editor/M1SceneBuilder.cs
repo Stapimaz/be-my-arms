@@ -126,6 +126,7 @@ namespace BeMyArms.M1.EditorTools
             bodyRegion.owner = health;
 
             var motor = body.AddComponent<P1Motor>();
+            var look = body.AddComponent<P1LookController>();
             var aim = body.AddComponent<P2AimRig>();
             var weapon = body.AddComponent<WeaponController>();
             var p1Device = body.AddComponent<M1P1DeviceInputSource>();
@@ -157,8 +158,9 @@ namespace BeMyArms.M1.EditorTools
             p1Cam.rect = new Rect(0f, 0f, 0.5f, 1f);
             p1Cam.nearClipPlane = 0.1f;
             p1CameraGo.AddComponent<AudioListener>();
-            var p1Camera = p1CameraGo.AddComponent<P1ThirdPersonCamera>();
+            var p1Camera = p1CameraGo.AddComponent<M1P1Camera>();
             p1Camera.target = body.transform;
+            p1Camera.look = look;
             p1Camera.distance = tuning.p1CameraDistance;
             p1Camera.height = tuning.p1CameraHeight;
 
@@ -181,6 +183,7 @@ namespace BeMyArms.M1.EditorTools
 
             var root = body.AddComponent<M1BodyRoot>();
             root.tuning = tuning;
+            root.look = look;
             root.motor = motor;
             root.aim = aim;
             root.weapon = weapon;
@@ -195,6 +198,7 @@ namespace BeMyArms.M1.EditorTools
             var hudGo = new GameObject("M1_Hud");
             var hud = hudGo.AddComponent<M1Hud>();
             hud.motor = motor;
+            hud.look = look;
             hud.aim = aim;
             hud.weapon = weapon;
             hud.health = health;

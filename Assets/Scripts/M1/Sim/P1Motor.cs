@@ -35,8 +35,10 @@ namespace BeMyArms.M1
         public float HeavyKickDamage = 28f;
         public float KickRangeMeters = 2.4f;
 
-        public float BodyYaw { get; private set; }
+        public float BodyYaw => look != null ? look.BodyYaw : transform.eulerAngles.y;
         public MovementState State { get; private set; } = MovementState.Idle;
+
+        public P1LookController look;
 
         CharacterController _controller;
         float _verticalVelocity;
@@ -52,7 +54,6 @@ namespace BeMyArms.M1
         void Awake()
         {
             _controller = GetComponent<CharacterController>();
-            BodyYaw = transform.eulerAngles.y;
         }
 
         public void Configure(M1Tuning tuning)
@@ -83,10 +84,8 @@ namespace BeMyArms.M1
 
         public void Step(in P1Command cmd, float deltaTime)
         {
-            // BodyYaw is P1-only and always responsive, even mid-action.
-            BodyYaw = AimSector.NormalizeAngle(BodyYaw + cmd.LookYawDelta);
-            transform.rotation = Quaternion.Euler(0f, BodyYaw, 0f);
-
+            // BodyYaw is owned by P1LookController (decoupled look + follow + explicit align).
+            // This step only moves and performs melee; movement stays relative to BodyYaw.
             float now = Time.time;
 
             if (now < _dodgeEndTime) { ContinueDodge(deltaTime); return; }
