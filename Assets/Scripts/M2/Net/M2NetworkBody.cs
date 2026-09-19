@@ -42,7 +42,6 @@ namespace BeMyArms.M2
         public NetworkVariable<int> RejectedFires = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         public NetworkVariable<int> UnauthorizedInputs = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-        readonly M2RoleRegistry _roles = new M2RoleRegistry();
         int _bytesIn;
         int _bytesOut;
         readonly M2DelayQueue<M2P1Input> _p1Queue = new M2DelayQueue<M2P1Input>();
@@ -83,35 +82,11 @@ namespace BeMyArms.M2
             if (IsServer)
             {
                 State.Value = _sim.State;
-                NetworkManager.OnClientDisconnectCallback += OnClientDisconnected;
             }
         }
 
         public override void OnNetworkDespawn()
         {
-            if (IsServer && NetworkManager != null)
-                NetworkManager.OnClientDisconnectCallback -= OnClientDisconnected;
-        }
-
-        /// <summary>Client announces its identity; server binds the connection to a role.</summary>
-        [ServerRpc(RequireOwnership = false)]
-        public void RegisterServerRpc(string token, byte desiredRole, ServerRpcParams rpcParams = default)
-        {
-            ulong clientId = rpcParams.Receive.SenderClientId;
-            byte role = _roles.Assign(clientId, token, desiredRole, out ulong displaced);
-            if (displaced != ulong.MaxValue)
-            {
-                Debug.Log($"[M2] reclaim: role {(role == RoleP1 ? "P1" : "P2")} taken by client {clientId}; dropping stale client {displaced}");
-                if (NetworkManager != null) NetworkManager.DisconnectClient(displaced);
-            }
-            Debug.Log($"[M2] assigned client {clientId} -> {(role == RoleP1 ? "P1" : role == RoleP2 ? "P2" : "spectator")}{(string.IsNullOrEmpty(token) ? "" : $" (token '{token}')")}");
-        }
-
-        void OnClientDisconnected(ulong clientId)
-        {
-            byte role = _roles.Release(clientId);
-            if (role != RoleNone)
-                Debug.Log($"[M2] client {clientId} disconnected from role {(role == RoleP1 ? "P1" : "P2")} (role freed)");
         }
 
         [ServerRpc(RequireOwnership = false)]
@@ -130,7 +105,8 @@ namespace BeMyArms.M2
             _p2Queue.Enqueue(_serverTime, InputDelaySeconds, input);
         }
 
-        bool HasRole(ulong clientId, byte role) => _roles.HasRole(clientId, role);
+        bool HasRole(ulong clientId, byte role)
+            => M2RoleService.Instance != null && M2RoleService.Instance.HasRole(clientId, role);
 
         const float FixedDeltaTime = 1f / 60f;
         float _accumulator;

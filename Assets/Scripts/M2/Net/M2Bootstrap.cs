@@ -47,11 +47,23 @@ namespace BeMyArms.M2
 
             if (Role != M2Role.Client) manager.OnServerStarted += OnServerStarted;
 
+            var roleService = manager.gameObject.GetComponent<M2RoleService>();
+            if (roleService == null) roleService = manager.gameObject.AddComponent<M2RoleService>();
+            roleService.InstallServerHooks();
+
             switch (Role)
             {
-                case M2Role.Server: manager.StartServer(); break;
-                case M2Role.Client: manager.StartClient(); break;
-                default: manager.StartHost(); break;
+                case M2Role.Server:
+                    manager.StartServer();
+                    break;
+                case M2Role.Client:
+                    manager.NetworkConfig.ConnectionData = M2RoleService.Encode(M2Config.ClientToken, M2Config.ClientRole);
+                    manager.StartClient();
+                    break;
+                default:
+                    manager.StartHost();
+                    roleService.Registry.Assign(manager.LocalClientId, M2Config.ClientToken, M2Config.ClientRole, out _);
+                    break;
             }
 
             Debug.Log($"[M2] bootstrap role={Role} position={(M2Config.ClientRole == M2NetworkBody.RoleP1 ? "P1" : "P2")} token='{M2Config.ClientToken}' port={Port} delay={M2Config.OneWayDelaySeconds * 1000:0}ms loss={M2Config.LossPercent:0}% auto={M2Config.AutoDrive}");

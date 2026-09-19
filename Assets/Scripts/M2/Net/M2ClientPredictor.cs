@@ -69,6 +69,8 @@ namespace BeMyArms.M2
         float _snapMax;
         float _lastAim;
         float _nextAimLog;
+        float _smoothedBodyYaw;
+        bool _hasSmoothedYaw;
 
         public M2BodyState Predicted => _reconciler != null ? _reconciler.Predicted : default;
         public float LocalAimYaw { get; private set; }
@@ -106,9 +108,8 @@ namespace BeMyArms.M2
 
             if (!_registered)
             {
-                Body.RegisterServerRpc(RoleToken, DesiredRole);
                 _registered = true;
-                Debug.Log($"[M2] registered client with role {(Role == M2NetworkBody.RoleP1 ? "P1" : "P2")} token '{RoleToken}'");
+                Debug.Log($"[M2] client active as {(Role == M2NetworkBody.RoleP1 ? "P1" : "P2")} (role authorized at connection approval)");
             }
 
             if (Time.time < _nextSendTime) { ApplyPresentation(); return; }
@@ -183,9 +184,25 @@ namespace BeMyArms.M2
         {
             M2P2Input p2 = BuildP2();
             p2.Sequence = ++_p2Sequence;
-            float bodyYaw = Body.State.Value.BodyYaw;
+
+            // Smooth the body-yaw reference so the sector boundary does not jump when the server
+            // corrects the body orientation; apply a small inner margin so the sent aim stays legal.
+            float serverBodyYaw = Body.State.Value.BodyYaw;
+            if (!_hasSmoothedYaw)
+            {
+                _smoothedBodyYaw = serverBodyYaw;
+                _hasSmoothedYaw = true;
+            }
+            else
+            {
+                float k = 1f - Mathf.Exp(-12f * Time.deltaTime);
+                _smoothedBodyYaw = Mathf.LerpAngle(_smoothedBodyYaw, serverBodyYaw, k);
+            }
+            float bodyYaw = _smoothedBodyYaw;
+            float innerHalf = Mathf.Max(1f, SectorHalfDegrees - 1f);
+
             float rawAim = p2.AimYaw;
-            p2.AimYaw = M2BodySim.ClampToSector(p2.AimYaw, bodyYaw, SectorHalfDegrees);
+            p2.AimYaw = M2BodySim.ClampToSector(p2.AimYaw, bodyYaw, innerHalf);
 
             // P2 camera correction: how far the shared body's sector pulled the aim this frame.
             float correction = Mathf.Abs(M2BodySim.Normalize(p2.AimYaw - rawAim));
