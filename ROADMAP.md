@@ -36,8 +36,8 @@ document wins. If they conflict on **implementation order**, this roadmap wins.
    proven requirement forces them.
 3. **Keep gameplay code modular and data-driven.** Tuning lives in data assets. Input,
    simulation and presentation stay separable — that is as far as early structure goes.
-4. **Netcode choice is provisional** until the bake-off and the networked spike produce
-   numbers. Do not write netcode-bound code before then.
+4. **Netcode is decided.** M0.5 chose Netcode for GameObjects; M2 must prove prediction,
+   reconciliation and lag compensation on it (see `docs/M05_NETCODE_BAKEOFF.md`).
 5. **Keep the architecture portable** to future mobile/console without optimizing the PC
    game around them.
 6. **Placeholder assets are temporary.** Greybox geometry, capsule bodies, proxy props and
@@ -54,7 +54,7 @@ document wins. If they conflict on **implementation order**, this roadmap wins.
 | Milestone | Status |
 |---|---|
 | **M0** — local shared-body spike | Implemented; automated verification passing (12 EditMode, 2 PlayMode); single-tester spot-check confirmed the Model C coupling; the two-human feel playtest was intentionally deferred to the M1 gate |
-| **M0.5** — netcode bake-off | In progress — candidate toolchains being installed (Netcode for GameObjects + Multiplayer Tools present); Netcode for Entities pending |
+| **M0.5** — netcode bake-off | **Complete — chose Netcode for GameObjects** with a custom prediction/lag-comp layer; see `docs/M05_NETCODE_BAKEOFF.md`. NfE isolated on branch `m0.5/nfe` |
 | **M1** — local vertical slice | Not started |
 | **M2** — networked spike | Not started |
 | **M3** — PvP round loop | Not started |
@@ -137,6 +137,10 @@ are temporary development assets, not the intended final presentation.
 2. A written recommendation with the numbers above and a clear go/no-go.
 3. **Timebox:** 3–5 days. If a stack cannot demonstrate the minimum loop inside the box,
    that is itself a finding.
+
+**Outcome:** **Netcode for GameObjects** selected, with an explicitly budgeted custom
+prediction/lag-compensation layer. Full record and rationale: `docs/M05_NETCODE_BAKEOFF.md`.
+Netcode for Entities remains isolated on branch `m0.5/nfe` and is not merged.
 
 ---
 
@@ -288,7 +292,7 @@ accessibility checklist passes.
 |---|---|---|---|
 | Aim coupling | M1 playtest | Model A, B or C | Playtest notes from at least three duos |
 | P1 camera | M1 | Does P1 keep free-look, or is `BodyYaw` always camera-locked? | Playtest notes |
-| Netcode stack | M0.5, confirmed M2 | NfE or NGO | Bake-off numbers plus networked spike results |
+| Netcode stack | M0.5 (decided) | NGO chosen | `docs/M05_NETCODE_BAKEOFF.md`; M2 confirms prediction/lag-comp |
 | Simulation customisation | M2 | Is a custom character controller / deterministic sim actually required? | Bandwidth, prediction error, stack constraints |
 | Disconnect policy | before M3/M4 | What happens to a body when one role disconnects mid-round? | Design decision consistent with concept §29 |
 

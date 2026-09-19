@@ -107,14 +107,13 @@ dependency.
 
 Milestone-gated additions (see `ROADMAP.md`):
 
-- **M0.5 bake-off (in progress):** `com.unity.netcode.gameobjects` 2.13.2 and
-  `com.unity.multiplayer.tools` 2.2.12 are installed for the first candidate. Netcode for
-  Entities will be added for the second candidate; the losing stack is removed after the
-  decision.
-- Unity Transport — **M0.5/M2** with the chosen stack (pulled in as a dependency).
+- **Chosen netcode (M0.5):** `com.unity.netcode.gameobjects` 2.13.2 and
+  `com.unity.multiplayer.tools` 2.2.12. Netcode for Entities was rejected and removed from
+  `main`; it remains isolated on branch `m0.5/nfe`. Decision record:
+  `docs/M05_NETCODE_BAKEOFF.md`.
+- Unity Transport — pulled in as a dependency of NGO.
 - Multiplayer Services SDK (sessions/lobby/matchmaking) — **M4**.
 
 **Bake-off isolation:** Netcode for GameObjects and Netcode for Entities define colliding
 assembly names (`Unity.Netcode.Runtime`, `Unity.Netcode.Editor`), so they cannot be installed in
-the same project. The M0.5 bake-off must evaluate them one at a time — Netcode for Entities on a
-separate branch or project.
+the same project. This is why the rejected candidate lives on a separate branch.

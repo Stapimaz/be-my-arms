@@ -1,6 +1,6 @@
 # Be My Arms — Technical Plan
 
-**Status:** Approved working technical plan; network stack not yet selected
+**Status:** Approved working technical plan; netcode decided — Netcode for GameObjects (M0.5)
 **Source of truth for game design:** `GAME_CONCEPT.md`
 **Companion document:** `ROADMAP.md`
 **Current production project:** `C:\Users\stapi\GameDev\be-my-arms`
@@ -239,14 +239,13 @@ differentiating strength (rich two-layer animation, IK and skin mounting) in the
 weakest area. NGO gives animation authoring for free but means building and maintaining a
 competitive prediction and lag-comp layer, which must be budgeted explicitly.
 
-**No stack is selected yet.** The M0.5 bake-off decides between the two and M2 confirms the
-result; the documentation records no winner before then, and no permanent netcode-bound code is
-written until the choice is made. The bake-off is judged on the criteria the M2 spike then
-verifies: two role-tagged input domains on one entity, prediction quality for the P1-owned
-portion, how much prediction and lag compensation the stack provides versus what must be
-written, CPU and bandwidth, and the cost of the animation/IK and skin-mounting work. Note that
-neither stack removes the need for a custom kinematic character controller; NfE would remove the
-need to write snapshot and rollback plumbing.
+**Decision (M0.5): Netcode for GameObjects.** The full record is
+`docs/M05_NETCODE_BAKEOFF.md`. NGO integrates natively with the GameObject/Mecanim pipeline that
+carries the two-layer rig, IK and P1×P2 skin mounting, and the player count is tiny, so NfE's
+scaling advantage buys nothing here; the cost is that the project must build prediction,
+reconciliation and lag compensation itself. Netcode for Entities is not used and remains
+isolated on branch `m0.5/nfe`. M2 must prove the custom prediction/lag-comp layer on NGO; neither
+stack removes the need for a custom kinematic character controller.
 
 ---
 
@@ -324,7 +323,6 @@ need to write snapshot and rollback plumbing.
 
 ## 12. Open technical questions — do not finalize silently
 
-- Netcode stack: NfE versus NGO, pending the M0.5 bake-off and M2 confirmation.
 - Whether a custom character controller or deterministic simulation is actually required.
 - Final server tick rate and lag-comp window.
 - How P2's view of body motion is reproduced (interpolation versus input relay).
