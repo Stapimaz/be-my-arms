@@ -75,6 +75,11 @@ transport-level behaviour that prevents the *ideal immediate* reconnect at the M
   accepting new connections. This is the concrete UTP/NGO connection-lifecycle behaviour to
   harden in M3.
 
+**Classified (M3): package-level, not our harness.** A minimal standalone NGO/UTP reproduction with
+no game code (no body, bots, tokens, approval, scene sync, conditioner or simulator) shows the same
+behaviour. Evidence, versions and the preserved repro: `docs/NETWORKING_PROBE.md`. It is tracked as
+a non-blocking networking-hardening item.
+
 **Safe workaround adopted:** role ownership is decided at **connection approval** and is
 token-based; a role is never left ownerless (it goes to a bot), and reclaim/duplicate-role handling
 is unit-tested. The architecture is correct and proven on graceful disconnect; the force-kill
