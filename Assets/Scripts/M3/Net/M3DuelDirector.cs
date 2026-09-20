@@ -311,13 +311,13 @@ namespace BeMyArms.M3
                     float yaw;
                     if (mapSpawns != null && mapSpawns.TryGetBodyPose(team, i, out position, out yaw))
                     {
-                        body.ServerResetRound(position.x, position.z, yaw);
+                        body.ServerResetRound(position.x, position.y, position.z, yaw);
                     }
                     else
                     {
                         float offset = (i - (BodiesPerTeam - 1) * 0.5f) * 4f;
                         float z = team == 0 ? -10f : 10f;
-                        body.ServerResetRound(offset, z, team == 0 ? 0f : 180f);
+                        body.ServerResetRound(offset, 0f, z, team == 0 ? 0f : 180f);
                     }
                 }
             }

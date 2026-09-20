@@ -1,9 +1,11 @@
 # Pre-M8 — Playable Private-Match Integration (checkpoint)
 
-**Status:** **Complete as a playable product integration checkpoint.** The normal Be My Arms client
-is directly playable through a real private-match flow with no command line and no separate test
-mode. Built on the existing M3/M4 match loop, the M7 arenas, the M5/M6 rig and cosmetics, and the
-existing server-authoritative systems.
+**Status:** **Human-playability FAILED — recovery pass complete, awaiting human acceptance.** The
+first real human playtest showed the private-match flow was not yet controllable: P1 camera/look,
+P2 first-person presentation, vertical aim, traversal and the in-match menu were all wrong or
+missing. A recovery pass addressed those on the real networked product (see §11). Automated tests
+and screenshots are green, but the checkpoint is **not accepted** until a human plays the rebuilt
+player and confirms the feel.
 **Build:** `Builds/M7/BeMyArms.exe` (development Windows player).
 
 ---
@@ -112,3 +114,47 @@ private-match flow headlessly for CI; it is not a separate game mode.
 M8 should build its UI/UX and optimization pass on this flow and screens, keep the allocator seam
 for production hosting, and replace the placeholder audio/VFX and procedural animation with
 production content behind the unchanged rig contract.
+
+## 11. Recovery pass (2026-09-20) — awaiting human acceptance
+
+The first human playtest failed the checkpoint. The recovery kept the server-authoritative /
+predicted architecture and extended it; it did **not** add a second gameplay stack.
+
+**Fixed systems**
+
+- **P1 look/camera.** Mouse now drives `LookYaw` + a vertical `LookPitch` in the shared sim; a real
+  third-person camera orbits the **look** yaw (not BodyYaw) with pitch and a deterministic spring
+  arm that keeps it inside the arena. Cursor is captured during live play and released for UI.
+- **Movement set restored into the networked sim.** `M2BodySim` gained walk, unlimited sprint,
+  jump, directional dodge, slide, vault and light/heavy kicks, with the action state carried in the
+  replicated state so prediction/reconciliation replay exactly. P1 input carries the full set and
+  the server resolves kicks authoritatively.
+- **Vertical traversal.** The flat XZ model was replaced by a deterministic 3D model
+  (`M2MovementCollision`): floors, gravity/grounding, steps, walkable ramps/slopes, walls, low
+  cover and catwalks, built identically on server and client from the arena hierarchy. The central
+  ramp is passable.
+- **P2 first person.** A local, presentation-only viewmodel (weapon + hands) rides the
+  `P2CameraAnchor`; the own combined body is layer-excluded from the FP camera so it no longer
+  blocks the view. Crosshair readability improved; recoil + muzzle flash on fire.
+- **Vertical aim agrees with shooting.** P2's authoritative hit ray is built from yaw **and** pitch
+  and tested against the enemy's vertical extent, with wall/solid blocking.
+- **In-match ESC menu.** `M7PauseMenu` (Resume / Settings / Leave Match / Quit) frees the cursor and
+  stops gameplay input; it does not pause the dedicated-server match.
+- **Weapon visual.** The in-house box/cylinder rifle was replaced at the mount/viewmodel seams by a
+  **CC0 Kenney Blaster Kit** blaster (`Assets/ThirdParty/KenneyBlasterKit`, license + README kept in
+  the repo). The old placeholder rifle remains as a fallback.
+- **Bot discipline.** Bots now fire in bursts with distance-scaled aim error and a short post-spawn
+  damage grace exists, so a body is not deleted within a second of the live phase starting.
+
+**Visual QA evidence** (captured through the runtime QA loop, `Builds/M7/QA2/`):
+`p1_live.png`, `p2_neutral.png`, `p2_firing.png`, `p2_pause_menu.png`.
+
+**Known remaining limitations (not addressed here)**
+
+- Character art is still the blocky segment rig; the weapon is a placeholder. Readability is the
+  bar for this pass, not final art.
+- Bot combat is now survivable but still tuned permissively; it is not a balance pass.
+- Buy/utility for a human P2 is via the buy panel and G/T/Y; there is no in-world affordance yet.
+- Duel/2v2 are the only modes; no online backend.
+- A re-entered lobby after returning to the menu was seen to leave stale duplicated bodies in one
+  scripted QA session; a fresh launch is clean and a normal single match is unaffected.

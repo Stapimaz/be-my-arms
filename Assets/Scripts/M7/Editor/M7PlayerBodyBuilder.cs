@@ -21,6 +21,9 @@ namespace BeMyArms.M7.EditorTools
         const string P1SkinPath = "Assets/Art/Characters/P1/Prefabs/BMA_P1_Ranger.prefab";
         const string P2SkinPath = "Assets/Art/Characters/P2/Prefabs/BMA_P2_Scout.prefab";
         const string RiflePath = "Assets/Art/Weapons/Prefabs/BMA_Weapon_Rifle.prefab";
+        // Current production-quality placeholder (Kenney Blaster Kit, CC0). Falls back to the
+        // in-house placeholder rifle when the third-party asset is absent.
+        const string KenneyRiflePath = "Assets/Art/Weapons/Prefabs/BMA_Weapon_Rifle_Kenney.prefab";
 
         public static void EnsurePrefabs(out GameObject bodyPrefab, out GameObject directorPrefab)
         {
@@ -48,7 +51,8 @@ namespace BeMyArms.M7.EditorTools
             M5AssembledBody assembled = M5MountAssembler.Assemble(rigInstance, p1Skin, p2Skin);
             if (!assembled.IsValid) Debug.LogWarning("[M7] player body rig invalid: " + assembled.Report);
 
-            var riflePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(RiflePath);
+            var riflePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(KenneyRiflePath);
+            if (riflePrefab == null) riflePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(RiflePath);
             var rifle = (GameObject)Object.Instantiate(riflePrefab);
             rifle.name = "Weapon";
             Transform weaponAnchor = Find(rigInstance.transform, "WeaponAnchor");

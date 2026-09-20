@@ -17,13 +17,25 @@ namespace BeMyArms.M3
         public const int MaxHealthDefault = 100;
 
         [Header("Sim tuning (mirrors M2)")]
-        public float MoveSpeed = 5f;
+        public float WalkSpeed = 4.5f;
+        public float SprintSpeed = 7f;
+        public float JumpSpeed = 7f;
+        public float Gravity = -20f;
         public float NeckYawLimitDegrees = 80f;
         public float BodyFollowThresholdDegrees = 50f;
         public float BodyFollowSpeedDegreesPerSecond = 120f;
         public float BodyAlignSpeedDegreesPerSecond = 540f;
         public float SectorHalfDegrees = 70f;
         public float MaxPitchDegrees = 80f;
+
+        [Header("Melee (server-authoritative)")]
+        public float LightKickDamage = 12f;
+        public float HeavyKickDamage = 28f;
+        public float KickRangeMeters = 2.4f;
+
+        [Header("Round pacing")]
+        [Tooltip("Brief post-spawn damage grace so a body is not deleted the instant the live phase starts.")]
+        public float SpawnGraceSeconds = 2.5f;
 
         [Header("Networked combat")]
         public float InputDelaySeconds = 0.05f;
@@ -52,7 +64,6 @@ namespace BeMyArms.M3
 
         M2BodySim _sim;
         M2WeaponState _weapon;
-        M3MovementCollision _collision;
         M2LagCompensation[] _lag = Array.Empty<M2LagCompensation>();
         readonly M2DelayQueue<M2P1Input> _p1Queue = new M2DelayQueue<M2P1Input>();
         readonly M2DelayQueue<M2P2Input> _p2Queue = new M2DelayQueue<M2P2Input>();
@@ -63,9 +74,12 @@ namespace BeMyArms.M3
         M3DuelBody[] _enemies = Array.Empty<M3DuelBody>();
 
         M3WeaponId _activeWeapon = M3WeaponId.Pistol;
+        M2MovementState _prevMovementState = M2MovementState.Idle;
+        float _spawnGraceRemaining;
         float _blindRemaining;
         float _damageRemainder;
         float _botClock;
+        float _botP2Clock;
         float _botStuckTime;
         float _botStrafeDir = 1f;
         float _lastBotX;
@@ -86,7 +100,10 @@ namespace BeMyArms.M3
 
             _sim = new M2BodySim
             {
-                MoveSpeed = MoveSpeed,
+                WalkSpeed = WalkSpeed,
+                SprintSpeed = SprintSpeed,
+                JumpSpeed = JumpSpeed,
+                Gravity = Gravity,
                 NeckYawLimitDegrees = NeckYawLimitDegrees,
                 BodyFollowThresholdDegrees = BodyFollowThresholdDegrees,
                 BodyFollowSpeedDegreesPerSecond = BodyFollowSpeedDegreesPerSecond,
@@ -98,8 +115,7 @@ namespace BeMyArms.M3
             _sim.Initialize(0f, 0f, 0f);
 
             M3MapSpawns map = FindAnyObjectByType<M3MapSpawns>();
-            if (map != null) _collision = map.BuildCollision();
-            _sim.MovementConstraint = ClampToArena;
+            if (map != null) _sim.Collision = map.BuildCollision();
 
             _weapon = new M2WeaponState();
             _p1Queue.LossPercent = LossPercent;
@@ -179,17 +195,6 @@ namespace BeMyArms.M3
         public bool IsSlotBot(int slot)
             => M3DuelRoleService.Instance != null && M3DuelRoleService.Instance.IsBot(slot);
 
-        /// <summary>Authoritative arena collision, applied after every P1 step (server and replay).</summary>
-        void ClampToArena(M2BodySim sim)
-        {
-            if (_collision == null || _collision.IsEmpty) return;
-            float x = sim.State.PosX;
-            float z = sim.State.PosZ;
-            _collision.Resolve(ref x, ref z);
-            sim.State.PosX = x;
-            sim.State.PosZ = z;
-        }
-
         // ---- Server tick ----
 
         void Update()
@@ -208,6 +213,8 @@ namespace BeMyArms.M3
         void ServerTick(float dt)
         {
             _serverTime += dt;
+
+            if (_spawnGraceRemaining > 0f) _spawnGraceRemaining = Mathf.Max(0f, _spawnGraceRemaining - dt);
 
             if (_blindRemaining > 0f)
             {
@@ -247,10 +254,51 @@ namespace BeMyArms.M3
             Ammo.Value = _weapon.Ammo;
             Reloading.Value = _weapon.IsReloading;
 
+            // A kick that just started this tick resolves its authoritative hit once.
+            M2MovementState movement = (M2MovementState)_sim.State.MovementState;
+            if (movement != _prevMovementState &&
+                (movement == M2MovementState.KickLight || movement == M2MovementState.KickHeavy))
+                ResolveKick(movement);
+            _prevMovementState = movement;
+
             State.Value = _sim.State;
 
-            transform.position = new Vector3(_sim.State.PosX, 0f, _sim.State.PosZ);
+            transform.position = new Vector3(_sim.State.PosX, _sim.State.PosY, _sim.State.PosZ);
             transform.rotation = Quaternion.Euler(0f, _sim.State.BodyYaw, 0f);
+        }
+
+        /// <summary>Server-only: a started kick hits the nearest enemy in front within range.</summary>
+        void ResolveKick(M2MovementState kind)
+        {
+            if (_director == null) return;
+            float damage = kind == M2MovementState.KickHeavy ? HeavyKickDamage : LightKickDamage;
+            float range = KickRangeMeters + 0.4f;
+
+            float rad = _sim.State.BodyYaw * Mathf.Deg2Rad;
+            float fx = Mathf.Sin(rad), fz = Mathf.Cos(rad);
+            float feet = _sim.State.PosY;
+
+            M3DuelBody best = null;
+            float bestForward = float.MaxValue;
+            for (int i = 0; i < _enemies.Length; i++)
+            {
+                M3DuelBody enemy = _enemies[i];
+                if (enemy == null || !enemy.Alive.Value) continue;
+                M2BodyState es = enemy.State.Value;
+
+                float toX = es.PosX - _sim.State.PosX;
+                float toZ = es.PosZ - _sim.State.PosZ;
+                float forward = toX * fx + toZ * fz;
+                float lateral = Mathf.Abs(toX * fz - toZ * fx);
+                if (forward <= 0f || forward > range || lateral > 0.9f) continue;
+
+                // Arms reach the torso, not the legs or head.
+                if (es.PosY + 2.0f < feet || es.PosY > feet + 1.9f) continue;
+
+                if (forward < bestForward) { bestForward = forward; best = enemy; }
+            }
+
+            if (best != null) _director.ServerApplyDamage(best, damage, this);
         }
 
         void ProcessP2(in M2P2Input input)
@@ -279,7 +327,17 @@ namespace BeMyArms.M3
             }
 
             M3WeaponStats stats = M3Loadouts.Stats(_activeWeapon);
-            Vector3 dir = new Vector3(Mathf.Sin(input.AimYaw * Mathf.Deg2Rad), 0f, Mathf.Cos(input.AimYaw * Mathf.Deg2Rad));
+
+            // Vertical aim must agree with the authoritative hit ray: build the direction from BOTH
+            // the (sector-legal) yaw and the pitch, and test it against the enemy's vertical extent.
+            float eye = _sim.State.PosY + 1.45f;
+            Vector3 origin = new Vector3(_sim.State.PosX, eye, _sim.State.PosZ);
+            Vector3 dir = Quaternion.Euler(input.AimPitch, input.AimYaw, 0f) * Vector3.forward;
+
+            float wallDistance = float.MaxValue;
+            bool wallBlocked = _sim.Collision != null &&
+                _sim.Collision.RaycastSolids(origin.x, origin.y, origin.z, dir.x, dir.y, dir.z,
+                    stats.RangeMeters, out wallDistance);
 
             M3DuelBody bestTarget = null;
             float bestForward = float.MaxValue;
@@ -290,12 +348,11 @@ namespace BeMyArms.M3
                 if (enemy == null || !enemy.Alive.Value) continue;
                 if (!_lag[i].TryRewind(_serverTime - LagRewindSeconds, out _, out float ex, out float ez)) continue;
 
-                float toX = ex - _sim.State.PosX;
-                float toZ = ez - _sim.State.PosZ;
-                float forward = toX * dir.x + toZ * dir.z;
-                float lateral = Mathf.Abs(toX * dir.z - toZ * dir.x);
-                bool hit = forward > 0f && forward <= stats.RangeMeters && lateral <= TargetRadius;
-                if (hit && forward < bestForward)
+                float enemyFeet = enemy.State.Value.PosY;
+                float forward = RaySegmentDistance(origin, dir, ex, enemyFeet, ez, 1.8f, stats.RangeMeters, out float lateral);
+                if (lateral > TargetRadius + 0.15f || forward <= 0f) continue;
+                if (wallBlocked && wallDistance < forward) continue;
+                if (forward < bestForward)
                 {
                     bestForward = forward;
                     bestTarget = enemy;
@@ -304,17 +361,39 @@ namespace BeMyArms.M3
                 }
             }
 
-            if (bestTarget != null)
+            if (bestTarget != null && (_director == null || !_director.Utility.BlocksLine(_serverTime, _sim.State.PosX, _sim.State.PosZ, bestX, bestZ)))
             {
-                bool blocked = _director != null && _director.Utility.BlocksLine(_serverTime, _sim.State.PosX, _sim.State.PosZ, bestX, bestZ);
-                if (!blocked)
-                {
-                    _validatedHits++;
-                    _director.ServerApplyDamage(bestTarget, stats.Damage, this);
-                }
+                _validatedHits++;
+                _director.ServerApplyDamage(bestTarget, stats.Damage, this);
             }
 
             _sim.ApplyP2(in input);
+        }
+
+        /// <summary>
+        /// Closest approach between a (normalised) ray and an enemy's vertical body segment, sampled
+        /// along the segment. Returns the forward distance and the lateral miss distance.
+        /// </summary>
+        static float RaySegmentDistance(Vector3 origin, Vector3 dir, float cx, float feet, float cz,
+            float height, float range, out float lateral)
+        {
+            const int samples = 8;
+            float bestForward = -1f;
+            lateral = float.MaxValue;
+            for (int s = 0; s <= samples; s++)
+            {
+                float y = feet + height * (s / (float)samples);
+                Vector3 p = new Vector3(cx, y, cz);
+                float t = Vector3.Dot(p - origin, dir);
+                if (t <= 0f || t > range) continue;
+                float miss = Vector3.Distance(origin + dir * t, p);
+                if (miss < lateral)
+                {
+                    lateral = miss;
+                    bestForward = t;
+                }
+            }
+            return bestForward;
         }
 
         /// <summary>Server-only: apply damage from a validated hit (or grenade/zone). Discrete hit
@@ -322,6 +401,7 @@ namespace BeMyArms.M3
         public void ServerTakeDamage(float damage, M3DuelBody attacker)
         {
             if (!IsServer || !Alive.Value || damage <= 0f) return;
+            if (_spawnGraceRemaining > 0f) return; // brief post-spawn protection
             _damageRemainder += damage;
             int amount = Mathf.FloorToInt(_damageRemainder);
             if (amount <= 0) return;
@@ -398,11 +478,12 @@ namespace BeMyArms.M3
         }
 
         /// <summary>Server-only: full reset at the start of a round, including economy.</summary>
-        public void ServerResetRound(float x, float z, float yaw)
+        public void ServerResetRound(float x, float y, float z, float yaw)
         {
             if (!IsServer) return;
-            _sim.Initialize(yaw, x, z);
+            _sim.Initialize(yaw, x, z, y);
             _sim.State.Health = MaxHealthDefault;
+            _spawnGraceRemaining = SpawnGraceSeconds;
             _blindRemaining = 0f;
             _damageRemainder = 0f;
             BlindRemaining.Value = 0f;
@@ -416,7 +497,7 @@ namespace BeMyArms.M3
             _p1Queue.Clear();
             _p2Queue.Clear();
             State.Value = _sim.State;
-            transform.position = new Vector3(x, 0f, z);
+            transform.position = new Vector3(x, y, z);
             transform.rotation = Quaternion.Euler(0f, yaw, 0f);
         }
 
@@ -466,6 +547,8 @@ namespace BeMyArms.M3
             bool advance = distance > 10f;
             input.MoveZ = _botStuckTime > 0f ? 0f : (advance ? 1f : 0.35f);
             input.MoveX = _botStuckTime > 0f ? _botStrafeDir : Mathf.Sin(_botClock * 0.7f) * (distance < 12f ? 0.9f : 0.25f);
+            input.Jump = _botStuckTime > 0.3f; // hop over low cover when progress stalls
+            input.Sprint = distance > 14f;
             _botClock += dt;
             return input;
         }
@@ -479,7 +562,15 @@ namespace BeMyArms.M3
             float dx = target.State.Value.PosX - _sim.State.PosX;
             float dz = target.State.Value.PosZ - _sim.State.PosZ;
             input.AimYaw = Mathf.Atan2(dx, dz) * Mathf.Rad2Deg;
-            input.Fire = true;
+
+            // Readable bot discipline: distance-scaled aim error and burst fire, so a stationary
+            // target is not deleted the instant the live phase starts (the player must still use
+            // cover and movement, but has a fair chance to react).
+            _botP2Clock += 1f / 60f;
+            float error = 1.2f + distance * 0.22f;
+            input.AimYaw += Mathf.Sin(_botP2Clock * 1.7f) * error;
+            input.AimPitch += Mathf.Sin(_botP2Clock * 1.1f + 1.3f) * error * 0.5f;
+            input.Fire = (_botP2Clock % 1.5f) < 0.85f;
             input.Reload = _weapon.Ammo <= 0;
 
             // Occasional utility through the normal P2 authority path.

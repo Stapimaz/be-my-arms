@@ -12,6 +12,9 @@ namespace BeMyArms.M3
     /// keeps aim local (Model C). It presents every body from replicated state and can auto-drive
     /// both roles for headless multi-process runs. Only the local player's body sends inputs; the
     /// local slot is assigned by the server (direct mode or matchmaker).
+    ///
+    /// Camera/viewmodel/cursor presentation is owned by the M7 layer (M7LocalPlayer); this component
+    /// exposes the predicted state and local aim/look so presentation stays decoupled from netcode.
     /// </summary>
     public class M3DuelClient : NetworkBehaviour
     {
@@ -23,7 +26,10 @@ namespace BeMyArms.M3
         public Transform Presentation;
 
         [Header("Tuning (must match the server body)")]
-        public float MoveSpeed = 5f;
+        public float WalkSpeed = 4.5f;
+        public float SprintSpeed = 7f;
+        public float JumpSpeed = 7f;
+        public float Gravity = -20f;
         public float NeckYawLimitDegrees = 80f;
         public float BodyFollowThresholdDegrees = 50f;
         public float BodyFollowSpeedDegreesPerSecond = 120f;
@@ -42,11 +48,49 @@ namespace BeMyArms.M3
         public float LocalAimYaw { get; private set; }
         public float LocalAimPitch { get; private set; }
 
+        public M3DuelBody Body => _body;
+        public bool IsLocalOwnBody => IsOwnBody;
+        public int LocalRoleIndex => EffectiveRole;
+
+        /// <summary>State the local camera/presentation should follow (predicted for local P1).</summary>
+        public M2BodyState ViewState
+        {
+            get
+            {
+                if (_body == null || !_body.IsSpawned) return default;
+                return IsOwnBody && EffectiveRole == 0 ? _reconciler.Predicted : _body.State.Value;
+            }
+        }
+
+        /// <summary>Decoupled look yaw for the local P1 camera (predicted).</summary>
+        public float LocalLookYaw
+        {
+            get
+            {
+                if (IsOwnBody && EffectiveRole == 0) return _predictSim.State.LookYaw;
+                if (_body != null && _body.IsSpawned) return _body.State.Value.LookYaw;
+                return 0f;
+            }
+        }
+
+        /// <summary>Decoupled look pitch for the local P1 camera (predicted).</summary>
+        public float LocalLookPitch
+        {
+            get
+            {
+                if (IsOwnBody && EffectiveRole == 0) return _predictSim.State.LookPitch;
+                if (_body != null && _body.IsSpawned) return _body.State.Value.LookPitch;
+                return 0f;
+            }
+        }
+
+        /// <summary>Mouse/keyboard gameplay input is only live while the cursor is captured.</summary>
+        public bool GameplayInputActive => Cursor.lockState == CursorLockMode.Locked;
+
         M3DuelBody _body;
         M3DuelDirector _director;
         M2BodySim _predictSim;
         M2Reconciler _reconciler;
-        M3MovementCollision _collision;
 
         uint _p1Sequence;
         uint _p2Sequence;
@@ -63,12 +107,13 @@ namespace BeMyArms.M3
         float _manualAimYaw;
         float _manualAimPitch;
 
+        // Edge-triggered actions are latched every frame so a press between send ticks is not lost.
+        M2P1Input _pendingP1;
+        bool _pendingGrenade, _pendingSmoke, _pendingFlash;
+
         Vector3 _visualPosition;
         float _visualYaw;
         bool _hasVisual;
-
-        Camera _camera;
-        Transform _eye;
 
         int BodiesPerTeam => Mathf.Clamp(M3Config.BodiesPerTeam, 1, 2);
         public int EffectiveRole => M3DuelSlots.IsValidSlot(LocalSlotIndex, BodiesPerTeam) ? M3DuelSlots.RoleOf(LocalSlotIndex) : M3Config.ClientRole;
@@ -89,7 +134,10 @@ namespace BeMyArms.M3
             _body = GetComponent<M3DuelBody>();
             _predictSim = new M2BodySim
             {
-                MoveSpeed = MoveSpeed,
+                WalkSpeed = WalkSpeed,
+                SprintSpeed = SprintSpeed,
+                JumpSpeed = JumpSpeed,
+                Gravity = Gravity,
                 NeckYawLimitDegrees = NeckYawLimitDegrees,
                 BodyFollowThresholdDegrees = BodyFollowThresholdDegrees,
                 BodyFollowSpeedDegreesPerSecond = BodyFollowSpeedDegreesPerSecond,
@@ -99,8 +147,7 @@ namespace BeMyArms.M3
             };
             _predictSim.Initialize(0f);
             M3MapSpawns map = FindAnyObjectByType<M3MapSpawns>();
-            if (map != null) _collision = map.BuildCollision();
-            _predictSim.MovementConstraint = ClampToArena;
+            if (map != null) _predictSim.Collision = map.BuildCollision();
             _reconciler = new M2Reconciler();
             _reconciler.Reset(_predictSim.State);
             _manualAimYaw = 0f;
@@ -113,13 +160,14 @@ namespace BeMyArms.M3
 
             if (_director == null) _director = M3DuelDirector.Instance;
 
+            PollInputEdges();
+
             if (!IsOwnBody)
             {
                 ApplyPresentation(Time.deltaTime);
                 return;
             }
 
-            EnsureCamera();
             HandleBuy();
 
             if (Time.time < _nextSendTime)
@@ -141,6 +189,25 @@ namespace BeMyArms.M3
             }
 
             ApplyPresentation(dt);
+        }
+
+        /// <summary>Latch edge-triggered actions every frame so the rate-limited send cannot miss one.</summary>
+        void PollInputEdges()
+        {
+            if (AutoDrive || !GameplayInputActive) return;
+#if ENABLE_INPUT_SYSTEM
+            Keyboard kb = Keyboard.current;
+            if (kb == null) return;
+            if (kb.spaceKey.wasPressedThisFrame) _pendingP1.Jump = true;
+            if (kb.qKey.wasPressedThisFrame) _pendingP1.Dodge = true;
+            if (kb.cKey.wasPressedThisFrame) _pendingP1.Slide = true;
+            if (kb.eKey.wasPressedThisFrame) _pendingP1.Vault = true;
+            if (kb.fKey.wasPressedThisFrame) _pendingP1.LightKick = true;
+            if (kb.vKey.wasPressedThisFrame) _pendingP1.HeavyKick = true;
+            if (kb.gKey.wasPressedThisFrame) _pendingGrenade = true;
+            if (kb.tKey.wasPressedThisFrame) _pendingSmoke = true;
+            if (kb.yKey.wasPressedThisFrame) _pendingFlash = true;
+#endif
         }
 
         void HandleBuy()
@@ -193,7 +260,16 @@ namespace BeMyArms.M3
             LocalAimPitch = Mathf.Clamp(input.AimPitch, -MaxPitchDegrees, MaxPitchDegrees);
             _body.SubmitP2ServerRpc(input);
 
-            HandleUtility();
+            if (!AutoDrive) HandleManualUtility();
+            else HandleUtility();
+        }
+
+        void HandleManualUtility()
+        {
+            if (_director == null || !_director.IsLive) return;
+            if (_pendingGrenade) { _pendingGrenade = false; _body.SubmitUtilityServerRpc((byte)M3UtilityKind.Grenade); }
+            if (_pendingSmoke) { _pendingSmoke = false; _body.SubmitUtilityServerRpc((byte)M3UtilityKind.Smoke); }
+            if (_pendingFlash) { _pendingFlash = false; _body.SubmitUtilityServerRpc((byte)M3UtilityKind.Flash); }
         }
 
         void HandleUtility()
@@ -269,13 +345,31 @@ namespace BeMyArms.M3
         M2P1Input BuildManualP1()
         {
             var input = new M2P1Input();
+            input.Jump = _pendingP1.Jump;
+            input.Dodge = _pendingP1.Dodge;
+            input.Slide = _pendingP1.Slide;
+            input.Vault = _pendingP1.Vault;
+            input.LightKick = _pendingP1.LightKick;
+            input.HeavyKick = _pendingP1.HeavyKick;
+            _pendingP1 = default;
+
+            if (!GameplayInputActive) return input;
 #if ENABLE_INPUT_SYSTEM
             Keyboard kb = Keyboard.current;
-            if (kb == null) return input;
-            input.MoveX = (kb.dKey.isPressed ? 1f : 0f) - (kb.aKey.isPressed ? 1f : 0f);
-            input.MoveZ = (kb.wKey.isPressed ? 1f : 0f) - (kb.sKey.isPressed ? 1f : 0f);
-            if (Mouse.current != null) input.LookYawDelta = Mouse.current.delta.x.ReadValue() * MouseSensitivity;
-            input.AlignBody = kb.leftAltKey.isPressed;
+            Mouse mouse = Mouse.current;
+            if (kb != null)
+            {
+                input.MoveX = (kb.dKey.isPressed ? 1f : 0f) - (kb.aKey.isPressed ? 1f : 0f);
+                input.MoveZ = (kb.wKey.isPressed ? 1f : 0f) - (kb.sKey.isPressed ? 1f : 0f);
+                input.Sprint = kb.leftShiftKey.isPressed;
+                input.AlignBody = kb.leftAltKey.isPressed;
+            }
+            if (mouse != null)
+            {
+                Vector2 delta = mouse.delta.ReadValue() * MouseSensitivity;
+                input.LookYawDelta = delta.x;
+                input.LookPitchDelta = -delta.y;
+            }
 #endif
             return input;
         }
@@ -283,14 +377,26 @@ namespace BeMyArms.M3
         M2P2Input BuildManualP2()
         {
             var input = new M2P2Input();
+            if (!GameplayInputActive)
+            {
+                input.AimYaw = _manualAimYaw;
+                input.AimPitch = _manualAimPitch;
+                return input;
+            }
 #if ENABLE_INPUT_SYSTEM
-            _manualAimYaw += Mouse.current != null ? Mouse.current.delta.x.ReadValue() * MouseSensitivity : 0f;
-            _manualAimPitch = Mathf.Clamp(_manualAimPitch - (Mouse.current != null ? Mouse.current.delta.y.ReadValue() * MouseSensitivity : 0f), -MaxPitchDegrees, MaxPitchDegrees);
+            Mouse mouse = Mouse.current;
+            Keyboard kb = Keyboard.current;
+            if (mouse != null)
+            {
+                Vector2 delta = mouse.delta.ReadValue() * MouseSensitivity;
+                _manualAimYaw += delta.x;
+                _manualAimPitch = Mathf.Clamp(_manualAimPitch - delta.y, -MaxPitchDegrees, MaxPitchDegrees);
+                input.Fire = mouse.leftButton.isPressed;
+            }
+            if (kb != null) input.Reload = kb.rKey.isPressed;
+#endif
             input.AimYaw = _manualAimYaw;
             input.AimPitch = _manualAimPitch;
-            input.Fire = Mouse.current != null && Mouse.current.leftButton.isPressed;
-            input.Reload = Keyboard.current != null && Keyboard.current.rKey.isPressed;
-#endif
             return input;
         }
 
@@ -312,23 +418,12 @@ namespace BeMyArms.M3
             return best;
         }
 
-        /// <summary>Client-side arena collision for prediction; must match the server exactly.</summary>
-        void ClampToArena(M2BodySim sim)
-        {
-            if (_collision == null || _collision.IsEmpty) return;
-            float x = sim.State.PosX;
-            float z = sim.State.PosZ;
-            _collision.Resolve(ref x, ref z);
-            sim.State.PosX = x;
-            sim.State.PosZ = z;
-        }
-
         void ApplyPresentation(float dt)
         {
             if (Presentation == null || _body == null || !_body.IsSpawned) return;
 
             M2BodyState state = IsOwnBody && EffectiveRole == 0 ? _reconciler.Predicted : _body.State.Value;
-            Vector3 targetPos = new Vector3(state.PosX, Presentation.position.y, state.PosZ);
+            Vector3 targetPos = new Vector3(state.PosX, state.PosY, state.PosZ);
             float targetYaw = state.BodyYaw;
 
             if (!_hasVisual)
@@ -346,43 +441,6 @@ namespace BeMyArms.M3
 
             Presentation.position = _visualPosition;
             Presentation.rotation = Quaternion.Euler(0f, _visualYaw, 0f);
-
-            if (_camera != null) UpdateCamera();
-        }
-
-        void EnsureCamera()
-        {
-            if (Application.isBatchMode || _camera != null) return;
-            if (!IsOwnBody) return;
-
-            var go = new GameObject(EffectiveRole == 0 ? "M3_P1Camera" : "M3_P2Camera");
-            _camera = go.AddComponent<Camera>();
-            _camera.nearClipPlane = 0.1f;
-            _camera.tag = "MainCamera";
-
-            if (EffectiveRole == 1)
-            {
-                var eye = new GameObject("M3_P2Eye");
-                eye.transform.SetParent(Presentation, false);
-                eye.transform.localPosition = new Vector3(0f, 1.45f, 0.22f);
-                _eye = eye.transform;
-            }
-        }
-
-        void UpdateCamera()
-        {
-            if (EffectiveRole == 0)
-            {
-                Vector3 forward = Quaternion.Euler(0f, _visualYaw, 0f) * Vector3.forward;
-                _camera.transform.position = _visualPosition - forward * 4.5f + Vector3.up * 1.6f;
-                _camera.transform.rotation = Quaternion.LookRotation(_visualPosition + Vector3.up * 1.2f - _camera.transform.position);
-            }
-            else
-            {
-                if (_eye == null) return;
-                _camera.transform.position = _eye.position;
-                _camera.transform.rotation = Quaternion.Euler(LocalAimPitch, LocalAimYaw, 0f);
-            }
         }
     }
 }

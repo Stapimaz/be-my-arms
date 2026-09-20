@@ -80,7 +80,7 @@ namespace BeMyArms.M2
         {
             _predictSim = new M2BodySim
             {
-                MoveSpeed = MoveSpeed,
+                WalkSpeed = MoveSpeed,
                 NeckYawLimitDegrees = NeckYawLimitDegrees,
                 BodyFollowThresholdDegrees = BodyFollowThresholdDegrees,
                 BodyFollowSpeedDegreesPerSecond = BodyFollowSpeedDegreesPerSecond,

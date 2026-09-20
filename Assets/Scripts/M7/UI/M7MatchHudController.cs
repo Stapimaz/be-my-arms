@@ -37,7 +37,13 @@ namespace BeMyArms.M7
             // private-match client before it ever connected. Only a dedicated server is excluded up
             // front; a client builds its HUD lazily in Update() once the NetworkManager reports one.
             if (Application.isBatchMode)
+            {
                 enabled = false;
+                return;
+            }
+
+            // Camera/viewmodel/cursor/ESC-menu presentation for the local player.
+            if (GetComponent<M7LocalPlayer>() == null) gameObject.AddComponent<M7LocalPlayer>();
         }
 
         static bool NetworkManagerIsClient()
@@ -66,13 +72,15 @@ namespace BeMyArms.M7
             _weapon = M7Ui.Label(_canvas.transform, "Weapon", "", 26, TextAnchor.LowerRight);
             M7Ui.Place(_weapon.rectTransform, new Vector2(1f, 0f), new Vector2(-24f, 24f), new Vector2(700f, 120f));
 
-            // Crosshair (P2).
+            // Crosshair (P2): four arms with a gap plus a centre dot, readable against the arena.
             _crosshair = M7Ui.Rect(_canvas.transform, "Crosshair");
-            M7Ui.Place(_crosshair, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(18f, 18f));
-            var h = M7Ui.Panel(_crosshair, "H", new Color(1f, 1f, 1f, 0.7f));
-            M7Ui.Place(h.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(18f, 2f));
-            var v = M7Ui.Panel(_crosshair, "V", new Color(1f, 1f, 1f, 0.7f));
-            M7Ui.Place(v.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(2f, 18f));
+            M7Ui.Place(_crosshair, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(28f, 28f));
+            var cross = new Color(0.86f, 1f, 0.92f, 0.92f);
+            M7Ui.Place(M7Ui.Panel(_crosshair, "Top", cross).rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -7f), new Vector2(2f, 10f));
+            M7Ui.Place(M7Ui.Panel(_crosshair, "Bottom", cross).rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 7f), new Vector2(2f, 10f));
+            M7Ui.Place(M7Ui.Panel(_crosshair, "Left", cross).rectTransform, new Vector2(0f, 0.5f), new Vector2(7f, 0f), new Vector2(10f, 2f));
+            M7Ui.Place(M7Ui.Panel(_crosshair, "Right", cross).rectTransform, new Vector2(1f, 0.5f), new Vector2(-7f, 0f), new Vector2(10f, 2f));
+            M7Ui.Place(M7Ui.Panel(_crosshair, "Dot", cross).rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(2f, 2f));
 
             BuildBuyPanel();
             BuildPostPanel();
@@ -178,18 +186,11 @@ namespace BeMyArms.M7
 
         void UpdateCursorAndEscape()
         {
+            // Cursor capture and the ESC menu are owned by M7LocalPlayer; the HUD only shows the
+            // crosshair when this body is the P2 role and the round is live.
             bool roleP2 = M3DuelClient.LocalSlotIndex >= 0 && M3DuelSlots.RoleOf(M3DuelClient.LocalSlotIndex) == 1;
             bool crosshair = roleP2 && _director.IsLive;
-            _crosshair.gameObject.SetActive(crosshair);
-
-            bool playable = _director.IsLive && !_postPanel.activeSelf;
-            Cursor.lockState = playable ? CursorLockMode.Locked : CursorLockMode.None;
-            Cursor.visible = !playable;
-
-#if ENABLE_INPUT_SYSTEM
-            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
-                M7PrivateMatch.ReturnToMenu();
-#endif
+            if (_crosshair != null) _crosshair.gameObject.SetActive(crosshair);
         }
 
         void Buy(int index)
