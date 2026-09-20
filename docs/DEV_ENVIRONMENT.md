@@ -191,7 +191,8 @@ build.
 
 ```powershell
 # Build the normal playable game (canonical entry point; also Be My Arms > M7 > Build Playable Game).
-unity command eval_file Temp/m7_build_eval.cs 3600000 --timeout 3600   # calls M7GameBuild.BuildWindowsPlayer()
+# The trailing 3600000 is the eval command's own millisecond budget; --timeout is the HTTP timeout.
+unity command eval_file tools/pipeline/qa/build-player.cs 3600000 --timeout 3600
 
 # Launch the client and wait for its runtime descriptor.
 Start-Process Builds\M7\BeMyArms.exe -WorkingDirectory Builds\M7
@@ -238,4 +239,4 @@ numeric check (an off-screen button reports `onScreen:false` and a screen centre
 
 `eval` / `eval_file` work in a desktop development Player, so a live layout can be probed or
 temporarily mutated (then rebuilt by navigating) to reproduce a suspected defect before changing
-source. Example: `unity command eval_file Temp/qa_break_menu.cs --runtime-path Builds\M7\.qa-client`.
+source. Example: `unity command eval_file tools/pipeline/qa/break-menu.cs --runtime-path Builds\M7\.qa-client`.
