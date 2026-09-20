@@ -159,9 +159,10 @@ namespace BeMyArms.M6.EditorTools
             var instance = (GameObject)PrefabUtility.InstantiatePrefab(model);
             instance.name = model.name;
             instance.transform.SetParent(parent, false);
-            instance.transform.localPosition = Vector3.zero;
-            instance.transform.localRotation = Quaternion.identity;
-            instance.transform.localScale = Vector3.one;
+            // Preserve the model's imported root transform exactly. An FBX root carries the axis
+            // and unit conversion (the P1 skins import rotated 270 deg X and scaled x100, the P2
+            // skins import identity); forcing position/rotation/scale here previously collapsed the
+            // P1 body to ~1 cm and laid it along Z, so only the P2 arms/weapon were visible.
         }
 
         static void RemapMaterials(GameObject root)

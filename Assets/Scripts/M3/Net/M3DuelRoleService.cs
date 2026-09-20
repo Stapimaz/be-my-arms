@@ -17,6 +17,14 @@ namespace BeMyArms.M3
     {
         public static M3DuelRoleService Instance { get; private set; }
 
+        /// <summary>Clears the static instance so a later match cannot resolve a previous roster.</summary>
+        public static void ResetStatics() => Instance = null;
+
+        void OnDestroy()
+        {
+            if (Instance == this) Instance = null;
+        }
+
         public readonly M3DuelRoster Registry = new M3DuelRoster();
 
         NetworkManager _manager;

@@ -13,6 +13,11 @@ namespace BeMyArms.M3
     /// both roles for headless multi-process runs. Only the local player's body sends inputs; the
     /// local slot is assigned by the server (direct mode or matchmaker).
     ///
+    /// Input sampling is deliberately decoupled from the network send rate: for the local player the
+    /// mouse and look/aim are sampled and applied every rendered frame, while the RPC stream runs at
+    /// <see cref="SendRateHz"/> and consumes the input accumulated since the last send. This is what
+    /// makes the camera smooth at high frame rates without smoothing over a low-frequency sample.
+    ///
     /// Camera/viewmodel/cursor presentation is owned by the M7 layer (M7LocalPlayer); this component
     /// exposes the predicted state and local aim/look so presentation stays decoupled from netcode.
     /// </summary>
@@ -43,14 +48,25 @@ namespace BeMyArms.M3
         public bool AutoBuy = true;
         public bool AutoFire = true;
         public bool AutoUtility = true;
-        public float MouseSensitivity = 0.12f;
 
         public float LocalAimYaw { get; private set; }
         public float LocalAimPitch { get; private set; }
 
+        /// <summary>Last raw mouse delta the local input path read (diagnostics).</summary>
+        public Vector2 LastMouseDelta { get; private set; }
+        /// <summary>Look yaw currently held by the prediction sim itself (diagnostics).</summary>
+        public float SimLookYaw => _predictSim != null ? _predictSim.State.LookYaw : 0f;
+        public uint P1Sequence => _p1Sequence;
+        public uint LastAckedP1 => _body != null ? _body.LastAckedP1Sequence.Value : 0u;
+        public int PendingP1Inputs => _reconciler != null ? _reconciler.PendingInputCount : 0;
+
         public M3DuelBody Body => _body;
         public bool IsLocalOwnBody => IsOwnBody;
         public int LocalRoleIndex => EffectiveRole;
+
+        /// <summary>Smoothed presentation position of this body (local body root, feet).</summary>
+        public Vector3 VisualPosition => _visualPosition;
+        public float VisualYaw => _visualYaw;
 
         /// <summary>State the local camera/presentation should follow (predicted for local P1).</summary>
         public M2BodyState ViewState
@@ -62,37 +78,34 @@ namespace BeMyArms.M3
             }
         }
 
-        /// <summary>Decoupled look yaw for the local P1 camera (predicted).</summary>
+        /// <summary>Decoupled look yaw for the local P1 camera (predicted, updated every frame).</summary>
         public float LocalLookYaw
         {
             get
             {
-                if (IsOwnBody && EffectiveRole == 0) return _predictSim.State.LookYaw;
+                if (IsOwnBody && EffectiveRole == 0) return _reconciler.Predicted.LookYaw;
                 if (_body != null && _body.IsSpawned) return _body.State.Value.LookYaw;
                 return 0f;
             }
         }
 
-        /// <summary>Decoupled look pitch for the local P1 camera (predicted).</summary>
+        /// <summary>Decoupled look pitch for the local P1 camera (predicted, updated every frame).</summary>
         public float LocalLookPitch
         {
             get
             {
-                if (IsOwnBody && EffectiveRole == 0) return _predictSim.State.LookPitch;
+                if (IsOwnBody && EffectiveRole == 0) return _reconciler.Predicted.LookPitch;
                 if (_body != null && _body.IsSpawned) return _body.State.Value.LookPitch;
                 return 0f;
             }
         }
-
-        /// <summary>Mouse/keyboard gameplay input is only live while the cursor is captured.</summary>
-        public bool GameplayInputActive => Cursor.lockState == CursorLockMode.Locked;
 
         M3DuelBody _body;
         M3DuelDirector _director;
         M2BodySim _predictSim;
         M2Reconciler _reconciler;
 
-        uint _p1Sequence;
+        uint _p1Sequence = 1; // sequence of the in-progress tick (0 is reserved for "none acked")
         uint _p2Sequence;
         float _nextSendTime;
         float _autoClock;
@@ -104,12 +117,17 @@ namespace BeMyArms.M3
         bool _grenadeSent;
         bool _smokeSent;
         bool _flashSent;
+
+        // Raw (unclamped) local P2 aim; the presentation and the sent aim are clamped to the sector.
         float _manualAimYaw;
         float _manualAimPitch;
 
         // Edge-triggered actions are latched every frame so a press between send ticks is not lost.
         M2P1Input _pendingP1;
         bool _pendingGrenade, _pendingSmoke, _pendingFlash;
+
+        // Input accumulated over the current tick; sent at SendRateHz.
+        M2P1Input _accumP1;
 
         Vector3 _visualPosition;
         float _visualYaw;
@@ -160,41 +178,121 @@ namespace BeMyArms.M3
 
             if (_director == null) _director = M3DuelDirector.Instance;
 
+            float dt = Mathf.Max(0.0001f, Time.deltaTime);
             PollInputEdges();
 
             if (!IsOwnBody)
             {
-                ApplyPresentation(Time.deltaTime);
+                ApplyPresentation(dt);
                 return;
             }
 
             HandleBuy();
 
-            if (Time.time < _nextSendTime)
-            {
-                ApplyPresentation(Time.deltaTime);
-                return;
-            }
-            _nextSendTime = Time.time + 1f / Mathf.Max(1f, SendRateHz);
-            float dt = 1f / Mathf.Max(1f, SendRateHz);
+            bool sendTick = Time.time >= _nextSendTime;
+            if (sendTick) _nextSendTime = Time.time + 1f / Mathf.Max(1f, SendRateHz);
+            float sendDt = 1f / Mathf.Max(1f, SendRateHz);
 
-            if (EffectiveRole == 0)
-            {
-                DrainSnapshots();
-                SendP1(dt);
-            }
-            else
-            {
-                SendP2();
-            }
+            if (EffectiveRole == 0) UpdateP1Role(dt, sendDt, sendTick);
+            else UpdateP2Role(dt, sendTick);
 
             ApplyPresentation(dt);
+        }
+
+        // ---- P1 ----
+
+        void UpdateP1Role(float dt, float sendDt, bool sendTick)
+        {
+            if (AutoDrive)
+            {
+                DrainSnapshots();
+                if (!sendTick) return;
+                M2P1Input input = BuildAutoP1(sendDt);
+                input.Sequence = _p1Sequence++;
+                _reconciler.Predict(input, sendDt, _predictSim);
+                _body.SubmitP1ServerRpc(input);
+                return;
+            }
+
+            // Local player: sample and predict every rendered frame so look/body presentation is
+            // smooth; accumulate the same input and send it once per network tick.
+            M2P1Input frame = BuildManualP1();
+            frame.Sequence = _p1Sequence;
+            _reconciler.Predict(frame, dt, _predictSim);
+
+            _accumP1.MoveX = frame.MoveX;
+            _accumP1.MoveZ = frame.MoveZ;
+            _accumP1.Sprint = frame.Sprint;
+            _accumP1.AlignBody = frame.AlignBody;
+            _accumP1.LookYawDelta += frame.LookYawDelta;
+            _accumP1.LookPitchDelta += frame.LookPitchDelta;
+            _accumP1.Jump |= frame.Jump;
+            _accumP1.Dodge |= frame.Dodge;
+            _accumP1.Slide |= frame.Slide;
+            _accumP1.Vault |= frame.Vault;
+            _accumP1.LightKick |= frame.LightKick;
+            _accumP1.HeavyKick |= frame.HeavyKick;
+
+            DrainSnapshots();
+
+            if (!sendTick) return;
+            _accumP1.Sequence = _p1Sequence++;
+            _body.SubmitP1ServerRpc(_accumP1);
+            _accumP1 = default;
+        }
+
+        // ---- P2 ----
+
+        void UpdateP2Role(float dt, bool sendTick)
+        {
+            UpdateSmoothedBodyYaw(dt);
+
+            if (AutoDrive)
+            {
+                if (!sendTick) return;
+                M2P2Input auto = BuildAutoP2();
+                auto.Sequence = ++_p2Sequence;
+                SubmitP2(auto);
+                return;
+            }
+
+            // Local player: mouse drives the raw aim every frame; presentation and the sent command
+            // use the sector-clamped aim. Fire/reload are held state, sent each tick.
+            M2P2Input input = BuildManualP2();
+            if (!sendTick) return;
+            input.Sequence = ++_p2Sequence;
+            SubmitP2(input);
+        }
+
+        void SubmitP2(in M2P2Input input)
+        {
+            _body.SubmitP2ServerRpc(input);
+            if (!AutoDrive) HandleManualUtility();
+            else HandleUtility();
+        }
+
+        void UpdateSmoothedBodyYaw(float dt)
+        {
+            float serverBodyYaw = _body.State.Value.BodyYaw;
+            if (!_hasSmoothedYaw)
+            {
+                _smoothedBodyYaw = serverBodyYaw;
+                _hasSmoothedYaw = true;
+                return;
+            }
+            float k = 1f - Mathf.Exp(-12f * dt);
+            _smoothedBodyYaw = Mathf.LerpAngle(_smoothedBodyYaw, serverBodyYaw, k);
+        }
+
+        void DrainSnapshots()
+        {
+            _reconciler.Reconcile(_body.State.Value, _body.LastAckedP1Sequence.Value, _predictSim);
         }
 
         /// <summary>Latch edge-triggered actions every frame so the rate-limited send cannot miss one.</summary>
         void PollInputEdges()
         {
-            if (AutoDrive || !GameplayInputActive) return;
+            if (AutoDrive || !M3LocalInput.GameplayActive) return;
 #if ENABLE_INPUT_SYSTEM
             Keyboard kb = Keyboard.current;
             if (kb == null) return;
@@ -223,45 +321,6 @@ namespace BeMyArms.M3
             _body.SubmitBuyServerRpc(4); // smoke (utility)
             _body.SubmitBuyServerRpc(5); // flash (utility)
             Debug.Log($"[M3-client] {M3DuelSlots.Name(LocalSlotIndex, BodiesPerTeam)} auto-buy round {_boughtRound}");
-        }
-
-        void DrainSnapshots()
-        {
-            _reconciler.Reconcile(_body.State.Value, _body.LastAckedP1Sequence.Value, _predictSim);
-        }
-
-        void SendP1(float dt)
-        {
-            M2P1Input input = AutoDrive ? BuildAutoP1(dt) : BuildManualP1();
-            input.Sequence = ++_p1Sequence;
-            _reconciler.Predict(input, dt, _predictSim);
-            _body.SubmitP1ServerRpc(input);
-        }
-
-        void SendP2()
-        {
-            M2P2Input input = AutoDrive ? BuildAutoP2() : BuildManualP2();
-            input.Sequence = ++_p2Sequence;
-
-            float serverBodyYaw = _body.State.Value.BodyYaw;
-            if (!_hasSmoothedYaw)
-            {
-                _smoothedBodyYaw = serverBodyYaw;
-                _hasSmoothedYaw = true;
-            }
-            else
-            {
-                float k = 1f - Mathf.Exp(-12f * Time.deltaTime);
-                _smoothedBodyYaw = Mathf.LerpAngle(_smoothedBodyYaw, serverBodyYaw, k);
-            }
-
-            input.AimYaw = M2BodySim.ClampToSector(input.AimYaw, _smoothedBodyYaw, Mathf.Max(1f, SectorHalfDegrees - 1f));
-            LocalAimYaw = input.AimYaw;
-            LocalAimPitch = Mathf.Clamp(input.AimPitch, -MaxPitchDegrees, MaxPitchDegrees);
-            _body.SubmitP2ServerRpc(input);
-
-            if (!AutoDrive) HandleManualUtility();
-            else HandleUtility();
         }
 
         void HandleManualUtility()
@@ -311,10 +370,11 @@ namespace BeMyArms.M3
             M3DuelBody target = NearestEnemy();
             if (target != null)
             {
-                float dx = target.State.Value.PosX - _predictSim.State.PosX;
-                float dz = target.State.Value.PosZ - _predictSim.State.PosZ;
+                M2BodyState predicted = _reconciler.Predicted;
+                float dx = target.State.Value.PosX - predicted.PosX;
+                float dz = target.State.Value.PosZ - predicted.PosZ;
                 float desired = Mathf.Atan2(dx, dz) * Mathf.Rad2Deg;
-                float delta = Mathf.Clamp(M2BodySim.Normalize(desired - _predictSim.State.LookYaw), -25f, 25f);
+                float delta = Mathf.Clamp(M2BodySim.Normalize(desired - predicted.LookYaw), -25f, 25f);
                 input.LookYawDelta = delta;
                 input.AlignBody = Mathf.Abs(delta) > 1f;
                 input.MoveZ = 0.4f;
@@ -339,6 +399,9 @@ namespace BeMyArms.M3
             {
                 input.AimYaw = _body.State.Value.BodyYaw;
             }
+            LocalAimYaw = M2BodySim.ClampToSector(input.AimYaw, _smoothedBodyYaw, Mathf.Max(1f, SectorHalfDegrees - 1f));
+            LocalAimPitch = Mathf.Clamp(input.AimPitch, -MaxPitchDegrees, MaxPitchDegrees);
+            input.AimYaw = LocalAimYaw;
             return input;
         }
 
@@ -353,7 +416,7 @@ namespace BeMyArms.M3
             input.HeavyKick = _pendingP1.HeavyKick;
             _pendingP1 = default;
 
-            if (!GameplayInputActive) return input;
+            if (!M3LocalInput.GameplayActive) return input;
 #if ENABLE_INPUT_SYSTEM
             Keyboard kb = Keyboard.current;
             Mouse mouse = Mouse.current;
@@ -366,44 +429,58 @@ namespace BeMyArms.M3
             }
             if (mouse != null)
             {
-                Vector2 delta = mouse.delta.ReadValue() * MouseSensitivity;
+                Vector2 delta = mouse.delta.ReadValue() * M3LocalInput.MouseSensitivity;
+                LastMouseDelta = delta;
                 input.LookYawDelta = delta.x;
                 input.LookPitchDelta = -delta.y;
             }
+            M3LocalInput.ConsumeInjectedLook(out float injectedYaw, out float injectedPitch);
+            input.LookYawDelta += injectedYaw;
+            input.LookPitchDelta -= injectedPitch; // injected pitch is "look up" positive
 #endif
             return input;
         }
 
         M2P2Input BuildManualP2()
         {
-            var input = new M2P2Input();
-            if (!GameplayInputActive)
-            {
-                input.AimYaw = _manualAimYaw;
-                input.AimPitch = _manualAimPitch;
-                return input;
-            }
 #if ENABLE_INPUT_SYSTEM
-            Mouse mouse = Mouse.current;
-            Keyboard kb = Keyboard.current;
-            if (mouse != null)
+            if (M3LocalInput.GameplayActive)
             {
-                Vector2 delta = mouse.delta.ReadValue() * MouseSensitivity;
-                _manualAimYaw += delta.x;
-                _manualAimPitch = Mathf.Clamp(_manualAimPitch - delta.y, -MaxPitchDegrees, MaxPitchDegrees);
-                input.Fire = mouse.leftButton.isPressed;
+                Mouse mouse = Mouse.current;
+                if (mouse != null)
+                {
+                    Vector2 delta = mouse.delta.ReadValue() * M3LocalInput.MouseSensitivity;
+                    LastMouseDelta = delta;
+                    _manualAimYaw += delta.x;
+                    _manualAimPitch = Mathf.Clamp(_manualAimPitch - delta.y, -MaxPitchDegrees, MaxPitchDegrees);
+                }
+                M3LocalInput.ConsumeInjectedLook(out float injectedYaw, out float injectedPitch);
+                _manualAimYaw += injectedYaw;
+                _manualAimPitch = Mathf.Clamp(_manualAimPitch - injectedPitch, -MaxPitchDegrees, MaxPitchDegrees); // injected pitch is "look up" positive
             }
-            if (kb != null) input.Reload = kb.rKey.isPressed;
 #endif
-            input.AimYaw = _manualAimYaw;
-            input.AimPitch = _manualAimPitch;
+            var input = new M2P2Input();
+            float innerHalf = Mathf.Max(1f, SectorHalfDegrees - 1f);
+            LocalAimYaw = M2BodySim.ClampToSector(_manualAimYaw, _smoothedBodyYaw, innerHalf);
+            LocalAimPitch = Mathf.Clamp(_manualAimPitch, -MaxPitchDegrees, MaxPitchDegrees);
+            input.AimYaw = LocalAimYaw;
+            input.AimPitch = LocalAimPitch;
+#if ENABLE_INPUT_SYSTEM
+            if (M3LocalInput.GameplayActive)
+            {
+                Mouse mouse = Mouse.current;
+                Keyboard kb = Keyboard.current;
+                if (mouse != null) input.Fire = mouse.leftButton.isPressed;
+                if (kb != null) input.Reload = kb.rKey.isPressed;
+            }
+#endif
             return input;
         }
 
         /// <summary>Closest living enemy body (2v2 has two).</summary>
         M3DuelBody NearestEnemy()
         {
-            M3DuelBody[] bodies = FindObjectsByType<M3DuelBody>();
+            M3DuelBody[] bodies = FindObjectsByType<M3DuelBody>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             M3DuelBody best = null;
             float bestDistance = float.MaxValue;
             for (int i = 0; i < bodies.Length; i++)

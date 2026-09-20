@@ -158,3 +158,35 @@ predicted architecture and extended it; it did **not** add a second gameplay sta
 - Duel/2v2 are the only modes; no online backend.
 - A re-entered lobby after returning to the menu was seen to leave stale duplicated bodies in one
   scripted QA session; a fresh launch is clean and a normal single match is unaffected.
+
+## 12. Foundation recovery pass 2 (2026-09-20) — awaiting human acceptance
+
+The second human playtest still failed at the local input/camera/session foundation. This pass was
+deliberately narrow (no buy/loadout, weapon switching, bot difficulty or art work).
+
+- **Input sampling decoupled from the network rate.** The local player samples the mouse and
+  updates look/aim every rendered frame and predicts the body every frame; the RPC stream runs at
+  `SendRateHz` and consumes the input accumulated since the last tick. No camera smoothing is used
+  to hide a low sample rate. P1 look/pitch/prediction and P2 aim presentation both follow this.
+- **Explicit gameplay/UI input mode** (`M3LocalInput`, written from match phase + focus + pause):
+  cursor capture is now a consequence of gameplay state, not its source. Focus loss/regain is
+  handled and the flag is cleared when the arena unloads.
+- **Mouse sensitivity** (`M7Settings.MouseSensitivity`) is pushed into the gameplay path every
+  frame.
+- **P1 combined body fixed.** The P1 skin prefab was ~100x too small and laid along Z because
+  `M6PrefabBuilders.AttachModel` clobbered the FBX root rotation/scale. The builder now preserves
+  the imported root transform, the skins and player-body prefab were rebuilt, and the procedural
+  animator rotates the head/hips about the character's real up/forward axes (correct for either
+  skin orientation). `qa_player_state` now reports `p1=ok p2=ok weapon=ok bboxH=1,9 inView=True`.
+- **Main-menu order** corrected to PLAY (top) / SETTINGS / QUIT (bottom).
+- **Private-match lifecycle fixed.** The `NetworkManager` is `DontDestroyOnLoad`, so leaving and
+  re-starting a match leaked a second manager and duplicated bodies/clients and could flip the
+  requested role. `M7PrivateMatch.ResetSessionState` now resets the local-slot/director/roster
+  statics and tears down stale managers/network objects before a new match. Verified:
+  `Leave Match -> menu (0 bodies) -> new match (2 bodies, 1 local, no duplicates, correct role)`.
+- **Structured runtime diagnostics** added: `qa_player_state` (slot/body/phase/input/cursor/camera/
+  look/aim/per-part bounds+viewport/weapon/viewmodel/duplicates) and `qa_inject_look` (drive the
+  real look path without a physical mouse). See `docs/DEV_ENVIRONMENT.md` section 7. Prefer these
+  over routine screenshots.
+
+The playable checkpoint remains **awaiting human acceptance**; M8 has not started.

@@ -31,6 +31,14 @@ namespace BeMyArms.M7
         Quaternion _p2Rest = Quaternion.identity;
         Quaternion _weaponRest = Quaternion.identity;
 
+        // The character's world up/forward expressed in the parent frame of the head/hips bones.
+        // The P1 FBX imports its root rotated (270 deg X), so a naive local-Y "look" rotation would
+        // roll the head instead of yawing it; these axes make the procedural layer skin-agnostic.
+        Vector3 _headYawAxis = Vector3.up;
+        Vector3 _hipsRollAxis = Vector3.forward;
+        Vector3 _hipsUpLocal = Vector3.up;
+        float _hipsBobScale = 1f;
+
         Vector3 _lastPosition;
         bool _hasLast;
         float _phase;
@@ -47,8 +55,8 @@ namespace BeMyArms.M7
             _footL = Find(P1Skin, "Foot_L"); _footR = Find(P1Skin, "Foot_R");
             _p2Root = Find(P2Skin, "P2Root");
 
-            if (_hips != null) { _hipsRest = _hips.localRotation; _hipsRestPosition = _hips.localPosition; _hasHipsRest = true; }
-            if (_head != null) _headRest = _head.localRotation;
+            if (_hips != null) { _hipsRest = _hips.localRotation; _hipsRestPosition = _hips.localPosition; _hasHipsRest = true; if (_hips.parent != null) { _hipsRollAxis = _hips.parent.InverseTransformDirection(Vector3.forward); _hipsUpLocal = _hips.parent.InverseTransformDirection(Vector3.up).normalized; _hipsBobScale = _hips.parent.lossyScale.y; } }
+            if (_head != null) { _headRest = _head.localRotation; if (_head.parent != null) _headYawAxis = _head.parent.InverseTransformDirection(Vector3.up); }
             if (_thighL != null) _thighRestL = _thighL.localRotation;
             if (_thighR != null) _thighRestR = _thighR.localRotation;
             if (_shinL != null) _shinRestL = _shinL.localRotation;
@@ -95,14 +103,19 @@ namespace BeMyArms.M7
 
             if (_hips != null)
             {
-                _hips.localRotation = _hipsRest * Quaternion.Euler(0f, 0f, Mathf.Sin(_phase) * 4f * speed01);
+                _hips.localRotation = Quaternion.AngleAxis(Mathf.Sin(_phase) * 4f * speed01, _hipsRollAxis) * _hipsRest;
                 if (_hasHipsRest)
-                    _hips.localPosition = _hipsRestPosition + Vector3.up * (Mathf.Abs(Mathf.Sin(_phase * 2f)) * 0.03f * speed01);
+                {
+                    // Bob is authored in world metres; convert to the skin's local units, which may
+                    // be scaled (the P1 FBX root imports at x100).
+                    float bob = Mathf.Abs(Mathf.Sin(_phase * 2f)) * 0.03f * speed01 / Mathf.Max(0.0001f, _hipsBobScale);
+                    _hips.localPosition = _hipsRestPosition + _hipsUpLocal * bob;
+                }
             }
 
-            // Decoupled head look within the neck limit.
+            // Decoupled head look within the neck limit, yawed about the character's up axis.
             float lookOffset = M2BodySim.Normalize(state.LookYaw - state.BodyYaw);
-            if (_head != null) _head.localRotation = _headRest * Quaternion.Euler(0f, lookOffset, 0f);
+            if (_head != null) _head.localRotation = Quaternion.AngleAxis(lookOffset, _headYawAxis) * _headRest;
         }
 
         void AnimateAim(M2BodyState state)

@@ -23,6 +23,9 @@ namespace BeMyArms.M3
     {
         public static M3DuelDirector Instance { get; private set; }
 
+        /// <summary>Clears the static instance so a later match cannot resolve a previous director.</summary>
+        public static void ResetStatics() => Instance = null;
+
         public GameObject BodyPrefab;
 
         [Header("Match shape (TUNING; overridden from command line)")]

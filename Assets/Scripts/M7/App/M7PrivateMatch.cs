@@ -83,6 +83,10 @@ namespace BeMyArms.M7
             if (Application.isEditor)
                 UnityEngine.Debug.LogWarning("[M7] Private matches launch a dedicated server process; run a build to use this flow.");
 
+            // Start every match from a clean session: no stale local slot, director/roster instance
+            // or leftover networked object from a previous match may leak into this one.
+            ResetSessionState();
+
             Current = request;
             InMatch = true;
 
@@ -108,6 +112,7 @@ namespace BeMyArms.M7
         {
             InMatch = false;
             Shutdown();
+            ResetSessionState();
             SceneManager.LoadScene(MenuScene);
         }
 
@@ -116,6 +121,53 @@ namespace BeMyArms.M7
             NetworkManager manager = NetworkManager.Singleton;
             if (manager != null && manager.IsListening) manager.Shutdown();
             if (Allocator != null) Allocator.Shutdown();
+        }
+
+        /// <summary>
+        /// Clears per-session statics and destroys stray networked objects, so a match started after
+        /// leaving a previous one cannot inherit the old local slot, director/roster or bodies.
+        /// </summary>
+        public static void ResetSessionState()
+        {
+            M3DuelClient.SetLocalSlot(-1);
+            M3DuelDirector.ResetStatics();
+            M3DuelRoleService.ResetStatics();
+            M3LocalInput.GameplayActive = false;
+            M3LocalInput.CursorCaptured = false;
+
+            // Stop every session manager that is still listening (a previous session that did not
+            // shut down cleanly leaves its manager and spawned objects behind).
+            NetworkManager[] managers = UnityEngine.Object.FindObjectsByType<NetworkManager>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < managers.Length; i++)
+            {
+                NetworkManager manager = managers[i];
+                if (manager == null) continue;
+                if (manager.IsListening) manager.Shutdown();
+            }
+
+            // Then remove any replicated/presentation objects that survived the shutdown.
+            NetworkObject[] networkObjects = UnityEngine.Object.FindObjectsByType<NetworkObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < networkObjects.Length; i++)
+            {
+                NetworkObject networkObject = networkObjects[i];
+                if (networkObject == null) continue;
+                if (networkObject.IsSpawned)
+                {
+                    try { networkObject.Despawn(true); }
+                    catch (Exception e) { UnityEngine.Debug.LogWarning("[M7] despawn on reset: " + e.Message); }
+                }
+                if (networkObject != null) DestroyObject(networkObject.gameObject);
+            }
+
+            for (int i = 0; i < managers.Length; i++)
+                if (managers[i] != null) DestroyObject(managers[i].gameObject);
+        }
+
+        static void DestroyObject(GameObject go)
+        {
+            if (go == null) return;
+            if (Application.isPlaying) UnityEngine.Object.Destroy(go);
+            else UnityEngine.Object.DestroyImmediate(go);
         }
 
         public static string GetArg(string name)

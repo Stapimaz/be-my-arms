@@ -2,6 +2,11 @@
     "name": "BeMyArms.QA",
     "rootNamespace": "BeMyArms.QA",
     "references": [
+        "BeMyArms.M7",
+        "BeMyArms.M3",
+        "BeMyArms.M2",
+        "BeMyArms.M0",
+        "Unity.Netcode.Runtime",
         "UnityEngine.UI",
         "Unity.Pipeline"
     ],

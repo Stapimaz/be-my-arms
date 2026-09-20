@@ -163,9 +163,28 @@ including **screen-space (overlay) UI**, which an editor camera capture misses.
 
 | Command | Does |
 |---|---|
+| `qa_player_state` | **Structured local-player state** (prefer this for gameplay debugging): local slot/team/body/role, body count and duplicates, match phase, gameplay-input mode / cursor / focus, camera position-euler-fov-mask, look/aim yaw+pitch, per-part (P1/P2/weapon) renderer counts+layers+world bounds, combined-body bounds and whether they project into the camera, active weapon, viewmodel count, and each body's scene/root. |
 | `qa_ui_state` | Active scene, screen resolution, canvases, and every active `Button` with its label, interactability and on-screen visibility. |
 | `qa_capture_frame` | Renders the current player frame (overlay UI included) to a PNG and returns its absolute path. `--output` is absolute or relative to the player root; `--include_inline true` also returns base64. |
 | `qa_click_button --name <GameObject name>` | Invokes the button's real `Button.onClick` callback (case-insensitive name). |
+| `qa_inject_look --yaw <deg> --pitch <deg>` | Development only: inject a look/aim delta into the local input path for the next frame. Verifies input → prediction → camera without a physical mouse. |
+
+**Prefer `qa_player_state` over screenshots.** It answers most "is the body/camera/input wrong?"
+questions directly and cheaply, e.g.:
+
+```powershell
+unity command qa_player_state --runtime-path $R --format json
+# Summary: scene=M7DuelArena phase=Live role=P1 slot=0 drawn=56 p1=ok p2=ok weapon=ok bboxH=1,9
+#          inView=True cam=M7_LocalCamera input=True cursor=Locked/False focused=True vm=0 dupes=none
+```
+
+`p1` / `p2` / `weapon` report `ok` (world height sane), `COLLAPSED` (a skin scaled/rotated wrong)
+or `missing`; `dupes` lists duplicate bodies/players/cameras/viewmodels; `input`/`cursor`/`focused`
+describe the explicit gameplay-input mode. Use image capture only when the structured state cannot
+answer a genuinely visual question — not as routine acceptance evidence.
+
+Note: `simulate_pointer --action move` cannot drive the Input System's per-frame `Mouse.delta`
+across frames, so it will not move the camera; use `qa_inject_look` to drive the real look path.
 
 These are `RuntimeOnly`, so they are hidden from the running Editor's command listing and are
 reached with `--runtime` / `--runtime-path`. They act on the shipped UI, so navigating through

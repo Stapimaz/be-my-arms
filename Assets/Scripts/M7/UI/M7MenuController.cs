@@ -193,18 +193,18 @@ namespace BeMyArms.M7
 
         /// <summary>
         /// Lay out a vertical stack of buttons centered on the given normalized anchor. The anchor is
-        /// in canvas space (0..1); the buttons are offset down the screen from the stack center.
+        /// in canvas space (0..1); the first item is the TOP button and later items go downward.
         /// </summary>
         static void Stack(Transform parent, IEnumerable<(string label, System.Action action)> items, float anchorX, float anchorY, float height, float gap)
         {
             var list = new List<(string label, System.Action action)>(items);
             float total = list.Count * height + Mathf.Max(0, list.Count - 1) * gap;
-            float y = -total * 0.5f + height * 0.5f; // first button's center, relative to the stack center
+            float y = total * 0.5f - height * 0.5f; // first (top) button's center, relative to the stack center
             foreach ((string label, System.Action action) in list)
             {
                 Button button = M7Ui.Button(parent, label, label, action, 30);
                 M7Ui.Place(button.image.rectTransform, new Vector2(anchorX, anchorY), new Vector2(0f, y), new Vector2(420f, height));
-                y += height + gap;
+                y -= height + gap;
             }
         }
     }

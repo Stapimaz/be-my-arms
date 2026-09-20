@@ -40,11 +40,17 @@ namespace BeMyArms.M7
 
         M3DuelClient _client;
         M3DuelDirector _director;
-        int _layerAppliedForTeam = -1;
+        int _layerAppliedForBody = -1;
 
         int _lastAmmo = -1;
         float _recoil;
         float _recoilVelocity;
+
+        /// <summary>True while the local player owns gameplay input (live, focused, not paused).</summary>
+        public bool IsGameplayActive { get; private set; }
+        public M3DuelClient LocalClient => _client;
+        public Camera LocalCamera => _camera;
+        public GameObject Viewmodel => _viewmodel;
 
         void Start()
         {
@@ -64,7 +70,14 @@ namespace BeMyArms.M7
             if (_director == null) _director = M3DuelDirector.Instance;
 
             HandleEscape();
-            UpdateCursor();
+            UpdateInputMode();
+        }
+
+        void OnDisable()
+        {
+            // Never leave a stale gameplay-input flag behind when the arena unloads.
+            M3LocalInput.GameplayActive = false;
+            M3LocalInput.CursorCaptured = false;
         }
 
         void LateUpdate()
@@ -90,14 +103,21 @@ namespace BeMyArms.M7
 #endif
         }
 
-        void UpdateCursor()
+        void UpdateInputMode()
         {
             bool paused = _pauseMenu != null && _pauseMenu.IsOpen;
+            bool focused = Application.isFocused;
             bool live = _director != null && _director.IsLive && _client != null && _client.IsLocalOwnBody;
-            bool capture = live && !paused;
 
-            Cursor.lockState = capture ? CursorLockMode.Locked : CursorLockMode.None;
-            Cursor.visible = !capture;
+            // Gameplay state is the source of truth; cursor capture is a consequence of it.
+            bool gameplay = live && !paused && focused;
+            IsGameplayActive = gameplay;
+            M3LocalInput.GameplayActive = gameplay;
+            M3LocalInput.CursorCaptured = gameplay;
+            M3LocalInput.MouseSensitivity = M7Settings.MouseSensitivity;
+
+            Cursor.lockState = gameplay ? CursorLockMode.Locked : CursorLockMode.None;
+            Cursor.visible = !gameplay;
         }
 
         // ---- Camera ----
@@ -137,7 +157,10 @@ namespace BeMyArms.M7
             if (_camera == null) return;
             float pitch = Mathf.Clamp(_client.LocalLookPitch, P1MinPitch, P1MaxPitch);
             Quaternion rotation = Quaternion.Euler(pitch, _client.LocalLookYaw, 0f);
-            Vector3 pivot = new Vector3(state.PosX, state.PosY + P1PivotHeight, state.PosZ);
+
+            // Follow the smoothed presentation position (not the raw reconciled prediction) so
+            // reconciliation corrections never jitter the camera.
+            Vector3 pivot = _client.VisualPosition + Vector3.up * P1PivotHeight;
             Vector3 back = rotation * Vector3.back;
 
             // Spring arm: pull the camera in when a wall/cover is behind the body.
@@ -280,8 +303,8 @@ namespace BeMyArms.M7
         {
             M3DuelBody body = client.Body;
             if (body == null || !body.IsSpawned) return;
-            if (_layerAppliedForTeam == body.GetInstanceID()) return;
-            _layerAppliedForTeam = body.GetInstanceID();
+            if (_layerAppliedForBody == body.GetInstanceID()) return;
+            _layerAppliedForBody = body.GetInstanceID();
             SetLayerRecursively(body.gameObject, PlayerBodyLayer);
         }
 
