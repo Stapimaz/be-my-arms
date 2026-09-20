@@ -32,12 +32,12 @@ namespace BeMyArms.M7
 
         void Awake()
         {
-            if (Application.isBatchMode || !(NetworkManagerIsClient()))
-            {
+            // The client connection is established later, in M3DuelBootstrap.Start(), so we cannot
+            // decide client-ness here — a previous check against IsClient disabled the HUD on every
+            // private-match client before it ever connected. Only a dedicated server is excluded up
+            // front; a client builds its HUD lazily in Update() once the NetworkManager reports one.
+            if (Application.isBatchMode)
                 enabled = false;
-                return;
-            }
-            Build();
         }
 
         static bool NetworkManagerIsClient()
@@ -118,6 +118,12 @@ namespace BeMyArms.M7
 
         void Update()
         {
+            if (_canvas == null)
+            {
+                if (!NetworkManagerIsClient()) return;
+                Build();
+            }
+
             if (_director == null) _director = M3DuelDirector.Instance;
             if (_director == null) return;
 

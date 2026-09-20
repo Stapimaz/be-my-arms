@@ -53,7 +53,7 @@ namespace BeMyArms.M7
                 ("PLAY", (System.Action)ShowLobby),
                 ("SETTINGS", (System.Action)ShowSettings),
                 ("QUIT", (System.Action)Quit),
-            }, 0.5f, 430f, 0.42f, 78f, 18f);
+            }, 0.5f, 0.42f, 78f, 18f);
 
             _status = M7Ui.Label(root.transform, "Status", EditorHint(), 22, TextAnchor.MiddleCenter);
             M7Ui.Place(_status.rectTransform, new Vector2(0.5f, 0.10f), Vector2.zero, new Vector2(1400f, 60f));
@@ -94,7 +94,7 @@ namespace BeMyArms.M7
 
             // Slot list.
             Text slotsTitle = M7Ui.Label(root.transform, "SlotsTitle", "SLOTS  (empty slots are bots)", 24, TextAnchor.MiddleLeft);
-            M7Ui.Place(slotsTitle.rectTransform, new Vector2(0.52f, 0.80f), Vector2.zero, new Vector2(700f, 40f));
+            M7Ui.Place(slotsTitle.rectTransform, new Vector2(0.72f, 0.80f), Vector2.zero, new Vector2(620f, 40f));
             int bodies = _mode == M7MapFamily.Duel ? 1 : 2;
             int line = 0;
             for (int team = 0; team < 2; team++)
@@ -106,7 +106,7 @@ namespace BeMyArms.M7
                         bool you = _role == role && body == 0 && team == 0; // human is team A, body 0
                         string label = $"Team {(team == 0 ? "A" : "B")}  Body {body}  P{role + 1}   {(you ? "YOU" : "BOT")}";
                         Text row = M7Ui.Label(root.transform, "Slot" + line, label, 26, TextAnchor.MiddleLeft);
-                        M7Ui.Place(row.rectTransform, new Vector2(0.52f, 0.76f), new Vector2(0f, -line * 44f), new Vector2(700f, 40f));
+                        M7Ui.Place(row.rectTransform, new Vector2(0.72f, 0.76f), new Vector2(0f, -line * 44f), new Vector2(620f, 40f));
                         row.color = you ? new Color(0.4f, 0.9f, 1f) : new Color(0.85f, 0.85f, 0.85f);
                         line++;
                     }
@@ -191,13 +191,19 @@ namespace BeMyArms.M7
         static void Highlight(Button button, bool selected)
             => M7Ui.SetColor(button, selected ? new Color(0.20f, 0.52f, 0.66f, 1f) : new Color(0.16f, 0.18f, 0.22f, 0.96f));
 
-        static void Stack(Transform parent, IEnumerable<(string label, System.Action action)> items, float centerX, float top, float y0, float height, float gap)
+        /// <summary>
+        /// Lay out a vertical stack of buttons centered on the given normalized anchor. The anchor is
+        /// in canvas space (0..1); the buttons are offset down the screen from the stack center.
+        /// </summary>
+        static void Stack(Transform parent, IEnumerable<(string label, System.Action action)> items, float anchorX, float anchorY, float height, float gap)
         {
-            float y = y0;
-            foreach ((string label, System.Action action) in items)
+            var list = new List<(string label, System.Action action)>(items);
+            float total = list.Count * height + Mathf.Max(0, list.Count - 1) * gap;
+            float y = -total * 0.5f + height * 0.5f; // first button's center, relative to the stack center
+            foreach ((string label, System.Action action) in list)
             {
                 Button button = M7Ui.Button(parent, label, label, action, 30);
-                M7Ui.Place(button.image.rectTransform, new Vector2(centerX, top), new Vector2(0f, -y), new Vector2(420f, height));
+                M7Ui.Place(button.image.rectTransform, new Vector2(anchorX, anchorY), new Vector2(0f, y), new Vector2(420f, height));
                 y += height + gap;
             }
         }

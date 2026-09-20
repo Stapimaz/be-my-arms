@@ -1,0 +1,19 @@
+{
+    "name": "BeMyArms.QA",
+    "rootNamespace": "BeMyArms.QA",
+    "references": [
+        "UnityEngine.UI",
+        "Unity.Pipeline"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UNITY_EDITOR || DEVELOPMENT_BUILD || ENABLE_RUNTIME_PIPELINE"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

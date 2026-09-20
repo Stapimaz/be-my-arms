@@ -1,7 +1,7 @@
 # Development Environment
 
 **Project:** `C:\Users\stapi\GameDev\be-my-arms`
-**Last updated:** 2026-09-19
+**Last updated:** 2026-09-20
 
 This documents the tooling required to develop and verify Be My Arms, and the preferred
 workflow: drive the **open Unity Editor through the Unity Pipeline package** rather than
@@ -151,3 +151,91 @@ Then, in the editor: **Be My Arms > M7 > Regenerate Content** builds the map pre
 the audio library and the VFX prefabs/libraries; **Be My Arms > M7 > Validate Content** runs the map
 and shippable-match-set checks (CLI: `M7PipelineCommands.Validate()`). See `docs/M7_CONTENT.md` and
 `docs/M7_ART_DIRECTION.md`.
+
+---
+
+## 7. Runtime visual QA (the real Player build)
+
+For player-facing UI and gameplay work, verify against the **actual built player**, not the editor.
+A small set of `RuntimeOnly` Pipeline commands (in `Assets/Scripts/QA`, assembly `BeMyArms.QA`)
+drives the production UI and its real callbacks and captures what the player actually rendered —
+including **screen-space (overlay) UI**, which an editor camera capture misses.
+
+| Command | Does |
+|---|---|
+| `qa_ui_state` | Active scene, screen resolution, canvases, and every active `Button` with its label, interactability and on-screen visibility. |
+| `qa_capture_frame` | Renders the current player frame (overlay UI included) to a PNG and returns its absolute path. `--output` is absolute or relative to the player root; `--include_inline true` also returns base64. |
+| `qa_click_button --name <GameObject name>` | Invokes the button's real `Button.onClick` callback (case-insensitive name). |
+
+These are `RuntimeOnly`, so they are hidden from the running Editor's command listing and are
+reached with `--runtime` / `--runtime-path`. They act on the shipped UI, so navigating through
+them exercises the exact flow a player uses.
+
+### Enable the runtime server in the dev build (one-time, per project)
+
+`ProjectSettings/Packages/com.unity.pipeline/RuntimePipelineConfig.json` sets `enableInBuilds`:
+
+```powershell
+unity command set_runtime_pipeline_settings --settings '{"enableInBuilds":true}' --confirm true
+```
+
+**Security:** this starts an HTTP command server inside the Player. It is for **development/QA
+builds only** and is never enabled in a shipping build (`M7GameBuild` builds `BuildOptions.Development`;
+the build processor bakes the config only for development builds / `ENABLE_RUNTIME_PIPELINE`).
+`M7GameBuild.BuildWindowsPlayer` mirrors the Development flag into
+`EditorUserBuildSettings.development` for the duration of the build, because the Pipeline build
+processor only bakes the config for a scripted build when it can tell the build is a development
+build.
+
+### Build, launch, connect
+
+```powershell
+# Build the normal playable game (canonical entry point; also Be My Arms > M7 > Build Playable Game).
+unity command eval_file Temp/m7_build_eval.cs 3600000 --timeout 3600   # calls M7GameBuild.BuildWindowsPlayer()
+
+# Launch the client and wait for its runtime descriptor.
+Start-Process Builds\M7\BeMyArms.exe -WorkingDirectory Builds\M7
+# descriptor: Builds\M7\.unity-pipeline-runtime-port  (pid, port, evalToken)
+
+# Connect. --runtime-path takes the DIRECTORY that contains the descriptor, not the file.
+unity command qa_ui_state --runtime-path Builds\M7
+```
+
+`unity command ... --runtime-path <build dir>` targets the Player, not the Editor.
+
+**Dedicated-server collision:** a private match launches a second process of the same build, and
+both write the *same* `.unity-pipeline-runtime-port` next to the exe. Before starting a match,
+snapshot the client's descriptor into its own directory and drive the client through that copy:
+
+```powershell
+New-Item -ItemType Directory -Force Builds\M7\.qa-client | Out-Null
+Copy-Item Builds\M7\.unity-pipeline-runtime-port Builds\M7\.qa-client\.unity-pipeline-runtime-port
+# then use:  --runtime-path Builds\M7\.qa-client
+```
+
+### Worked flow (main menu → private lobby → 2v2 match)
+
+```powershell
+$R = "Builds\M7\.qa-client"
+unity command qa_capture_frame --output "QA/01_main_menu.png" --runtime-path $R
+unity command qa_click_button  --name PLAY        --runtime-path $R
+unity command qa_capture_frame --output "QA/03_lobby.png"     --runtime-path $R
+unity command qa_click_button  --name TwoVsTwo    --runtime-path $R
+unity command qa_click_button  --name P2          --runtime-path $R
+unity command qa_capture_frame --output "QA/04_lobby_2v2_p2.png" --runtime-path $R
+unity command qa_click_button  --name Start       --runtime-path $R
+unity command qa_ui_state      --runtime-path $R          # → M7TwoVsTwoArena + M7MatchHud canvas
+unity command qa_capture_frame --output "QA/05_match_hud.png" --runtime-path $R
+```
+
+Captures default to `<player root>/QA/` (`Builds/M7/QA`, gitignored). **Read the PNGs back with
+the agent's image-capable tools** and treat them as the acceptance evidence — code inspection and
+green tests do not prove the pixels. `qa_ui_state`'s per-button `onScreen` flag is the quick
+numeric check (an off-screen button reports `onScreen:false` and a screen centre far outside
+`Resolution`).
+
+### Diagnosing runtime UI without a rebuild
+
+`eval` / `eval_file` work in a desktop development Player, so a live layout can be probed or
+temporarily mutated (then rebuilt by navigating) to reproduce a suspected defect before changing
+source. Example: `unity command eval_file Temp/qa_break_menu.cs --runtime-path Builds\M7\.qa-client`.
