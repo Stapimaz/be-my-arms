@@ -474,3 +474,55 @@ Follow-up feel pass on the improved build.
 - Arms: `Q_P2_Arms` `animType=Generic avatarSetup=NoAvatar`, 17 Generic clips; viewmodel Animator
   `M7_P2_ArmsAim` with `avatar=null`.
 - `M7PipelineCommands.Validate()` PASSED; build succeeded.
+
+## 20. Stabilization: native Generic presentation + rubber wall (2026-09-27)
+
+Rolls back the §19 world-character animation/import experiment and stabilizes feel, keeping the §19
+gameplay wins (LookYaw-relative WASD, crouch sim). Supersedes the §19 directional-blend, Humanoid
+avatar, spring-wall and socket-Euler grip claims.
+
+- **P1/P2 world bodies are back on the native Generic Quaternius presentation.** `EnsureImportSettings`
+  imports `Q_P1_Body`/`Q_P2_Body`/`Q_P2_Arms` as Generic (`NoAvatar`); the hand-authored Humanoid
+  avatar and the Humanoid/KayKit import path are removed (asset + folder deleted). No `isHumanMotion`
+  clips remain on the bodies, so the previously broken/static/humanoid-retargeted locomotion is gone.
+  The FPS arms keep their Generic setup.
+- **Locomotion is a 1D speed blend** (`Idle_Loop`/`Walk_Loop`/`Jog_Fwd_Loop`/`Sprint_Loop` at
+  0/4.5/5.8/7.0 m/s) on `Speed`; the `MoveX`/`MoveY` 2D tree and the KayKit directional clips are
+  gone. The crouch override layer (`Crouch_Idle_Loop`/`Crouch_Fwd_Loop` on `Speed`) is retained, as
+  is crouch simulation and stance blending. Stable native animation is preferred over strafing for
+  now.
+- **Trigger-hand roll is derived from the real hand.** `Grip_R` is no longer an arbitrary socket Euler
+  (the old `(0,0,30)` about the weapon-forward axis, which did not visibly roll the palm). The weapon
+  prefab's `Grip_R` local rotation is baked by `M7WeaponBuilder.BakeTriggerHandRoll`: the arm rig is
+  sampled in its `Pistol_Aim_Neutral` pose, the right hand's long (wrist-to-finger) axis is found from
+  `DEF-hand.R`→`DEF-f_middle.01.R`, and the aimed hand is rolled `GripRoll` (30°) about that axis,
+  expressed relative to the weapon root. Hand **position is unchanged**. Both the world body and the
+  viewmodel follow the same baked grip (the two-bone IK `targetRotationWeight=1`).
+- **P2 sector edge is a non-oscillating rubber wall.** The damped-spring `M3SectorWall` (Velocity/
+  Stiffness) is replaced by a rubber model with no restoring force: outward movement in the last
+  `SectorWallZoneDegrees` (~11°) is resisted by a linear gain that reaches zero exactly at the
+  boundary; rejected outward input banks a compression (`SectorEdgePressureGain`, cap
+  `SectorReboundMaxDegrees` ≈ 0.9°). On release the banked compression becomes a single inward
+  impulse whose coast speed only decays (`SectorReboundDamping`), so the aim eases ~0.5–1° inward and
+  then **stops** — it is never pulled back toward the boundary (no oscillation, no jitter). Inward
+  movement is exactly 1:1 and clears the wall immediately. The stored target is always clamped inside
+  the sector, so no input is accumulated beyond the boundary (no phantom aim).
+- **P1 third-person camera obstacle transitions softened only.** `CinemachineThirdPersonFollow`
+  `AvoidObstacles.DampingIntoCollision` 0.06 → 0.18 and `DampingFromCollision` 0.35 → 0.45; no other
+  camera smoothing changed.
+
+**Structural checks (no runtime play)**
+
+- Import: P1/P2/Arms all `Generic` + `NoAvatar`, 17 clips each, **0** `isHumanMotion`.
+- Controllers: `Simple1D`/`Speed`, children 0/4.5/5.8/7.0, params `[Speed,Grounded,VerticalSpeed,
+  Alive,Shoot,Hit]`, 2 layers (locomotion + crouch). P1/P2/Arms/body Animators all resolve their
+  controller (`avatar=null`).
+- Grip: `Grip_R` local euler `(299.2, 69.9, 292.7)` (derived from the posed hand axis `≈(0.02, 0.23,
+  −0.97)`), position `(0, −0.110, −0.180)` unchanged.
+- Wall: outward push → 15/30/45/60/69 held (compression 0.9°, offset capped at 69); release → coasts
+  monotonically from 69 to 68.10 with the coast speed decaying to zero, no oscillation, and stays at
+  68.10 (no return); inward −10 → 59 exactly with rebound/compression cleared; idle after clearing
+  stays put.
+- Prefab import race fixed: skin/body prefabs are force-reimported after save so a just-recreated
+  controller reference never caches as `null`.
+- `M7PipelineCommands.Validate()` PASSED; Windows player built.

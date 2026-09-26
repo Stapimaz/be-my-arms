@@ -222,8 +222,8 @@ namespace BeMyArms.M7
             body.AvoidObstacles.Enabled = true;
             body.AvoidObstacles.CollisionFilter = 1; // Default layer only (arena camera colliders)
             body.AvoidObstacles.CameraRadius = 0.3f;
-            body.AvoidObstacles.DampingIntoCollision = 0.06f;
-            body.AvoidObstacles.DampingFromCollision = 0.35f;
+            body.AvoidObstacles.DampingIntoCollision = 0.18f;
+            body.AvoidObstacles.DampingFromCollision = 0.45f;
             var composer = p1Go.AddComponent<CinemachineRotationComposer>();
             composer.Damping = new Vector2(0.06f, 0.06f);
 

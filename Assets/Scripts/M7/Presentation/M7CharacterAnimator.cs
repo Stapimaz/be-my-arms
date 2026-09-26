@@ -8,11 +8,10 @@ namespace BeMyArms.M7
     /// <summary>
     /// Presentation-only Mecanim driver for the Quaternius-derived shared body.
     ///
-    /// Locomotion is a 2D directional blend driven by the sim's body-local movement direction
-    /// (MoveRight/MoveForward, magnitude = speed). Forward/back/strafe/diagonal are real authored
-    /// clips (the strafe/back clips are baked from the CC0 walk/jog/sprint cycles), so the fighter
-    /// strafes while facing BodyYaw without any per-frame bone rotation. P2 plays the same locomotion
-    /// for its torso and the two-bone arm IK aims the arms at the rifle grips on the aim pivot.
+    /// Locomotion is a 1D speed blend on the native Generic Quaternius clips (Idle/Walk/Jog/Sprint),
+    /// so the fighter is animated while facing BodyYaw independently of the movement direction. P2
+    /// plays the same locomotion for its torso and the two-bone arm IK aims the arms at the rifle
+    /// grips on the aim pivot.
     ///
     /// It only reads simulation/replicated state and never writes simulation, hitboxes, aim or the
     /// contract anchors.
@@ -38,8 +37,6 @@ namespace BeMyArms.M7
         /// <summary>Diagnostic: the current crouch blend 0..1.</summary>
         public float CrouchWeight => _crouch01;
 
-        static readonly int MoveXId = Animator.StringToHash("MoveX");
-        static readonly int MoveYId = Animator.StringToHash("MoveY");
         static readonly int SpeedId = Animator.StringToHash("Speed");
         static readonly int GroundedId = Animator.StringToHash("Grounded");
         static readonly int VerticalSpeedId = Animator.StringToHash("VerticalSpeed");
@@ -80,12 +77,7 @@ namespace BeMyArms.M7
         void ApplyAnimator(Animator animator, M2BodyState state, bool alive)
         {
             if (animator == null) return;
-            // Body-local movement direction scaled by speed magnitude (walk ~0.64, sprint 1.0); the
-            // 2D blend picks forward/back/strafe and blends diagonals naturally.
-            float sprint = Body != null && Body.SprintSpeed > 0.01f ? Body.SprintSpeed : 7f;
-            float magnitude = Mathf.Clamp(state.PlanarSpeed / sprint, 0f, 1f);
-            animator.SetFloat(MoveXId, state.MoveRight * magnitude);
-            animator.SetFloat(MoveYId, state.MoveForward * magnitude);
+            // Native Generic 1D speed blend (thresholds in raw planar speed, m/s).
             animator.SetFloat(SpeedId, state.PlanarSpeed);
             animator.SetBool(GroundedId, state.Grounded);
             animator.SetFloat(VerticalSpeedId, state.VerticalVelocity);

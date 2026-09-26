@@ -33,15 +33,17 @@ namespace BeMyArms.M2.Tests
         }
 
         [Test]
-        public void LookInsideThreshold_DoesNotMoveBody_ButMovementUsesBodyYaw()
+        public void LookInsideThreshold_DoesNotMoveBody_ButMovementUsesLookYaw()
         {
             M2BodySim sim = NewSim();
             sim.ApplyP1(new M2P1Input { MoveX = 0f, MoveZ = 1f, LookYawDelta = 30f }, 0.1f);
 
             Assert.AreEqual(0f, sim.State.BodyYaw, 1e-4f, "Looking inside the threshold must not turn the body.");
-            // Body faces +Z, so forward movement advances +Z and not +X.
-            Assert.Greater(sim.State.PosZ, 0f);
-            Assert.AreEqual(0f, sim.State.PosX, 1e-4f);
+            // WASD is camera/look-relative, so forward advances along the 30° look yaw rather than the
+            // body's +Z facing: the movement direction must read as the look direction.
+            Assert.Greater(sim.State.PosZ, 0f, "Forward movement still advances away from the origin.");
+            float angle = (float)(System.Math.Atan2(sim.State.PosX, sim.State.PosZ) * 180.0 / System.Math.PI);
+            Assert.AreEqual(30f, angle, 1.5f, "Forward movement must follow LookYaw, not the body yaw.");
         }
 
         [Test]

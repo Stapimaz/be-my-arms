@@ -104,6 +104,7 @@ namespace BeMyArms.M7.EditorTools
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(go, BodyPrefabPath);
             Object.DestroyImmediate(go);
             AssetDatabase.SaveAssets();
+            AssetDatabase.ImportAsset(BodyPrefabPath, ImportAssetOptions.ForceUpdate);
             return prefab;
         }
 

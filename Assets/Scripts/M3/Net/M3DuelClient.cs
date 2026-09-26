@@ -42,12 +42,11 @@ namespace BeMyArms.M3
         public float SectorHalfDegrees = 70f;
         public float MaxPitchDegrees = 80f;
 
-        [Header("P2 sector wall (feel)")]
-        public float SectorWallZoneDegrees = 12f;
-        public float SectorWallStiffness = 120f;
-        public float SectorReboundDamping = 16f;
-        public float SectorReboundMaxDegrees = 2f;
-        public float SectorEdgePressureGain = 0.6f;
+        [Header("P2 sector rubber wall (feel)")]
+        public float SectorWallZoneDegrees = 11f;
+        public float SectorReboundMaxDegrees = 0.9f;
+        public float SectorEdgePressureGain = 0.55f;
+        public float SectorReboundDamping = 14f;
 
         [Header("Send")]
         public float SendRateHz = 60f;
@@ -531,14 +530,14 @@ namespace BeMyArms.M3
             var tuning = new M3SectorWall.Tuning
             {
                 WallZoneDegrees = SectorWallZoneDegrees,
-                Stiffness = SectorWallStiffness,
-                Damping = SectorReboundDamping,
+                PressureGain = SectorEdgePressureGain,
                 ReboundMaxDegrees = SectorReboundMaxDegrees,
-                PressureGain = SectorEdgePressureGain
+                ReleaseDamping = SectorReboundDamping
             };
             float displayedOffset = M3SectorWall.Step(ref _sectorWall, tuning, offset, deltaYaw, innerHalf, Time.deltaTime, out float targetOffset);
 
-            // The stored target stays legal (no phantom); the spring rebound is presentation-only.
+            // The stored target stays legal (no phantom); the rubber rebound is presentation-only and
+            // never pulls the aim back toward the boundary.
             _manualAimYaw = M2BodySim.Normalize(_smoothedBodyYaw + targetOffset);
 
             var input = new M2P2Input();
