@@ -140,6 +140,8 @@ namespace BeMyArms.M7.EditorTools
         {
             if (File.Exists(path)) AssetDatabase.DeleteAsset(path);
             var controller = AnimatorController.CreateAnimatorControllerAtPath(path);
+            controller.AddParameter("MoveX", AnimatorControllerParameterType.Float);
+            controller.AddParameter("MoveY", AnimatorControllerParameterType.Float);
             controller.AddParameter("Speed", AnimatorControllerParameterType.Float);
             controller.AddParameter("Grounded", AnimatorControllerParameterType.Bool);
             controller.AddParameter("VerticalSpeed", AnimatorControllerParameterType.Float);
@@ -149,18 +151,31 @@ namespace BeMyArms.M7.EditorTools
 
             AnimatorStateMachine sm = controller.layers[0].stateMachine;
 
+            // 2D directional locomotion: (MoveX = body-local right, MoveY = body-local forward), with
+            // magnitude encoding speed. Forward/back/strafe are real authored clips, so A/D strafe
+            // while facing BodyYaw and diagonals blend naturally.
             var blend = new BlendTree
             {
                 name = "Locomotion",
-                blendType = BlendTreeType.Simple1D,
-                blendParameter = "Speed",
+                blendType = BlendTreeType.FreeformCartesian2D,
+                blendParameter = "MoveX",
+                blendParameterY = "MoveY",
                 useAutomaticThresholds = false
             };
             AssetDatabase.AddObjectToAsset(blend, controller);
-            blend.AddChild(Clip(fbx, "Idle_Loop"), 0f);
-            blend.AddChild(Clip(fbx, "Walk_Loop"), 4.5f);
-            blend.AddChild(Clip(fbx, "Jog_Fwd_Loop"), 5.8f);
-            blend.AddChild(Clip(fbx, "Sprint_Loop"), 7.0f);
+            blend.AddChild(Clip(fbx, "Idle_Loop"), new Vector2(0f, 0f));
+            blend.AddChild(Clip(fbx, "Walk_Loop"), new Vector2(0f, 0.64f));
+            blend.AddChild(Clip(fbx, "Jog_Fwd_Loop"), new Vector2(0f, 0.82f));
+            blend.AddChild(Clip(fbx, "Sprint_Loop"), new Vector2(0f, 1.0f));
+            blend.AddChild(Clip(fbx, "Walk_Back_Loop"), new Vector2(0f, -0.64f));
+            blend.AddChild(Clip(fbx, "Jog_Back_Loop"), new Vector2(0f, -0.82f));
+            blend.AddChild(Clip(fbx, "Sprint_Back_Loop"), new Vector2(0f, -1.0f));
+            blend.AddChild(Clip(fbx, "Walk_Strafe_L_Loop"), new Vector2(-0.64f, 0f));
+            blend.AddChild(Clip(fbx, "Jog_Strafe_L_Loop"), new Vector2(-0.82f, 0f));
+            blend.AddChild(Clip(fbx, "Sprint_Strafe_L_Loop"), new Vector2(-1.0f, 0f));
+            blend.AddChild(Clip(fbx, "Walk_Strafe_R_Loop"), new Vector2(0.64f, 0f));
+            blend.AddChild(Clip(fbx, "Jog_Strafe_R_Loop"), new Vector2(0.82f, 0f));
+            blend.AddChild(Clip(fbx, "Sprint_Strafe_R_Loop"), new Vector2(1.0f, 0f));
 
             AnimatorState loco = sm.AddState("Locomotion", new Vector3(0f, 0f, 0f));
             loco.motion = blend;

@@ -20,6 +20,8 @@ namespace BeMyArms.M7.EditorTools
         public const string GripRightName = "Grip_R";
         public const string GripLeftName = "Grip_L";
         public const string MuzzleName = "Muzzle";
+        /// <summary>Roll of the trigger-hand grip about the weapon-forward axis (degrees).</summary>
+        public const float GripRoll = 30f;
 
         public static GameObject Build()
         {
@@ -61,7 +63,9 @@ namespace BeMyArms.M7.EditorTools
             Debug.Log($"[M7weapon] rifle axis={axis} muzzlePositive={muzzlePositive} scale={scale:0.0000} size={size:F3}");
 
             CreateMarker(root.transform, MuzzleName, new Vector3(0f, 0.02f * size.y, 0.5f * size.z), Quaternion.identity);
-            CreateMarker(root.transform, GripRightName, new Vector3(0f, -0.30f * size.y, -0.20f * size.z), Quaternion.identity);
+            // The right (trigger) hand rolls ~30 deg about the weapon-forward axis so the palm wraps
+            // the grip; the two-bone IK (targetRotationWeight 1) follows this grip rotation.
+            CreateMarker(root.transform, GripRightName, new Vector3(0f, -0.30f * size.y, -0.20f * size.z), Quaternion.Euler(0f, 0f, -GripRoll));
             CreateMarker(root.transform, GripLeftName, new Vector3(0f, -0.24f * size.y, 0.20f * size.z), Quaternion.identity);
 
             Directory.CreateDirectory(Path.GetDirectoryName(PrefabPath));

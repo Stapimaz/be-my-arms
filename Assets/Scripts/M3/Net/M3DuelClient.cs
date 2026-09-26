@@ -540,24 +540,27 @@ namespace BeMyArms.M3
         }
 
         /// <summary>
-        /// Progressive, exponential-feeling resistance as P2 aim approaches the sector edge: moving
-        /// outward loses sensitivity smoothly and becomes very stiff near the limit, while moving
-        /// back inward is immediate. The world-stabilized accumulator is hard-clamped inside the
-        /// sector, so there is no phantom travel beyond the boundary.
+        /// Soft/asymptotic resistance as P2 aim approaches the sector edge. Outward mouse yaw is
+        /// compressed by the remaining angular distance to the boundary:
+        ///   applied = remaining * (1 - exp(-|delta| / remaining))
+        /// so the closer the aim is to the limit the less of the same delta is applied, and it
+        /// smoothly asymptotes to the boundary (no hard wall). Far from the edge this is ~1:1, and
+        /// inward movement is always exactly 1:1. The accumulator is hard-clamped inside the sector
+        /// only as a numerical/server safety fallback, so there is never hidden input beyond it.
         /// </summary>
-        static float ApplySectorResistance(float worldYaw, float deltaYaw, float bodyYaw, float innerHalf)
+        public static float ApplySectorResistance(float worldYaw, float deltaYaw, float bodyYaw, float innerHalf)
         {
             float offset = M2BodySim.Normalize(worldYaw - bodyYaw);
             float applied = deltaYaw;
             if (Mathf.Abs(deltaYaw) > 0.0001f)
             {
-                bool outward = Mathf.Sign(deltaYaw) == Mathf.Sign(offset);
+                bool outward = Mathf.Sign(deltaYaw) == Mathf.Sign(offset) && Mathf.Abs(offset) > 0.001f;
                 if (outward)
                 {
-                    const float softStart = 0.55f; // begin resisting at 55% of the half-sector
-                    float t = Mathf.InverseLerp(innerHalf * softStart, innerHalf, Mathf.Abs(offset));
-                    float sensitivity = Mathf.Lerp(0.06f, 1f, 1f - Mathf.SmoothStep(0f, 1f, t));
-                    applied = deltaYaw * sensitivity;
+                    float remaining = Mathf.Max(0f, innerHalf - Mathf.Abs(offset));
+                    applied = remaining <= 0.0001f
+                        ? 0f
+                        : Mathf.Sign(deltaYaw) * remaining * (1f - Mathf.Exp(-Mathf.Abs(deltaYaw) / remaining));
                 }
             }
             float clamped = Mathf.Clamp(offset + applied, -innerHalf, innerHalf);

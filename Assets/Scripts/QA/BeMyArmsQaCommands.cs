@@ -291,7 +291,6 @@ namespace BeMyArms.QA
                         M7CharacterAnimator presentation = local.Body.GetComponent<M7CharacterAnimator>();
                         if (presentation != null)
                         {
-                            result.LegYaw = Round(presentation.CurrentLegYaw);
                             result.CrouchWeight = Round(presentation.CrouchWeight);
                         }
 
@@ -410,7 +409,7 @@ namespace BeMyArms.QA
                    $"drawn={r.BodyRenderedParts} p1={p1} p2={p2} weapon={w} bboxH={r.BodyBoundsSize?[1]} inView={r.BodyInViewport} " +
                    $"cam={r.CameraName} input={r.InputGameplayActive} cursor={r.CursorLock}/{r.CursorVisible} focused={r.ApplicationFocused} " +
                    $"crouch={r.Crouching} hitH={r.HitHeight} spd={r.PlanarSpeed} mv=({r.MoveForward},{r.MoveRight}) " +
-                   $"legYaw={r.LegYaw} crouchW={r.CrouchWeight} aimOff={r.AimYawOffset} " +
+                   $"crouchW={r.CrouchWeight} aimOff={r.AimYawOffset} " +
                    $"vm={r.ViewmodelCount} dupes={r.DuplicateSummary}";
         }
 
@@ -666,7 +665,6 @@ namespace BeMyArms.QA
         public float MoveForward { get; set; }
         public float MoveRight { get; set; }
         public float AimYawOffset { get; set; }
-        public float LegYaw { get; set; }
         public float CrouchWeight { get; set; }
         public float[] BodyPosition { get; set; }
         public float BodyYaw { get; set; }

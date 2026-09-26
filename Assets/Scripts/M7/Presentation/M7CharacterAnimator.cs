@@ -6,16 +6,16 @@ using UnityEngine.Animations.Rigging;
 namespace BeMyArms.M7
 {
     /// <summary>
-    /// Presentation-only Mecanim driver for the Quaternius-derived shared body. P1 plays an authored
-    /// locomotion blend tree (idle/walk/jog/sprint + jump/fall/land/death); P2 plays the same
-    /// locomotion for its torso and the two-bone arm IK (Animation Rigging) aims the arms at the rifle
-    /// grip targets on the authoritative aim pivot. It only reads simulation/replicated state and
-    /// never writes simulation, hitboxes, aim or the contract anchors.
+    /// Presentation-only Mecanim driver for the Quaternius-derived shared body.
     ///
-    /// Directional locomotion: the sim publishes the body-local movement direction (MoveForward /
-    /// MoveRight); the driver leads the legs toward it (hip-lead) and counter-rotates the torso for
-    /// conventional third-person strafing without turning the fighter's facing. Crouch is a full-body
-    /// override layer weighted from the replicated stance.
+    /// Locomotion is a 2D directional blend driven by the sim's body-local movement direction
+    /// (MoveRight/MoveForward, magnitude = speed). Forward/back/strafe/diagonal are real authored
+    /// clips (the strafe/back clips are baked from the CC0 walk/jog/sprint cycles), so the fighter
+    /// strafes while facing BodyYaw without any per-frame bone rotation. P2 plays the same locomotion
+    /// for its torso and the two-bone arm IK aims the arms at the rifle grips on the aim pivot.
+    ///
+    /// It only reads simulation/replicated state and never writes simulation, hitboxes, aim or the
+    /// contract anchors.
     /// </summary>
     public class M7CharacterAnimator : MonoBehaviour
     {
@@ -31,16 +31,15 @@ namespace BeMyArms.M7
         public TwoBoneIKConstraint ArmIkL;
         public TwoBoneIKConstraint ArmIkR;
 
-        /// <summary>Diagnostic: the current directional leg-lead yaw (degrees) and crouch blend 0..1.</summary>
-        public float CurrentLegYaw => _legYaw;
-        public float CrouchWeight => _crouch01;
-
-        [Header("Directional locomotion")]
-        public float MaxLegYaw = 55f;
-        public float LegYawSmoothing = 12f;
+        [Header("Stance")]
         public float CrouchDrop = 0.33f;
         public float CrouchBlendSpeed = 10f;
 
+        /// <summary>Diagnostic: the current crouch blend 0..1.</summary>
+        public float CrouchWeight => _crouch01;
+
+        static readonly int MoveXId = Animator.StringToHash("MoveX");
+        static readonly int MoveYId = Animator.StringToHash("MoveY");
         static readonly int SpeedId = Animator.StringToHash("Speed");
         static readonly int GroundedId = Animator.StringToHash("Grounded");
         static readonly int VerticalSpeedId = Animator.StringToHash("VerticalSpeed");
@@ -48,10 +47,7 @@ namespace BeMyArms.M7
         static readonly int ShootId = Animator.StringToHash("Shoot");
         static readonly int ReloadId = Animator.StringToHash("Reload");
 
-        Transform _p1Hips;
-        Transform _p1Spine;
         Vector3 _aimPivotBase;
-        float _legYaw;
         float _crouch01;
         float _recoil;
         int _lastAmmo = -1;
@@ -62,11 +58,6 @@ namespace BeMyArms.M7
             if (Body == null) Body = GetComponent<M3DuelBody>();
             if (Client == null) Client = GetComponent<M3DuelClient>();
             _lastAmmo = Body != null ? Body.Ammo.Value : -1;
-            if (P1Skin != null)
-            {
-                _p1Hips = Find(P1Skin, "DEF-hips");
-                _p1Spine = Find(P1Skin, "DEF-spine.001");
-            }
             if (AimPivot != null) _aimPivotBase = AimPivot.localPosition;
         }
 
@@ -78,27 +69,27 @@ namespace BeMyArms.M7
             float dt = Mathf.Max(1e-4f, Time.deltaTime);
 
             bool alive = Body.Alive.Value && state.Health > 0;
-            // PlanarSpeed/MoveForward/MoveRight come straight from the sim (predicted or replicated),
-            // so the locomotion blend is stable and never bursts from frame-to-frame position noise.
             ApplyAnimator(P1Animator, state, alive);
             ApplyAnimator(P2Animator, state, alive);
 
             UpdateStance(state, alive, dt);
-            ApplyDirectionalLegs(state, dt);
             UpdateAim(state, alive);
             UpdateCombat(dt);
         }
 
-        static void ApplyAnimator(Animator animator, M2BodyState state, bool alive)
+        void ApplyAnimator(Animator animator, M2BodyState state, bool alive)
         {
             if (animator == null) return;
+            // Body-local movement direction scaled by speed magnitude (walk ~0.64, sprint 1.0); the
+            // 2D blend picks forward/back/strafe and blends diagonals naturally.
+            float sprint = Body != null && Body.SprintSpeed > 0.01f ? Body.SprintSpeed : 7f;
+            float magnitude = Mathf.Clamp(state.PlanarSpeed / sprint, 0f, 1f);
+            animator.SetFloat(MoveXId, state.MoveRight * magnitude);
+            animator.SetFloat(MoveYId, state.MoveForward * magnitude);
             animator.SetFloat(SpeedId, state.PlanarSpeed);
             animator.SetBool(GroundedId, state.Grounded);
             animator.SetFloat(VerticalSpeedId, state.VerticalVelocity);
             animator.SetBool(AliveId, alive);
-            // Backing up plays the locomotion cycle in reverse so the feet read as stepping back.
-            // Never reverse a dead body.
-            animator.speed = alive && state.MoveForward < -0.15f ? -1f : 1f;
         }
 
         /// <summary>Blends the crouch override layer and drops the weapon mount with the stance.</summary>
@@ -109,42 +100,6 @@ namespace BeMyArms.M7
             if (P1Animator != null) P1Animator.SetLayerWeight(1, _crouch01);
             if (P2Animator != null) P2Animator.SetLayerWeight(1, _crouch01);
             if (AimPivot != null) AimPivot.localPosition = _aimPivotBase + Vector3.down * (CrouchDrop * _crouch01);
-        }
-
-        /// <summary>
-        /// Conventional third-person strafing: lead the legs toward the body-local movement direction
-        /// and counter-rotate the spine so the fighter keeps facing BodyYaw/look. The library's free
-        /// subset has no authored strafe clips, so this re-directs the existing authored leg swing
-        /// rather than rotating the whole fighter.
-        /// </summary>
-        void ApplyDirectionalLegs(M2BodyState state, float dt)
-        {
-            if (_p1Hips == null) return;
-
-            float target = 0f;
-            float length = Mathf.Sqrt(state.MoveForward * state.MoveForward + state.MoveRight * state.MoveRight);
-            if (state.Grounded && length > 0.05f && state.PlanarSpeed > 0.15f)
-            {
-                // Body-local movement angle (0 = forward, + = right). Backward is conveyed by reverse
-                // playback, so the lateral component alone leads the legs.
-                float denom = Mathf.Max(0.3f, state.MoveForward);
-                target = Mathf.Clamp(Mathf.Atan2(state.MoveRight, denom) * Mathf.Rad2Deg, -MaxLegYaw, MaxLegYaw);
-            }
-            _legYaw = Mathf.Lerp(_legYaw, target, 1f - Mathf.Exp(-LegYawSmoothing * dt));
-            if (Mathf.Abs(_legYaw) < 0.05f) return;
-
-            Quaternion hipsLocal = _p1Hips.localRotation;
-            Vector3 upInHipsParent = _p1Hips.parent != null
-                ? _p1Hips.parent.InverseTransformDirection(Vector3.up) : Vector3.up;
-            _p1Hips.localRotation = Quaternion.AngleAxis(_legYaw, upInHipsParent) * hipsLocal;
-
-            if (_p1Spine != null)
-            {
-                Quaternion spineLocal = _p1Spine.localRotation;
-                Vector3 upInSpineParent = _p1Spine.parent != null
-                    ? _p1Spine.parent.InverseTransformDirection(Vector3.up) : Vector3.up;
-                _p1Spine.localRotation = Quaternion.AngleAxis(-_legYaw, upInSpineParent) * spineLocal;
-            }
         }
 
         void UpdateAim(M2BodyState state, bool alive)
@@ -184,15 +139,6 @@ namespace BeMyArms.M7
                 }
             }
             _lastAmmo = ammo;
-        }
-
-        static Transform Find(Transform root, string name)
-        {
-            if (root == null) return null;
-            Transform[] all = root.GetComponentsInChildren<Transform>(true);
-            for (int i = 0; i < all.Length; i++)
-                if (all[i].name == name) return all[i];
-            return null;
         }
     }
 }

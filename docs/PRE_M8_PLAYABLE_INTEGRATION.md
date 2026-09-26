@@ -387,3 +387,31 @@ Follow-up feel pass on the improved build.
   hard sector limit (69°).
 - `qa_grip_state` body/viewmodel hands still on the weapon (≤0.023 m); no exceptions; content
   validation PASSED.
+
+## 17. Directional blend + soft sector + grip roll (2026-09-26, fifth pass)
+
+- **P1 locomotion rebuilt as a real 2D directional blend.** Removed the runtime
+  `ApplyDirectionalLegs()` hip/spine LateUpdate rotation (source of the upper-body oscillation) and
+  the `animator.speed = -1` backward hack. `M7CharacterAnimator` now drives a 2D blend tree
+  (`FreeformCartesian2D`) with body-local parameters `MoveX`/`MoveY` (magnitude = speed): Idle,
+  forward/back, strafe L/R at walk/jog/sprint. `tools/pipeline/build-quaternius-bodies.py` authors
+  the strafe clips offline by conjugating the leg-chain rotation with a 90° rotation about each leg
+  bone's own axis (the forward/back swing becomes a lateral step; pelvis/spine untouched) and the
+  backward clips by time-reversing the cycle — real clips on the CC0 rig, no per-frame bone math.
+- **P2 sector wall is now soft/asymptotic.** `M3DuelClient.ApplySectorResistance` compresses outward
+  yaw by the remaining angular distance:
+  `applied = remaining * (1 - exp(-|delta| / remaining))`. The hard clamp remains only as a
+  numerical/server fallback. Inward is exactly 1:1; there is no accumulated input beyond the limit.
+- **P2 grip roll.** The trigger-hand grip marker (`Grip_R`, `M7WeaponBuilder`) is rolled 30° about
+  the weapon-forward axis; the existing two-bone IK follows it. `Grip_L` and all grip positions are
+  unchanged.
+
+**Targeted checks**
+
+- Running player, P1: forward → `moveY=+0.64`, strafe R → `moveX=+0.64`, strafe L → `moveX=-0.64`,
+  backward → `moveY=-0.64`, all with `animSpeed=1.0` (no Animator reversal) and the Locomotion
+  state active.
+- Sector mapping (direct call): outward +15 steps → +15, +13.1, +12.6, +11.7, +9.9, +6.1, +0.75, 0,
+  asymptote 69°; inward −12 → exactly −12.
+- `qa_grip_state`: body L 0.027 m / R 0.000 m, viewmodel 0.000 m (positions unchanged); no
+  exceptions; `M7PipelineCommands.Validate()` PASSED.

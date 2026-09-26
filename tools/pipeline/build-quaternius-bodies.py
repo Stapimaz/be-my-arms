@@ -41,6 +41,12 @@ KEEP_CLIPS = (
     "Pistol_Idle_Loop",
     "Crouch_Idle_Loop",
     "Crouch_Fwd_Loop",
+    # Derived directional locomotion (baked from Walk/Jog/Sprint below): the free CC0 pack ships no
+    # strafe/backward clips, and its rig is not compatible with UAL2's, so we author them by
+    # redirecting the leg swing plane (strafe) and reversing time (backward).
+    "Walk_Strafe_L_Loop", "Walk_Strafe_R_Loop", "Walk_Back_Loop",
+    "Jog_Strafe_L_Loop", "Jog_Strafe_R_Loop", "Jog_Back_Loop",
+    "Sprint_Strafe_L_Loop", "Sprint_Strafe_R_Loop", "Sprint_Back_Loop",
 )
 
 ARM_BONES = ("DEF-upper_arm.", "DEF-forearm.", "DEF-hand.", "DEF-f_", "DEF-thumb.")
@@ -142,6 +148,84 @@ def trim_actions():
     log(f"actions kept={kept} removed={removed}")
 
 
+# Leg chain whose swing plane is redirected for strafing. The CC0 source has no strafe clips, and
+# UAL2 uses a different rig, so we derive strafe clips by conjugating the leg rotation with a 90
+# degree rotation about each leg bone's own axis: the forward/back swing becomes a lateral step
+# while the pelvis/spine/torso stay exactly as authored (the fighter keeps facing forward).
+LEG_BONES = (
+    "DEF-thigh.L", "DEF-thigh.R", "DEF-shin.L", "DEF-shin.R",
+    "DEF-foot.L", "DEF-foot.R", "DEF-toe.L", "DEF-toe.R",
+)
+
+
+def _find_action(suffix):
+    for action in bpy.data.actions:
+        if action.name.split("|")[-1] == suffix:
+            return action
+    return None
+
+
+def _quat_curves(action, bone):
+    base = 'pose.bones["%s"].rotation_quaternion' % bone
+    return [action.fcurves.find(base, index=i) for i in range(4)]
+
+
+def _conjugate_legs(action, angle_deg):
+    from mathutils import Quaternion
+    import math
+    half = math.radians(angle_deg) * 0.5
+    b = Quaternion((math.cos(half), 0.0, math.sin(half), 0.0))  # about bone-local Y
+    binv = b.conjugated()
+    for bone in LEG_BONES:
+        curves = _quat_curves(action, bone)
+        if any(c is None for c in curves):
+            continue
+        count = min(len(c.keyframe_points) for c in curves)
+        for k in range(count):
+            q = Quaternion((
+                curves[0].keyframe_points[k].co[1],
+                curves[1].keyframe_points[k].co[1],
+                curves[2].keyframe_points[k].co[1],
+                curves[3].keyframe_points[k].co[1]))
+            r = b @ q @ binv
+            for i in range(4):
+                curves[i].keyframe_points[k].co[1] = r[i]
+        for c in curves:
+            c.update()
+
+
+def _reverse_time(action):
+    start, end = action.frame_range
+    total = start + end
+    for fc in action.fcurves:
+        frames = [k.co[0] for k in fc.keyframe_points]
+        values = [k.co[1] for k in fc.keyframe_points]
+        n = len(frames)
+        for i, kp in enumerate(fc.keyframe_points):
+            j = n - 1 - i
+            kp.co = (total - frames[j], values[j])
+        fc.update()
+
+
+def derive_directional_actions():
+    """Author strafe/backward clips from the forward walk/jog/sprint cycles."""
+    for source_name, base in (("Walk_Loop", "Walk"), ("Jog_Fwd_Loop", "Jog"), ("Sprint_Loop", "Sprint")):
+        source = _find_action(source_name)
+        if source is None:
+            log(f"derive: missing source {source_name}")
+            continue
+        for label, angle in (("Strafe_L", -90.0), ("Strafe_R", 90.0)):
+            dup = source.copy()
+            dup.name = f"{base}_{label}_Loop"
+            _conjugate_legs(dup, angle)
+            dup.use_fake_user = True
+        back = source.copy()
+        back.name = f"{base}_Back_Loop"
+        _reverse_time(back)
+        back.use_fake_user = True
+    log("derived directional actions")
+
+
 def report_motion(arm):
     """Sanity log: confirm the actions actually carry keyed motion before exporting."""
     data = arm.animation_data
@@ -219,6 +303,7 @@ def build_variant(src, out_dir, filename, remove_fragments):
     mesh.name = "Body"
     remove_vertices(mesh, remove_fragments)
     shade_smooth(mesh)
+    derive_directional_actions()
     trim_actions()
     report_motion(arm)
     stash_actions(arm)
