@@ -13,22 +13,17 @@ namespace BeMyArms.M7
     /// </summary>
     public class M7MatchHudController : MonoBehaviour
     {
-        static readonly (string label, int index)[] BuyCatalog =
-        {
-            ("Rifle 700", 0), ("SMG 500", 1), ("Shotgun 450", 2), ("Pistol 150", 3),
-            ("Smoke 150", 4), ("Flash 150", 5), ("Grenade 200", 6)
-        };
-
         Canvas _canvas;
         Text _top;
         Text _vitals;
         Text _weapon;
         RectTransform _crosshair;
-        GameObject _buyPanel;
         GameObject _postPanel;
         Text _postTitle;
+        Text _buyHint;
 
         M3DuelDirector _director;
+        M7LocalPlayer _localPlayer;
 
         void Awake()
         {
@@ -43,7 +38,8 @@ namespace BeMyArms.M7
             }
 
             // Camera/viewmodel/cursor/ESC-menu presentation for the local player.
-            if (GetComponent<M7LocalPlayer>() == null) gameObject.AddComponent<M7LocalPlayer>();
+            _localPlayer = GetComponent<M7LocalPlayer>();
+            if (_localPlayer == null) _localPlayer = gameObject.AddComponent<M7LocalPlayer>();
         }
 
         static bool NetworkManagerIsClient()
@@ -82,29 +78,12 @@ namespace BeMyArms.M7
             M7Ui.Place(M7Ui.Panel(_crosshair, "Right", cross).rectTransform, new Vector2(1f, 0.5f), new Vector2(-7f, 0f), new Vector2(10f, 2f));
             M7Ui.Place(M7Ui.Panel(_crosshair, "Dot", cross).rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(2f, 2f));
 
-            BuildBuyPanel();
+            // Vertical slice: the P2 loadout is a single auto-equipped rifle, so there is no weapon
+            // selection UI. A short buy-phase hint keeps the phase readable without needing the mouse.
+            _buyHint = M7Ui.Label(_canvas.transform, "BuyHint", "", 24, TextAnchor.UpperCenter);
+            M7Ui.Place(_buyHint.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -84f), new Vector2(900f, 40f));
+
             BuildPostPanel();
-        }
-
-        void BuildBuyPanel()
-        {
-            var panel = M7Ui.Panel(_canvas.transform, "Buy", new Color(0.04f, 0.05f, 0.07f, 0.85f));
-            M7Ui.Place(panel.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(760f, 220f));
-            _buyPanel = panel.gameObject;
-
-            Text title = M7Ui.Label(panel.transform, "Title", "BUY PHASE  (P2 loadout)", 26, TextAnchor.UpperCenter);
-            M7Ui.Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -14f), new Vector2(720f, 40f));
-
-            for (int i = 0; i < BuyCatalog.Length; i++)
-            {
-                (string label, int index) = BuyCatalog[i];
-                int column = i % 4;
-                int row = i / 4;
-                Button button = M7Ui.Button(panel.transform, "Buy" + index, label, () => Buy(index), 20);
-                M7Ui.Place(button.image.rectTransform, new Vector2(0f, 1f),
-                    new Vector2(30f + column * 180f, -70f - row * 70f), new Vector2(170f, 60f));
-            }
-            _buyPanel.SetActive(false);
         }
 
         void BuildPostPanel()
@@ -170,8 +149,14 @@ namespace BeMyArms.M7
 
         void UpdateBuy(M3DuelBody own)
         {
+            // The P2 loadout is one auto-equipped rifle in this slice: no interactive buy UI, so the
+            // cursor stays captured through the buy phase. The property is still published so a
+            // future buy/menu UI can release the cursor by setting it true.
+            if (_localPlayer != null) _localPlayer.BuyMenuOpen = false;
+
             bool p2Own = own != null && M3DuelClient.LocalSlotIndex >= 0 && M3DuelSlots.RoleOf(M3DuelClient.LocalSlotIndex) == 1;
-            _buyPanel.SetActive(_director.IsBuy && p2Own);
+            if (_buyHint != null)
+                _buyHint.text = (_director.IsBuy && p2Own) ? "BUY PHASE — rifle equipped" : "";
         }
 
         void UpdatePost()
@@ -191,12 +176,6 @@ namespace BeMyArms.M7
             bool roleP2 = M3DuelClient.LocalSlotIndex >= 0 && M3DuelSlots.RoleOf(M3DuelClient.LocalSlotIndex) == 1;
             bool crosshair = roleP2 && _director.IsLive;
             if (_crosshair != null) _crosshair.gameObject.SetActive(crosshair);
-        }
-
-        void Buy(int index)
-        {
-            M3DuelBody own = FindOwnBody();
-            if (own != null && _director.IsBuy) own.SubmitBuyServerRpc(index);
         }
 
         M3DuelBody FindOwnBody()

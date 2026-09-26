@@ -179,6 +179,7 @@ namespace BeMyArms.M7.EditorTools
             // Player-facing HUD and the audio/VFX services (client-only behaviour guards itself).
             var hudGo = new GameObject("M7_MatchHud");
             hudGo.AddComponent<M7MatchHudController>();
+            hudGo.AddComponent<M7CombatFeedback>();
 
             var audioGo = new GameObject("M7_Audio");
             audioGo.AddComponent<M7AudioService>().Library =

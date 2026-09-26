@@ -315,12 +315,9 @@ namespace BeMyArms.M3
             if (_boughtRound == _director.RoundIndex.Value) return;
             _boughtRound = _director.RoundIndex.Value;
 
-            // DRAFT budget 1200: rifle 700 + grenade 200 + smoke 150 + flash 150 = 1200.
+            // Vertical slice: the playable P2 loadout is a single rifle, auto-equipped each round.
             _body.SubmitBuyServerRpc(0); // rifle (primary)
-            _body.SubmitBuyServerRpc(6); // grenade (utility)
-            _body.SubmitBuyServerRpc(4); // smoke (utility)
-            _body.SubmitBuyServerRpc(5); // flash (utility)
-            Debug.Log($"[M3-client] {M3DuelSlots.Name(LocalSlotIndex, BodiesPerTeam)} auto-buy round {_boughtRound}");
+            Debug.Log($"[M3-client] {M3DuelSlots.Name(LocalSlotIndex, BodiesPerTeam)} auto-equipped rifle round {_boughtRound}");
         }
 
         void HandleManualUtility()

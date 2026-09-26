@@ -159,7 +159,7 @@ predicted architecture and extended it; it did **not** add a second gameplay sta
 - A re-entered lobby after returning to the menu was seen to leave stale duplicated bodies in one
   scripted QA session; a fresh launch is clean and a normal single match is unaffected.
 
-## 12. Foundation recovery pass 2 (2026-09-20) � awaiting human acceptance
+## 12. Foundation recovery pass 2 (2026-09-20) � awaiting human acceptance
 
 The second human playtest still failed at the local input/camera/session foundation. This pass was
 deliberately narrow (no buy/loadout, weapon switching, bot difficulty or art work).
@@ -190,3 +190,78 @@ deliberately narrow (no buy/loadout, weapon switching, bot difficulty or art wor
   over routine screenshots.
 
 The playable checkpoint remains **awaiting human acceptance**; M8 has not started.
+
+## 13. Human game-feel vertical slice (2026-09-26) — awaiting human acceptance
+
+A deliberately narrow presentation/feel pass on top of the unchanged authoritative/networked
+architecture: one Duel private match, one P1, one P2, one rifle.
+
+**Packages adopted**
+
+- `com.unity.cinemachine` `3.1.7` — P1 third-person camera.
+- `com.unity.animation.rigging` `1.4.1` — P2 two-bone arm IK.
+- (pulled transitively: `com.unity.splines` `2.0.0`, `com.unity.burst`).
+
+**Character presentation replaced (CC0)**
+
+- The blocky segment rigs and `M7CharacterAnimator`'s sinusoidal locomotion are replaced by the
+  **Quaternius Universal Animation Library** (CC0) humanoid rig + authored clips. Attribution and
+  regeneration steps: `Assets/ThirdParty/QuaterniusUniversalAnimationLibrary/README.md`.
+- `tools/pipeline/build-quaternius-bodies.py` derives three anatomy-locked skinned bodies from the
+  library's single 53-bone rig by deleting the vertices weighted to hidden bones and capping the
+  loops: P1 (head+torso+pelvis+legs, no arms), P2 (chest+shoulders+arms, no head/legs), and a
+  P2 arms-only first-person set. The derived FBX are committed.
+- `M7CharacterBodyBuilder` builds Generic Mecanim controllers (idle/walk/jog/sprint blend tree,
+  jump/fall/land/death) and the skinned skin prefabs; `M7CharacterAnimator` drives them from the
+  replicated/predicted state only (in-place, never root-motion authority).
+- **P2 arm IK**: Animation Rigging `TwoBoneIKConstraint` (shoulder → elbow → hand) on the skin,
+  targeting grip transforms on the body's aim pivot, so the arms aim with the authoritative aim
+  instead of rotating the P2 root. The first-person view reuses those same real arms + rifle: the
+  local P1 skin is hidden and the camera sits at the `P2CameraAnchor`.
+- The M5/M6 contract (sockets, camera/weapon anchors, hitboxes, stats) is unchanged and still
+  validates; the new skins mount through the existing cosmetic sockets.
+
+**Camera and input feel**
+
+- P1 uses a Cinemachine 3 rig (`CinemachineCamera` + `ThirdPersonFollow` + `RotationComposer` +
+  built-in obstacle avoidance) around a dedicated look/pivot target placed from LookYaw/LookPitch;
+  BodyYaw stays simulation-owned. A map-bounds clamp keeps the camera inside the arena at doorways.
+  Avoidance colliders were added to the map prefabs on the Default layer (hitboxes moved to Ignore
+  Raycast).
+- Mouse sampling stays per-render-frame and predicted; network commands stay rate-limited.
+- Cursor context: gameplay (buy or live, focused, no interactive UI) captures the mouse, including
+  the P1 pre-round/buy window; ESC/pause releases it and Resume restores it. The P2 buy panel is
+  removed for this slice, so the cursor stays captured through buy as well.
+
+**One rifle**
+
+- P2's playable loadout is a single rifle, auto-equipped at round start for both humans and bots;
+  the SMG/shotgun/pistol selection UI is removed. One rifle per body; the crosshair shows for P2
+  while live.
+
+**Combat feedback (authoritative only)**
+
+- `M3DuelBody` broadcasts server-confirmed damage/impact events; `M7CombatFeedback` turns them into a
+  hitmarker + confirm sound (shooter), a red damage vignette + hurt sound (victim), an
+  `ImpactFlesh`/`ImpactWorld` particle, and a distinct ELIMINATED overlay + sound on death.
+
+**Forgiving bot baseline**
+
+- Bots hold through a reaction window, use larger distance-scaled aim error, fire short bursts with
+  pauses, and the post-spawn damage grace is 4s.
+
+**Known limitations**
+
+- Character art is a simple CC0 mannequin with two clay materials and shaded-smooth joints; the
+  first-person arms are the third-person rig (a clean silhouette, not final FP art).
+- The P1 torso and P2 chest overlap where the two halves combine, so the combined silhouette is a
+  little bulky.
+- Combat feedback uses the existing procedural audio/VFX placeholders.
+- `qa_player_state` still reports `vm=0` (there is no separate viewmodel object any more).
+
+**Targeted checks**
+
+- EditMode compile clean; M7 content validation PASSED; map prefabs 15/15 have camera colliders.
+- Runtime on the built player (`Builds/M7/BeMyArms.exe`), real private Duel match, both roles:
+  `bboxH=1.94 p1=ok p2=ok weapon=ok inView=True`, no duplicate bodies, cursor locked during
+  gameplay, rifle equipped, no runtime console errors.

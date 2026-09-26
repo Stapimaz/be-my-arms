@@ -5,28 +5,34 @@ using BeMyArms.M5;
 using BeMyArms.M6;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
 
 namespace BeMyArms.M7.EditorTools
 {
     /// <summary>
     /// Builds the production player-body prefab: the M3 networked body head with the M5/M6 shared-body
-    /// rig, one P1 skin + one P2 skin mounted through the contract, the rifle at the weapon anchor and
-    /// the procedural animation layer. The authoritative components are unchanged.
+    /// rig, one P1 skin + one P2 skin mounted through the contract, the P2 aim pivot + rifle + grip
+    /// targets, the P2 arm IK and the Mecanim presentation driver. The authoritative components are
+    /// unchanged.
     /// </summary>
     public static class M7PlayerBodyBuilder
     {
         public const string BodyPrefabPath = "Assets/Art/Characters/M7PlayerBody.prefab";
         public const string DirectorPrefabPath = "Assets/Art/Characters/M7PlayerDirector.prefab";
 
-        const string P1SkinPath = "Assets/Art/Characters/P1/Prefabs/BMA_P1_Ranger.prefab";
-        const string P2SkinPath = "Assets/Art/Characters/P2/Prefabs/BMA_P2_Scout.prefab";
+        const string P1SkinPath = M7CharacterBodyBuilder.P1SkinPrefabPath;
+        const string P2SkinPath = M7CharacterBodyBuilder.P2SkinPrefabPath;
         const string RiflePath = "Assets/Art/Weapons/Prefabs/BMA_Weapon_Rifle.prefab";
-        // Current production-quality placeholder (Kenney Blaster Kit, CC0). Falls back to the
-        // in-house placeholder rifle when the third-party asset is absent.
-        const string KenneyRiflePath = "Assets/Art/Weapons/Prefabs/BMA_Weapon_Rifle_Kenney.prefab";
+        const string KenneyRiflePath = M7CharacterBodyBuilder.RiflePrefabPath;
+
+        // Aim-relative grip positions (metres) for the P2 two-bone arm IK.
+        static readonly Vector3 GripRight = new Vector3(0.10f, -0.09f, -0.06f);
+        static readonly Vector3 GripLeft = new Vector3(-0.01f, -0.05f, 0.28f);
 
         public static void EnsurePrefabs(out GameObject bodyPrefab, out GameObject directorPrefab)
         {
+            M7CharacterBodyBuilder.EnsureImportSettings();
+            M7CharacterBodyBuilder.BuildAll();
             bodyPrefab = BuildBody();
             directorPrefab = BuildDirector(bodyPrefab);
         }
@@ -51,20 +57,46 @@ namespace BeMyArms.M7.EditorTools
             M5AssembledBody assembled = M5MountAssembler.Assemble(rigInstance, p1Skin, p2Skin);
             if (!assembled.IsValid) Debug.LogWarning("[M7] player body rig invalid: " + assembled.Report);
 
+            // Hitbox triggers stay out of the camera deoccluder's raycasts (Default layer only) and
+            // out of any Unity physics query, since gameplay collision is deterministic and custom.
+            foreach (BeMyArms.M0.HitboxRegion hitbox in go.GetComponentsInChildren<BeMyArms.M0.HitboxRegion>(true))
+                hitbox.gameObject.layer = 2;
+
+            // P2 aim pivot under the contract's WeaponAnchor. It carries the rifle and the grip
+            // targets the arm IK solves to, so the arms aim with the authoritative aim (not the root).
+            Transform weaponAnchor = Find(rigInstance.transform, "WeaponAnchor");
+            var aimPivot = new GameObject("AimPivot");
+            aimPivot.transform.SetParent(weaponAnchor != null ? weaponAnchor : rigInstance.transform, false);
+            aimPivot.transform.localPosition = Vector3.zero;
+            aimPivot.transform.localRotation = Quaternion.identity;
+
             var riflePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(KenneyRiflePath);
             if (riflePrefab == null) riflePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(RiflePath);
             var rifle = (GameObject)Object.Instantiate(riflePrefab);
             rifle.name = "Weapon";
-            Transform weaponAnchor = Find(rigInstance.transform, "WeaponAnchor");
-            rifle.transform.SetParent(weaponAnchor != null ? weaponAnchor : rigInstance.transform, false);
+            rifle.transform.SetParent(aimPivot.transform, false);
             rifle.transform.localPosition = Vector3.zero;
             rifle.transform.localRotation = Quaternion.identity;
 
+            Transform gripR = Marker(aimPivot.transform, "HandTarget_R", GripRight);
+            Transform gripL = Marker(aimPivot.transform, "HandTarget_L", GripLeft);
+
+            TwoBoneIKConstraint ikL = FindConstraint(rigInstance, "ArmIK_L");
+            TwoBoneIKConstraint ikR = FindConstraint(rigInstance, "ArmIK_R");
+            if (ikL != null) ikL.data.target = gripL;
+            if (ikR != null) ikR.data.target = gripR;
+
             var animator = go.AddComponent<M7CharacterAnimator>();
             animator.Body = go.GetComponent<M3DuelBody>();
+            animator.Client = go.GetComponent<M3DuelClient>();
             animator.P1Skin = assembled.P1Skin != null ? assembled.P1Skin.transform : null;
             animator.P2Skin = assembled.P2Skin != null ? assembled.P2Skin.transform : null;
+            animator.P1Animator = FindAnimator(assembled.P1Skin);
+            animator.P2Animator = FindAnimator(assembled.P2Skin);
+            animator.AimPivot = aimPivot.transform;
             animator.Weapon = rifle.transform;
+            animator.ArmIkL = ikL;
+            animator.ArmIkR = ikR;
 
             var client = go.GetComponent<M3DuelClient>();
             if (client != null) client.Presentation = rigInstance.transform;
@@ -89,6 +121,25 @@ namespace BeMyArms.M7.EditorTools
             AssetDatabase.SaveAssets();
             return prefab;
         }
+
+        static Transform Marker(Transform parent, string name, Vector3 localPosition)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPosition;
+            go.transform.localRotation = Quaternion.identity;
+            return go.transform;
+        }
+
+        static TwoBoneIKConstraint FindConstraint(GameObject root, string name)
+        {
+            foreach (TwoBoneIKConstraint c in root.GetComponentsInChildren<TwoBoneIKConstraint>(true))
+                if (c.gameObject.name == name) return c;
+            return null;
+        }
+
+        static Animator FindAnimator(GameObject skin)
+            => skin != null ? skin.GetComponentInChildren<Animator>(true) : null;
 
         static Transform Find(Transform root, string name)
         {

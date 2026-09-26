@@ -326,13 +326,14 @@ namespace BeMyArms.M3
             }
             if (mapSpawns != null) Log($"using map spawns ({mapSpawns.Spawns.Count})");
 
-            // Bot-owned P2 roles get a legal loadout so bots can fight with the real economy path.
+            // Vertical slice: every P2 (human or bot) is equipped with the single rifle at round
+            // start, so there is always exactly one clear weapon per body.
             for (int team = 0; team < M3DuelSlots.Teams; team++)
             {
                 for (int i = 0; i < _bodies[team].Count; i++)
                 {
                     M3DuelBody body = _bodies[team][i];
-                    if (body != null && body.IsSlotBot(body.SlotP2)) body.ServerAutoBuyBotLoadout();
+                    if (body != null) body.ServerAutoBuyBotLoadout();
                 }
             }
 

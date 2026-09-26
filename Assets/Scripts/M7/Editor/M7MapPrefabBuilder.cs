@@ -34,6 +34,7 @@ namespace BeMyArms.M7.EditorTools
                 instance.transform.localScale = Vector3.one;
 
                 RemapMaterials(root);
+                AddCameraColliders(root);
 
                 string path = $"{PrefabDir}/{name}.prefab";
                 PrefabUtility.SaveAsPrefabAsset(root, path);
@@ -58,6 +59,25 @@ namespace BeMyArms.M7.EditorTools
                     if (palette != null && palette != materials[i]) { materials[i] = palette; dirty = true; }
                 }
                 if (dirty) renderer.sharedMaterials = materials;
+            }
+        }
+
+        /// <summary>
+        /// Gives every map piece a box collider matching its renderer bounds, on the Default layer.
+        /// The M7 camera's Cinemachine deoccluder raycasts against Default only, so these become the
+        /// camera's collision geometry without touching the shared-body hitboxes (Ignore Raycast) or
+        /// the deterministic movement collision (which reads renderer/obstacle data separately).
+        /// </summary>
+        static void AddCameraColliders(GameObject root)
+        {
+            foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                if (renderer.GetComponent<Collider>() != null) continue;
+                var box = renderer.gameObject.AddComponent<BoxCollider>();
+                Bounds local = renderer.localBounds;
+                box.center = local.center;
+                box.size = local.size;
+                box.isTrigger = false;
             }
         }
     }

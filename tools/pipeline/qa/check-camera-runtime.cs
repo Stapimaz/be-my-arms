@@ -1,0 +1,13 @@
+var sb = new System.Text.StringBuilder();
+var pivot = UnityEngine.GameObject.Find("M7_P1LookPivot");
+var aim = UnityEngine.GameObject.Find("M7_P1AimTarget");
+var cam = UnityEngine.GameObject.Find("M7_LocalCamera");
+var p1cam = UnityEngine.GameObject.Find("M7_P1Camera");
+var p2cam = UnityEngine.GameObject.Find("M7_P2Camera");
+if (pivot != null) sb.Append("pivot pos=").Append(pivot.transform.position.ToString("F3")).Append(" euler=").Append(pivot.transform.eulerAngles.ToString("F1")).Append('\n');
+if (aim != null) sb.Append("aim pos=").Append(aim.transform.position.ToString("F3")).Append('\n');
+if (cam != null) sb.Append("camera pos=").Append(cam.transform.position.ToString("F3")).Append(" euler=").Append(cam.transform.eulerAngles.ToString("F1")).Append('\n');
+if (p1cam != null) sb.Append("p1vcam active=").Append(p1cam.activeInHierarchy).Append(" pos=").Append(p1cam.transform.position.ToString("F3")).Append('\n');
+if (p2cam != null) sb.Append("p2vcam active=").Append(p2cam.activeInHierarchy).Append('\n');
+UnityEngine.Debug.Log("[camrt]\n" + sb);
+return sb.ToString();

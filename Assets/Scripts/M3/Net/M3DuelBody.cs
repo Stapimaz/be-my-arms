@@ -35,7 +35,16 @@ namespace BeMyArms.M3
 
         [Header("Round pacing")]
         [Tooltip("Brief post-spawn damage grace so a body is not deleted the instant the live phase starts.")]
-        public float SpawnGraceSeconds = 2.5f;
+        public float SpawnGraceSeconds = 4f;
+
+        [Header("Bot practice tuning (forgiving learning baseline)")]
+        [Tooltip("Seconds into the live phase before a bot starts reacting at all.")]
+        public float BotReactionSeconds = 1.6f;
+        public float BotAimErrorBase = 3.5f;
+        public float BotAimErrorPerMeter = 0.45f;
+        public float BotBurstOnSeconds = 0.35f;
+        public float BotBurstPeriodSeconds = 1.7f;
+        public float BotMaxEngageDistance = 40f;
 
         [Header("Networked combat")]
         public float InputDelaySeconds = 0.05f;
@@ -85,6 +94,7 @@ namespace BeMyArms.M3
         float _lastBotX;
         float _lastBotZ;
         float _grenadeCooldown = 5f;
+        float _botLiveTime;
         double _serverTime;
         float _accumulator;
         int _rejectedFires;
@@ -189,6 +199,23 @@ namespace BeMyArms.M3
             if (TryConsumeUtility(kind)) _director.ServerApplyUtility(TeamIndex, kind, _sim.State.PosX, _sim.State.PosZ, _sim.State.AimYaw);
         }
 
+        [ClientRpc]
+        void DamageFeedbackClientRpc(byte attackerTeam, byte attackerBody, byte victimTeam, byte victimBody, Vector3 point, bool killed)
+        {
+            M3CombatEvents.RaiseDamage(new M3DamageEvent
+            {
+                AttackerTeam = attackerTeam == 255 ? -1 : attackerTeam,
+                AttackerBody = attackerBody == 255 ? -1 : attackerBody,
+                VictimTeam = victimTeam == 255 ? -1 : victimTeam,
+                VictimBody = victimBody == 255 ? -1 : victimBody,
+                Point = point,
+                Killed = killed
+            });
+        }
+
+        [ClientRpc]
+        void WorldImpactClientRpc(Vector3 point) => M3CombatEvents.RaiseWorldImpact(point);
+
         bool HasSlot(ulong clientId, int slot)
             => M3DuelRoleService.Instance != null && M3DuelRoleService.Instance.HasSlot(clientId, slot);
 
@@ -213,6 +240,11 @@ namespace BeMyArms.M3
         void ServerTick(float dt)
         {
             _serverTime += dt;
+
+            // Bots hold still for a moment at the start of the live phase so a learning player has
+            // time to look around before they are engaged.
+            if (_director != null && _director.IsLive) _botLiveTime += dt;
+            else _botLiveTime = 0f;
 
             if (_spawnGraceRemaining > 0f) _spawnGraceRemaining = Mathf.Max(0f, _spawnGraceRemaining - dt);
 
@@ -366,6 +398,11 @@ namespace BeMyArms.M3
                 _validatedHits++;
                 _director.ServerApplyDamage(bestTarget, stats.Damage, this);
             }
+            else if (bestTarget == null && wallBlocked && wallDistance < stats.RangeMeters)
+            {
+                // Authoritative miss into geometry: tell clients where to show the impact.
+                WorldImpactClientRpc(origin + dir * wallDistance);
+            }
 
             _sim.ApplyP2(in input);
         }
@@ -412,6 +449,14 @@ namespace BeMyArms.M3
             State.Value = _sim.State;
 
             if (_director != null) _director.NoteDamage(TeamIndex, attacker != null ? attacker.TeamIndex : -1);
+
+            // Authoritative combat feedback for all clients (hitmarker / damage / impact particles).
+            DamageFeedbackClientRpc(
+                attacker != null ? (byte)attacker.TeamIndex : (byte)255,
+                attacker != null ? (byte)attacker.BodyId : (byte)255,
+                (byte)TeamIndex, (byte)BodyId,
+                new Vector3(_sim.State.PosX, _sim.State.PosY + 1.15f, _sim.State.PosZ),
+                _sim.State.Health <= 0);
 
             if (_sim.State.Health <= 0)
             {
@@ -521,6 +566,9 @@ namespace BeMyArms.M3
         M2P1Input BuildBotP1(float dt)
         {
             var input = new M2P1Input();
+            // Idle through the reaction window so the player is not rushed at the start of live.
+            if (_botLiveTime < BotReactionSeconds) return input;
+
             M3DuelBody target = NearestEnemy(out float distance);
             if (target == null) { input.MoveZ = 0.5f; return input; }
 
@@ -544,11 +592,11 @@ namespace BeMyArms.M3
                 _botStuckTime = 0f;
             }
 
-            bool advance = distance > 10f;
+            bool advance = distance > 10f && _botLiveTime > BotReactionSeconds;
             input.MoveZ = _botStuckTime > 0f ? 0f : (advance ? 1f : 0.35f);
             input.MoveX = _botStuckTime > 0f ? _botStrafeDir : Mathf.Sin(_botClock * 0.7f) * (distance < 12f ? 0.9f : 0.25f);
             input.Jump = _botStuckTime > 0.3f; // hop over low cover when progress stalls
-            input.Sprint = distance > 14f;
+            input.Sprint = distance > 16f && _botLiveTime > BotReactionSeconds + 1.5f;
             _botClock += dt;
             return input;
         }
@@ -563,32 +611,35 @@ namespace BeMyArms.M3
             float dz = target.State.Value.PosZ - _sim.State.PosZ;
             input.AimYaw = Mathf.Atan2(dx, dz) * Mathf.Rad2Deg;
 
-            // Readable bot discipline: distance-scaled aim error and burst fire, so a stationary
-            // target is not deleted the instant the live phase starts (the player must still use
-            // cover and movement, but has a fair chance to react).
+            // Forgiving practice baseline: hold fire through a reaction window, use distance-scaled
+            // aim error, and fire in short bursts with pauses so the player can read and react.
             _botP2Clock += 1f / 60f;
-            float error = 1.2f + distance * 0.22f;
-            input.AimYaw += Mathf.Sin(_botP2Clock * 1.7f) * error;
-            input.AimPitch += Mathf.Sin(_botP2Clock * 1.1f + 1.3f) * error * 0.5f;
-            input.Fire = (_botP2Clock % 1.5f) < 0.85f;
+            float error = BotAimErrorBase + distance * BotAimErrorPerMeter;
+            input.AimYaw += Mathf.Sin(_botP2Clock * 1.31f) * error
+                          + Mathf.Sin(_botP2Clock * 0.47f + 2.1f) * error * 0.5f;
+            input.AimPitch += Mathf.Sin(_botP2Clock * 0.93f + 1.3f) * error * 0.4f;
+            bool burst = (_botP2Clock % BotBurstPeriodSeconds) < BotBurstOnSeconds;
+            input.Fire = burst && distance < BotMaxEngageDistance && _botLiveTime > BotReactionSeconds;
             input.Reload = _weapon.Ammo <= 0;
 
             // Occasional utility through the normal P2 authority path.
             _grenadeCooldown -= 1f / 60f;
-            if (_director != null && _director.IsLive && distance < 24f && _grenadeCooldown <= 0f && TryConsumeUtility(M3UtilityKind.Grenade))
+            if (_director != null && _director.IsLive && _botLiveTime > BotReactionSeconds + 4f &&
+                distance < 24f && _grenadeCooldown <= 0f && TryConsumeUtility(M3UtilityKind.Grenade))
             {
                 _director.ServerApplyUtility(TeamIndex, M3UtilityKind.Grenade, _sim.State.PosX, _sim.State.PosZ, _sim.State.AimYaw);
-                _grenadeCooldown = 9f;
+                _grenadeCooldown = 12f;
             }
             return input;
         }
 
-        /// <summary>Server-only: give a bot-owned P2 a legal loadout at the start of a round.</summary>
+        /// <summary>Server-only: give a bot-owned P2 a legal loadout at the start of a round. This
+        /// vertical slice equips the single rifle only; it bypasses the buy-phase gate so the bot is
+        /// armed even if the phase transition and the round-start callback race.</summary>
         public void ServerAutoBuyBotLoadout()
         {
             if (!IsServer) return;
-            ServerBuy(0); // rifle (primary)
-            ServerBuy(6); // grenade (utility)
+            ServerApplyLoadout(M3WeaponId.Rifle);
         }
 
         void Log(string message)

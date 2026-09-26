@@ -9,7 +9,9 @@
         "BeMyArms.M0",
         "Unity.Netcode.Runtime",
         "UnityEngine.UI",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Unity.Animation.Rigging",
+        "Unity.Cinemachine"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

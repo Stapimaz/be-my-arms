@@ -11,7 +11,9 @@
         "BeMyArms.M3.Editor",
         "BeMyArms.M2",
         "BeMyArms.M0",
-        "Unity.Netcode.Runtime"
+        "Unity.Netcode.Runtime",
+        "Unity.Animation.Rigging",
+        "Unity.Cinemachine"
     ],
     "includePlatforms": [
         "Editor"
