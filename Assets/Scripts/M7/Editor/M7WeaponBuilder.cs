@@ -20,12 +20,6 @@ namespace BeMyArms.M7.EditorTools
         public const string GripRightName = "Grip_R";
         public const string GripLeftName = "Grip_L";
         public const string MuzzleName = "Muzzle";
-        /// <summary>Roll of the trigger-hand grip about the actual hand's long axis (degrees).</summary>
-        public const float GripRoll = 30f;
-
-        /// <summary>Right-hand bone and a finger it parents, used to find the hand's long axis.</summary>
-        public const string HandBoneName = "DEF-hand.R";
-        public const string HandFingerBoneName = "DEF-f_middle.01.R";
 
         public static GameObject Build()
         {
@@ -67,8 +61,8 @@ namespace BeMyArms.M7.EditorTools
             Debug.Log($"[M7weapon] rifle axis={axis} muzzlePositive={muzzlePositive} scale={scale:0.0000} size={size:F3}");
 
             CreateMarker(root.transform, MuzzleName, new Vector3(0f, 0.02f * size.y, 0.5f * size.z), Quaternion.identity);
-            // Grips start unrotated; BakeTriggerHandRoll() later orients the trigger-hand grip
-            // relative to the actual right hand's aim pose (see its doc).
+            // Grips are unrotated in the asset. The visible first-person 30° hand roll is applied at
+            // runtime on the viewmodel hand bone (see M7LocalPlayer), not baked into the socket.
             CreateMarker(root.transform, GripRightName, new Vector3(0f, -0.30f * size.y, -0.20f * size.z), Quaternion.identity);
             CreateMarker(root.transform, GripLeftName, new Vector3(0f, -0.24f * size.y, 0.20f * size.z), Quaternion.identity);
 
@@ -101,102 +95,6 @@ namespace BeMyArms.M7.EditorTools
                 gripLeft = CreateMarker(weapon.transform, GripLeftName, center + new Vector3(0f, -0.24f * size.y, 0.20f * length), Quaternion.identity);
             if (muzzle == null)
                 muzzle = CreateMarker(weapon.transform, MuzzleName, center + new Vector3(0f, 0f, 0.5f * length), Quaternion.identity);
-        }
-
-        /// <summary>
-        /// Orients the trigger-hand grip relative to the actual right hand instead of an arbitrary
-        /// socket Euler: samples the arm rig in its aim pose, finds the hand's long (wrist-to-finger)
-        /// axis, and rolls the hand's aim orientation about that axis. The resulting grip local
-        /// rotation is written into the weapon prefab, so both the world body and the first-person
-        /// viewmodel follow it without any per-frame feedback. Returns false (leaving the identity
-        /// grip) if the arms model or bones are missing.
-        /// </summary>
-        public static bool BakeTriggerHandRoll(string armsModelPath, string aimClipSuffix, float degrees)
-        {
-            GameObject armsAsset = AssetDatabase.LoadAssetAtPath<GameObject>(armsModelPath);
-            if (armsAsset == null)
-            {
-                Debug.LogWarning("[M7weapon] grip roll: missing arms model " + armsModelPath);
-                return false;
-            }
-
-            var arms = (GameObject)PrefabUtility.InstantiatePrefab(armsAsset);
-            PrefabUtility.UnpackPrefabInstance(arms, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
-            arms.transform.localRotation = Quaternion.identity;
-            arms.transform.localScale = Vector3.one;
-
-            Transform[] all = arms.GetComponentsInChildren<Transform>(true);
-            var pos = new Vector3[all.Length];
-            var rot = new Quaternion[all.Length];
-            for (int i = 0; i < all.Length; i++) { pos[i] = all[i].localPosition; rot[i] = all[i].localRotation; }
-
-            Transform hand = Find(arms.transform, HandBoneName);
-            if (hand == null)
-            {
-                Restore(arms, all, pos, rot);
-                Object.DestroyImmediate(arms);
-                Debug.LogWarning("[M7weapon] grip roll: missing hand bone " + HandBoneName);
-                return false;
-            }
-
-            AnimationClip clip = FindClip(armsModelPath, aimClipSuffix);
-            if (clip != null) clip.SampleAnimation(arms, 0f);
-
-            Transform finger = Find(arms.transform, HandFingerBoneName);
-            Vector3 longAxisWorld = (finger != null && (finger.position - hand.position).sqrMagnitude > 1e-8f)
-                ? (finger.position - hand.position).normalized
-                : hand.rotation * Vector3.up;
-
-            // Roll the aimed hand about its own long axis, then express that as a rotation relative to
-            // the weapon root (which is also the grip's parent in the runtime prefabs).
-            Quaternion targetHand = Quaternion.AngleAxis(degrees, longAxisWorld) * hand.rotation;
-
-            var tempWeapon = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath));
-            tempWeapon.transform.SetParent(arms.transform, false);
-            tempWeapon.transform.localPosition = Vector3.zero;
-            tempWeapon.transform.localRotation = Quaternion.identity;
-            Quaternion rel = Quaternion.Inverse(tempWeapon.transform.rotation) * targetHand;
-            Object.DestroyImmediate(tempWeapon);
-
-            Restore(arms, all, pos, rot);
-            Object.DestroyImmediate(arms);
-
-            GameObject contents = PrefabUtility.LoadPrefabContents(PrefabPath);
-            Transform grip = Find(contents.transform, GripRightName);
-            if (grip == null)
-            {
-                PrefabUtility.UnloadPrefabContents(contents);
-                Debug.LogWarning("[M7weapon] grip roll: missing " + GripRightName);
-                return false;
-            }
-            grip.localRotation = rel;
-            PrefabUtility.SaveAsPrefabAsset(contents, PrefabPath);
-            PrefabUtility.UnloadPrefabContents(contents);
-            Debug.Log($"[M7weapon] trigger-hand grip roll baked: {degrees:0.#}° about hand axis {longAxisWorld:F3}");
-            return true;
-        }
-
-        static void Restore(GameObject go, Transform[] all, Vector3[] pos, Quaternion[] rot)
-        {
-            for (int i = 0; i < all.Length; i++)
-            {
-                if (all[i] == null) continue;
-                all[i].localPosition = pos[i];
-                all[i].localRotation = rot[i];
-            }
-        }
-
-        static AnimationClip FindClip(string fbxPath, string suffix)
-        {
-            foreach (Object asset in AssetDatabase.LoadAllAssetsAtPath(fbxPath))
-            {
-                if (asset is AnimationClip clip &&
-                    !clip.name.StartsWith("__preview__") &&
-                    (clip.name == suffix || clip.name.EndsWith("|" + suffix)))
-                    return clip;
-            }
-            Debug.LogWarning($"[M7weapon] missing clip '{suffix}' in {fbxPath}");
-            return null;
         }
 
         static Transform CreateMarker(Transform parent, string name, Vector3 localPosition, Quaternion localRotation)

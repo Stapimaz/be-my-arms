@@ -59,7 +59,6 @@ namespace BeMyArms.M7.EditorTools
             EnsureFolders();
 
             M7WeaponBuilder.Build();
-            M7WeaponBuilder.BakeTriggerHandRoll(ArmsModelPath, "Pistol_Aim_Neutral", M7WeaponBuilder.GripRoll);
             BuildLocomotionController(P1ControllerPath, P1ModelPath);
             BuildLocomotionController(P2ControllerPath, P2ModelPath);
             BuildArmsAimController(ArmsControllerPath, ArmsModelPath);

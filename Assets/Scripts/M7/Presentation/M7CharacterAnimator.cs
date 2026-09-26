@@ -49,6 +49,7 @@ namespace BeMyArms.M7
         float _recoil;
         int _lastAmmo = -1;
         float _nextMuzzle;
+        bool _weaponVisible = true;
 
         void Start()
         {
@@ -71,7 +72,20 @@ namespace BeMyArms.M7
 
             UpdateStance(state, alive, dt);
             UpdateAim(state, alive);
+            UpdateWeaponVisibility(alive);
             UpdateCombat(dt);
+        }
+
+        /// <summary>
+        /// The animated body falls on death but the world rifle lives under the non-animated
+        /// WeaponAnchor/AimPivot, so it would otherwise float in place. Hide it while dead and restore
+        /// it when the round respawns the body. No dropped-weapon behaviour yet.
+        /// </summary>
+        void UpdateWeaponVisibility(bool alive)
+        {
+            if (Weapon == null || _weaponVisible == alive) return;
+            _weaponVisible = alive;
+            Weapon.gameObject.SetActive(alive);
         }
 
         void ApplyAnimator(Animator animator, M2BodyState state, bool alive)

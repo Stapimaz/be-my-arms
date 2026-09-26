@@ -526,3 +526,51 @@ avatar, spring-wall and socket-Euler grip claims.
 - Prefab import race fixed: skin/body prefabs are force-reimported after save so a just-recreated
   controller reference never caches as `null`.
 - `M7PipelineCommands.Validate()` PASSED; Windows player built.
+
+## 21. Presentation polish: camera smoothing + tactile wall (2026-09-27)
+
+Small presentation-only pass; the §20 character locomotion/import pipeline is untouched. Supersedes
+the §20 trigger-hand-roll bullet and the §20 wall bullet.
+
+- **P1 camera look is lightly smoothed (presentation only).** `UpdateP1Camera` no longer drives the
+  Cinemachine pivot straight from raw look: local yaw/pitch are eased towards the delivered
+  `LocalLookYaw`/`LocalLookPitch` with an exponential time constant `P1LookSmoothing` (~30 ms,
+  `LerpAngle` for yaw). The simulation/input look is untouched, so WASD/control direction stays
+  responsive; only the rendered camera eases.
+- **Bounds correction no longer snaps the final camera.** `ClampCameraToArena` used to hard-overwrite
+  `_camera.transform.position` after `CinemachineBrain.ManualUpdate`, defeating Cinemachine's obstacle
+  damping. It now computes the desired in-bounds correction and applies it as a lightly-smoothed
+  offset (`BoundsCorrectionSmoothing` ~0.12 s), so entering/leaving the map bounds eases instead of
+  popping; Cinemachine's `AvoidObstacles` damping is left intact.
+- **Visible 30° right-hand roll is applied at runtime on the FPS viewmodel only.** The offline
+  `M7WeaponBuilder.BakeTriggerHandRoll` (and its baked `Grip_R` rotation) is removed — the real FPS
+  hierarchy differs, so the socket basis did not produce the visible result. `M7LocalPlayer` now caches
+  the viewmodel's `DEF-hand.R` and its own longitudinal axis (wrist→`DEF-f_middle.01.R`, in the hand's
+  local frame) and post-multiplies a `ViewmodelHandRoll` (30°) about that axis each frame **after** the
+  viewmodel animator/IK have posed the bones. It is re-applied from the freshly posed local rotation
+  every frame, so it never accumulates; the hand position is unchanged; the world body's hand is a
+  separate object and is not rolled. `Grip_R` in the weapon asset is back to identity.
+- **P2 sector edge is a simple tactile wall, not a spring.** `M3SectorWall` is simplified: 1:1 aim
+  through the sector, then a linear resistance gain over the last `SectorWallZoneDegrees` (~10°)
+  reaching zero at the limit. When a push actually reaches/crosses the limit the legal target is
+  clamped there and **one** small inward visual kick (`SectorKickDegrees` ~0.7°) is fired; the kick
+  decays exponentially back to the target over `SectorKickDecaySeconds` (~0.12 s). The kick is latched
+  (`State.EdgeLatched`), so continuously holding/pushing into the same edge does not retrigger it;
+  inward movement is exactly 1:1 and clears the latch. No spring, no oscillation, no jitter, and the
+  stored target stays clamped inside the sector (no phantom aim).
+- **World weapon hides on death.** `M7CharacterAnimator.UpdateWeaponVisibility` deactivates the world
+  rifle (which lives under the non-animated `WeaponAnchor`/`AimPivot` and would otherwise float while
+  the body ragdolls) when the body is dead, and restores it when the round respawns the body. No
+  dropped-weapon system.
+
+**Structural checks (no runtime play)**
+
+- Wall: outward +15/frame → 0→…→69 with the kick latched once (`kick≈0.7`, `latch=true`); continuing
+  to push at the edge does **not** retrigger; on release the kick decays (0.7 → 0.26 in one ~0.12 s
+  constant) and the aim settles at the limit; inward −10 → 1:1 with kick 0 and `latch=false`; a fresh
+  outward push after the reset fires a new kick.
+- Camera: `P1LookSmoothing`/`BoundsCorrectionSmoothing` are presentation-only and never write back to
+  `M2BodySim`; role switches reset the smoothing and bounds-offset state.
+- Grip: weapon `Grip_R` local rotation is identity; `M7LocalPlayer.CacheViewmodelHand` resolves
+  `DEF-hand.R` on the viewmodel prefab and `ApplyViewmodelHandRoll` is a single local post-multiply.
+- `M7PipelineCommands.Validate()` PASSED; Windows player built.

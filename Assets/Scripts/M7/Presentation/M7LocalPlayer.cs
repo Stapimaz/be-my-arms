@@ -38,10 +38,16 @@ namespace BeMyArms.M7
         public float P1MinPitch = -55f;
         public float P1MaxPitch = 70f;
         public float FieldOfView = 72f;
+        /// <summary>Presentation-only exponential smoothing time constant for P1 look (seconds).</summary>
+        public float P1LookSmoothing = 0.03f;
+        /// <summary>Presentation-only smoothing for the arena-bounds camera correction (seconds).</summary>
+        public float BoundsCorrectionSmoothing = 0.12f;
 
         [Header("P2 first person")]
         public float P2EyeHeight = 1.58f;
         public float ViewmodelFieldOfView = 68f;
+        /// <summary>Presentation-only roll of the viewmodel right hand about its own long axis.</summary>
+        public float ViewmodelHandRoll = 30f;
 
         [Header("Shot feel")]
         public float CameraRecoilPitch = 1.15f;
@@ -60,11 +66,20 @@ namespace BeMyArms.M7
         GameObject _viewmodel;
         Transform _viewmodelWeapon;
         Transform _viewmodelMuzzle;
+        Transform _viewmodelHandR;
+        Vector3 _viewmodelHandAxisLocal;
         float _viewmodelKick;
         float _viewmodelKickVelocity;
         float _camRecoilPitch;
         float _camRecoilYaw;
         float _nextMuzzle;
+
+        // Presentation-only P1 camera state: lightly smoothed look, and a smoothed bounds correction.
+        float _camLookYaw;
+        float _camLookPitch;
+        bool _camLookInitialized;
+        Vector3 _boundsOffset;
+        bool _boundsOffsetInitialized;
 
         M3DuelClient _client;
         M3DuelDirector _director;
@@ -122,6 +137,9 @@ namespace BeMyArms.M7
             {
                 UpdateShotFeedback(Time.deltaTime);
                 UpdateP2Camera(state);
+                // Presentation-only right-hand roll, applied after the viewmodel animator/IK have
+                // posed the bones this frame (re-applied from the fresh pose, so it never stacks).
+                ApplyViewmodelHandRoll();
             }
 
             // Frame-accurate: the look/aim above is sampled this frame, then Cinemachine applies it.
@@ -136,11 +154,25 @@ namespace BeMyArms.M7
         {
             M2MovementCollision collision = Collision();
             if (collision == null || !collision.HasBounds || _camera == null) return;
+
+            // Desired correction to bring the Cinemachine output back inside the bounds. Rather than
+            // snapping the final transform (which defeats Cinemachine's own obstacle damping), the
+            // correction is applied as a lightly-smoothed offset, so entering/leaving the boundary
+            // eases instead of popping.
             Vector3 p = _camera.transform.position;
-            p.x = Mathf.Clamp(p.x, collision.MinX + 0.6f, collision.MaxX - 0.6f);
-            p.z = Mathf.Clamp(p.z, collision.MinZ + 0.6f, collision.MaxZ - 0.6f);
-            p.y = Mathf.Max(p.y, 0.6f);
-            _camera.transform.position = p;
+            Vector3 q = p;
+            q.x = Mathf.Clamp(q.x, collision.MinX + 0.6f, collision.MaxX - 0.6f);
+            q.z = Mathf.Clamp(q.z, collision.MinZ + 0.6f, collision.MaxZ - 0.6f);
+            q.y = Mathf.Max(q.y, 0.6f);
+            Vector3 correction = q - p;
+
+            float dt = Mathf.Max(1e-4f, Time.deltaTime);
+            float k = 1f - Mathf.Exp(-dt / Mathf.Max(0.001f, BoundsCorrectionSmoothing));
+            if (!_boundsOffsetInitialized) { _boundsOffset = correction; _boundsOffsetInitialized = true; }
+            else _boundsOffset = Vector3.Lerp(_boundsOffset, correction, k);
+
+            if (_boundsOffset.sqrMagnitude > 1e-8f)
+                _camera.transform.position = p + _boundsOffset;
         }
 
         M2MovementCollision Collision()
@@ -263,6 +295,11 @@ namespace BeMyArms.M7
             if (_cameraRole == role) return;
             _cameraRole = role;
 
+            // Fresh camera state on a role switch so no stale smoothing/bounds offset carries over.
+            _camLookInitialized = false;
+            _boundsOffset = Vector3.zero;
+            _boundsOffsetInitialized = false;
+
             _camera.cullingMask = (role == 1 ? ~(1 << PlayerBodyLayer) : ~0) & ~(1 << ViewModelLayer);
             _camera.fieldOfView = FieldOfView;
             if (_viewmodelCamera != null) _viewmodelCamera.enabled = role == 1;
@@ -277,10 +314,29 @@ namespace BeMyArms.M7
         void UpdateP1Camera(M2BodyState state)
         {
             if (_pivot == null || _camera == null) return;
-            float pitch = Mathf.Clamp(_client.LocalLookPitch, P1MinPitch, P1MaxPitch);
+
+            // Presentation-only smoothing of the delivered look. The sim/input LookYaw/Pitch are
+            // untouched, so WASD/control direction stays fully responsive; only the camera's rendered
+            // yaw/pitch are eased to remove sensor jitter.
+            float targetPitch = Mathf.Clamp(_client.LocalLookPitch, P1MinPitch, P1MaxPitch);
+            float targetYaw = _client.LocalLookYaw;
+            if (!_camLookInitialized)
+            {
+                _camLookYaw = targetYaw;
+                _camLookPitch = targetPitch;
+                _camLookInitialized = true;
+            }
+            else
+            {
+                float dt = Mathf.Max(1e-4f, Time.deltaTime);
+                float k = 1f - Mathf.Exp(-dt / Mathf.Max(0.001f, P1LookSmoothing));
+                _camLookYaw = Mathf.LerpAngle(_camLookYaw, targetYaw, k);
+                _camLookPitch = Mathf.Lerp(_camLookPitch, targetPitch, k);
+            }
+
             float eyeHeight = state.EyeHeight > 0.01f ? state.EyeHeight : 1.45f;
             Vector3 pivot = _client.VisualPosition + Vector3.up * (eyeHeight + 0.10f);
-            _pivot.SetPositionAndRotation(pivot, Quaternion.Euler(pitch, _client.LocalLookYaw, 0f));
+            _pivot.SetPositionAndRotation(pivot, Quaternion.Euler(_camLookPitch, _camLookYaw, 0f));
         }
 
         void UpdateP2Camera(M2BodyState state)
@@ -317,7 +373,37 @@ namespace BeMyArms.M7
             _viewmodel.transform.localScale = Vector3.one;
             _viewmodelWeapon = FindDeep(_viewmodel.transform, "ViewmodelWeapon");
             _viewmodelMuzzle = _viewmodelWeapon != null ? FindDeep(_viewmodelWeapon, "Muzzle") : null;
+            CacheViewmodelHand();
             SetLayerRecursively(_viewmodel, ViewModelLayer);
+        }
+
+        /// <summary>
+        /// Finds the viewmodel right hand and its own longitudinal (wrist-to-finger) axis in the
+        /// hand's local frame. The finger offset is a fixed local transform, so the axis is constant
+        /// and can be cached once.
+        /// </summary>
+        void CacheViewmodelHand()
+        {
+            _viewmodelHandR = FindDeep(_viewmodel.transform, "DEF-hand.R");
+            _viewmodelHandAxisLocal = Vector3.up;
+            if (_viewmodelHandR == null) return;
+            Transform finger = FindDeep(_viewmodelHandR, "DEF-f_middle.01.R") ?? FindDeep(_viewmodel.transform, "DEF-f_middle.01.R");
+            if (finger != null)
+            {
+                Vector3 local = _viewmodelHandR.InverseTransformPoint(finger.position);
+                if (local.sqrMagnitude > 1e-8f) _viewmodelHandAxisLocal = local.normalized;
+            }
+        }
+
+        /// <summary>
+        /// Presentation-only +roll of the viewmodel right hand about its own long axis. Applied on top
+        /// of the freshly animated/IK'd pose each frame, so it never accumulates frame-to-frame, and
+        /// only for the first-person viewmodel (the world body's hand is a separate object).
+        /// </summary>
+        void ApplyViewmodelHandRoll()
+        {
+            if (_viewmodelHandR == null || Mathf.Approximately(ViewmodelHandRoll, 0f)) return;
+            _viewmodelHandR.localRotation = _viewmodelHandR.localRotation * Quaternion.AngleAxis(ViewmodelHandRoll, _viewmodelHandAxisLocal);
         }
 
         void DestroyViewmodel()
@@ -326,6 +412,7 @@ namespace BeMyArms.M7
             _viewmodel = null;
             _viewmodelWeapon = null;
             _viewmodelMuzzle = null;
+            _viewmodelHandR = null;
         }
 
         void UpdateShotFeedback(float dt)
