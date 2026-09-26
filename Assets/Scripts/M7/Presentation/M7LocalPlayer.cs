@@ -2,6 +2,7 @@ using BeMyArms.M2;
 using BeMyArms.M3;
 using Unity.Cinemachine;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -11,22 +12,23 @@ namespace BeMyArms.M7
     /// <summary>
     /// Local-player presentation for a match.
     ///
-    /// P1 third person is a real Cinemachine rig: a dedicated look/pivot target is placed from the
-    /// predicted shared-body state (LookYaw/LookPitch) and Cinemachine's third-person follow, framing
-    /// and collision place the camera. The character transform is never forced to the camera
-    /// direction, so BodyYaw stays independently driven by the shared-body simulation.
+    /// P1 third person is a Cinemachine rig orbiting a dedicated look/pivot target placed from the
+    /// predicted shared-body state; BodyYaw stays simulation-owned.
     ///
-    /// P2 first person reuses the real P2 arms + rifle already mounted and IK-driven on the shared
-    /// body: the local P1 skin is hidden and the camera sits at the P2 camera anchor, so the
-    /// first-person view is the actual rig, not a separate primitive viewmodel.
+    /// P2 first person follows the conventional shooter separation: a stable logical camera at a
+    /// fixed eye height over the shared body's position, rotated directly from local P2 aim, with the
+    /// whole local world-body hidden and a dedicated camera-local arms + rifle viewmodel drawn in a
+    /// fixed screen-space composition. The viewmodel never feeds back into authoritative aim/hit
+    /// detection.
     ///
-    /// Cursor capture follows the explicit gameplay/UI state: gameplay (buy or live, focused, no
-    /// interactive UI) captures the mouse; the ESC menu or an interactive buy panel releases it. It
-    /// only reads simulation/replicated state.
+    /// Firing feel is separated from hit confirmation: a locally valid trigger pull immediately plays
+    /// the rifle sound, muzzle flash, viewmodel kick and a small camera recoil impulse, while
+    /// hitmarkers/damage/kills remain server-authoritative.
     /// </summary>
     public class M7LocalPlayer : MonoBehaviour
     {
         const int PlayerBodyLayer = 8; // TagManager "PlayerBody"
+        const int ViewModelLayer = 9;  // dedicated first-person viewmodel layer
 
         [Header("P1 third person (Cinemachine)")]
         public float P1Distance = 4.6f;
@@ -38,16 +40,30 @@ namespace BeMyArms.M7
         public float FieldOfView = 72f;
 
         [Header("P2 first person")]
-        public float P2EyeHeight = 1.52f;
-        public Vector3 P2EyeOffset = new Vector3(0f, 0.09f, 0.16f);
+        public float P2EyeHeight = 1.58f;
+        public float ViewmodelFieldOfView = 68f;
+
+        [Header("Shot feel")]
+        public float CameraRecoilPitch = 1.15f;
+        public float CameraRecoilYawJitter = 0.35f;
+        public float CameraRecoilRecovery = 10f;
 
         Camera _camera;
+        Camera _viewmodelCamera;
         CinemachineBrain _brain;
         CinemachineCamera _p1Cam;
         CinemachineCamera _p2Cam;
         Transform _pivot;
         Transform _aimTarget;
         M7PauseMenu _pauseMenu;
+
+        GameObject _viewmodel;
+        Transform _viewmodelWeapon;
+        float _viewmodelKick;
+        float _viewmodelKickVelocity;
+        float _camRecoilPitch;
+        float _camRecoilYaw;
+        float _nextMuzzle;
 
         M3DuelClient _client;
         M3DuelDirector _director;
@@ -62,6 +78,7 @@ namespace BeMyArms.M7
         public bool BuyMenuOpen { get; set; }
         public M3DuelClient LocalClient => _client;
         public Camera LocalCamera => _camera;
+        public GameObject Viewmodel => _viewmodel;
 
         void Start()
         {
@@ -96,8 +113,15 @@ namespace BeMyArms.M7
             EnsureCameraForRole();
 
             M2BodyState state = _client.ViewState;
-            if (_client.LocalRoleIndex == 0) UpdateP1Camera(state);
-            else UpdateP2Camera(state);
+            if (_client.LocalRoleIndex == 0)
+            {
+                UpdateP1Camera(state);
+            }
+            else
+            {
+                UpdateShotFeedback(Time.deltaTime);
+                UpdateP2Camera(state);
+            }
 
             // Frame-accurate: the look/aim above is sampled this frame, then Cinemachine applies it.
             if (_brain != null) _brain.ManualUpdate(Time.frameCount, Time.deltaTime);
@@ -206,6 +230,26 @@ namespace BeMyArms.M7
             _p2Cam = p2Go.AddComponent<CinemachineCamera>();
             _p2Cam.Lens.FieldOfView = FieldOfView;
 
+            // Dedicated viewmodel camera: a lower FOV and its own layer make the arms/rifle read at a
+            // conventional first-person scale and draw over the world without being clipped by it.
+            var vmGo = new GameObject("M7_ViewModelCamera");
+            vmGo.transform.SetParent(go.transform, false);
+            _viewmodelCamera = vmGo.AddComponent<Camera>();
+            _viewmodelCamera.cullingMask = 1 << ViewModelLayer;
+            _viewmodelCamera.fieldOfView = ViewmodelFieldOfView;
+            _viewmodelCamera.nearClipPlane = 0.01f;
+            _viewmodelCamera.farClipPlane = 20f;
+            _viewmodelCamera.enabled = false;
+
+            // URP requires camera stacking: the viewmodel camera is an Overlay in the main camera's
+            // stack, so it composites on top of the world instead of replacing it.
+            var mainData = go.GetComponent<UniversalAdditionalCameraData>();
+            if (mainData == null) mainData = go.AddComponent<UniversalAdditionalCameraData>();
+            mainData.renderType = CameraRenderType.Base;
+            var vmData = vmGo.AddComponent<UniversalAdditionalCameraData>();
+            vmData.renderType = CameraRenderType.Overlay;
+            mainData.cameraStack.Add(_viewmodelCamera);
+
             _p1Cam.Priority.Value = 0;
             _p2Cam.Priority.Value = 0;
             _cameraRole = -1;
@@ -218,24 +262,15 @@ namespace BeMyArms.M7
             if (_cameraRole == role) return;
             _cameraRole = role;
 
-            _camera.cullingMask = role == 1
-                ? ~(1 << PlayerBodyLayer)   // FP: hide the P1 skin, keep the real P2 arms+rifle
-                : ~0;                        // TP: show everything
+            _camera.cullingMask = (role == 1 ? ~(1 << PlayerBodyLayer) : ~0) & ~(1 << ViewModelLayer);
             _camera.fieldOfView = FieldOfView;
+            if (_viewmodelCamera != null) _viewmodelCamera.enabled = role == 1;
 
             _p1Cam.Priority.Value = role == 0 ? 20 : 0;
             _p2Cam.Priority.Value = role == 1 ? 20 : 0;
 
-            // The local body was put on PlayerBody; for P2 first person only the arms and rifle are
-            // restored to the default layer so the first-person camera renders the actual rig.
-            M3DuelBody body = _client.Body;
-            var animator = body != null ? body.GetComponent<M7CharacterAnimator>() : null;
-            if (animator != null)
-            {
-                if (animator.P1Skin != null) SetLayerRecursively(animator.P1Skin.gameObject, PlayerBodyLayer);
-                if (animator.P2Skin != null) SetLayerRecursively(animator.P2Skin.gameObject, role == 1 ? 0 : PlayerBodyLayer);
-                if (animator.Weapon != null) SetLayerRecursively(animator.Weapon.gameObject, role == 1 ? 0 : PlayerBodyLayer);
-            }
+            if (role == 1) BuildViewmodel();
+            else DestroyViewmodel();
         }
 
         void UpdateP1Camera(M2BodyState state)
@@ -249,14 +284,78 @@ namespace BeMyArms.M7
         void UpdateP2Camera(M2BodyState state)
         {
             if (_p2Cam == null) return;
-            float pitch = Mathf.Clamp(_client.LocalAimPitch, -80f, 80f);
-            Quaternion rotation = Quaternion.Euler(pitch, _client.LocalAimYaw, 0f);
+            float pitch = Mathf.Clamp(_client.LocalAimPitch, -80f, 80f) - _camRecoilPitch;
+            Quaternion rotation = Quaternion.Euler(pitch, _client.LocalAimYaw + _camRecoilYaw, 0f);
 
-            Vector3 eye = new Vector3(state.PosX, state.PosY + P2EyeHeight, state.PosZ);
-            Transform anchor = FindDeep(_client.Presentation, "P2CameraAnchor");
-            if (anchor != null) eye = anchor.position + rotation * P2EyeOffset;
+            // Stable logical eye: follows the smoothed shared-body position at a fixed height and is
+            // completely independent of the animated chest/shoulder rig.
+            Vector3 eye = _client.VisualPosition + Vector3.up * P2EyeHeight;
+            _p2Cam.transform.SetPositionAndRotation(eye, rotation);
+        }
 
-            _p2Cam.transform.SetPositionAndRotation(eye + rotation * Vector3.forward * 0.05f, rotation);
+        // ---- P2 first-person viewmodel + shot feel ----
+
+        void BuildViewmodel()
+        {
+            DestroyViewmodel();
+            if (_camera == null) return;
+
+            var prefab = Resources.Load<GameObject>("M7_P2ArmsViewmodel");
+            if (prefab == null)
+            {
+                Debug.LogWarning("[M7] P2 viewmodel prefab not found in Resources.");
+                return;
+            }
+
+            _viewmodel = Instantiate(prefab, _viewmodelCamera != null ? _viewmodelCamera.transform : _camera.transform);
+            _viewmodel.name = "M7_P2Viewmodel";
+            _viewmodel.transform.localPosition = Vector3.zero;
+            _viewmodel.transform.localRotation = Quaternion.identity;
+            _viewmodel.transform.localScale = Vector3.one;
+            _viewmodelWeapon = FindDeep(_viewmodel.transform, "ViewmodelWeapon");
+            SetLayerRecursively(_viewmodel, ViewModelLayer);
+        }
+
+        void DestroyViewmodel()
+        {
+            if (_viewmodel != null) Destroy(_viewmodel);
+            _viewmodel = null;
+            _viewmodelWeapon = null;
+        }
+
+        void UpdateShotFeedback(float dt)
+        {
+            int shots = _client != null ? _client.ConsumePendingLocalShots() : 0;
+            for (int i = 0; i < shots; i++)
+            {
+                _viewmodelKickVelocity += 1.0f;
+                _camRecoilPitch += CameraRecoilPitch;
+                _camRecoilYaw += Random.Range(-CameraRecoilYawJitter, CameraRecoilYawJitter);
+
+                M7AudioService audio = M7AudioService.Instance;
+                if (audio != null) audio.Play(M7AudioId.RifleShot);
+
+                if (M7VfxService.Instance != null && _viewmodelWeapon != null && Time.time >= _nextMuzzle)
+                {
+                    _nextMuzzle = Time.time + 0.03f;
+                    M7VfxService.Instance.Spawn(M7VfxId.MuzzleFlash,
+                        _viewmodelWeapon.position + _viewmodelWeapon.forward * 0.3f, _viewmodelWeapon.rotation);
+                }
+            }
+
+            // Quick camera recovery.
+            _camRecoilPitch = Mathf.MoveTowards(_camRecoilPitch, 0f, dt * CameraRecoilRecovery);
+            _camRecoilYaw = Mathf.MoveTowards(_camRecoilYaw, 0f, dt * CameraRecoilRecovery);
+
+            if (_viewmodel == null) return;
+            // Critically-damped viewmodel kick.
+            _viewmodelKickVelocity -= _viewmodelKick * 150f * dt;
+            _viewmodelKickVelocity *= Mathf.Exp(-16f * dt);
+            _viewmodelKick += _viewmodelKickVelocity * dt;
+            _viewmodelKick = Mathf.Clamp(_viewmodelKick, 0f, 0.08f);
+            float k = _viewmodelKick / 0.08f;
+            _viewmodel.transform.localPosition = new Vector3(0.006f * k, 0.008f * k, -0.05f * k);
+            _viewmodel.transform.localRotation = Quaternion.Euler(-7f * k, 1.5f * k, 0f);
         }
 
         // ---- Helpers ----
@@ -281,7 +380,7 @@ namespace BeMyArms.M7
             if (_layerAppliedForBody == body.GetInstanceID()) return;
             _layerAppliedForBody = body.GetInstanceID();
             SetLayerRecursively(body.gameObject, PlayerBodyLayer);
-            _cameraRole = -1; // force the per-role layer split to be re-applied
+            _cameraRole = -1; // force the per-role camera setup to be re-applied
         }
 
         static void SetLayerRecursively(GameObject go, int layer)

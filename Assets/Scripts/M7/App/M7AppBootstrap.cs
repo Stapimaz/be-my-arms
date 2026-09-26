@@ -14,7 +14,13 @@ namespace BeMyArms.M7
         {
             if (M7PrivateMatch.IsServerLaunch(out string arenaScene))
             {
-                Debug.Log($"[M7] launching dedicated server on arena '{arenaScene}'");
+                int ownerPid = M7PrivateMatch.OwnerPidArg();
+                if (ownerPid > 0)
+                {
+                    var watchdog = new GameObject("M7_ServerWatchdog");
+                    watchdog.AddComponent<M7ServerWatchdog>().Configure(ownerPid);
+                }
+                Debug.Log($"[M7] launching dedicated server on arena '{arenaScene}' (ownerPid={ownerPid})");
                 SceneManager.LoadScene(arenaScene, LoadSceneMode.Single);
                 return;
             }

@@ -129,6 +129,12 @@ namespace BeMyArms.M3
         // Input accumulated over the current tick; sent at SendRateHz.
         M2P1Input _accumP1;
 
+        // Local P2 trigger feedback (presentation only; never authoritative).
+        float _localShotCooldown;
+        int _lastServerAmmo = -1;
+        int _optimisticSpent;
+        int _pendingLocalShots;
+
         Vector3 _visualPosition;
         float _visualYaw;
         bool _hasVisual;
@@ -203,11 +209,16 @@ namespace BeMyArms.M3
 
         void UpdateP1Role(float dt, float sendDt, bool sendTick)
         {
+            // Look is accepted during Buy; translation/actions are not. Sanitise on both the
+            // prediction and the sent command so the client never visually simulates movement the
+            // server is rejecting.
+            bool canAct = _director != null && _director.InputsAccepted;
+
             if (AutoDrive)
             {
                 DrainSnapshots();
                 if (!sendTick) return;
-                M2P1Input input = BuildAutoP1(sendDt);
+                M2P1Input input = canAct ? BuildAutoP1(sendDt) : new M2P1Input();
                 input.Sequence = _p1Sequence++;
                 _reconciler.Predict(input, sendDt, _predictSim);
                 _body.SubmitP1ServerRpc(input);
@@ -216,7 +227,7 @@ namespace BeMyArms.M3
 
             // Local player: sample and predict every rendered frame so look/body presentation is
             // smooth; accumulate the same input and send it once per network tick.
-            M2P1Input frame = BuildManualP1();
+            M2P1Input frame = BuildManualP1(canAct);
             frame.Sequence = _p1Sequence;
             _reconciler.Predict(frame, dt, _predictSim);
 
@@ -257,12 +268,47 @@ namespace BeMyArms.M3
             }
 
             // Local player: mouse drives the raw aim every frame; presentation and the sent command
-            // use the sector-clamped aim. Fire/reload are held state, sent each tick.
+            // use the sector-clamped aim. Fire/reload are held state, sent each tick. Local trigger
+            // feedback is detected every frame (independent of the authoritative ammo replication)
+            // so the shot feels immediate.
             M2P2Input input = BuildManualP2();
+            DetectLocalShot(input, dt);
             if (!sendTick) return;
             input.Sequence = ++_p2Sequence;
             SubmitP2(input);
         }
+
+        /// <summary>
+        /// Locally detects a valid rifle trigger pull for immediate presentation feedback. The server
+        /// still validates cadence/sector and owns all hit/damage/kill confirmation.
+        /// </summary>
+        void DetectLocalShot(in M2P2Input input, float dt)
+        {
+            int serverAmmo = _body.Ammo.Value;
+            if (serverAmmo != _lastServerAmmo) { _lastServerAmmo = serverAmmo; _optimisticSpent = 0; }
+            _localShotCooldown = Mathf.Max(0f, _localShotCooldown - dt);
+
+            if (!M3LocalInput.GameplayActive || _body.Reloading.Value) return;
+            if (!input.Fire || _localShotCooldown > 0f) return;
+            if (serverAmmo - _optimisticSpent <= 0) return;
+
+            M3WeaponStats stats = M3Loadouts.Stats((M3WeaponId)_body.WeaponId.Value);
+            _localShotCooldown = Mathf.Max(0.02f, stats.SecondsBetweenShots);
+            _optimisticSpent++;
+            _pendingLocalShots++;
+        }
+
+        /// <summary>Number of locally detected rifle shots since the last call (presentation only).</summary>
+        public int ConsumePendingLocalShots()
+        {
+            int pending = _pendingLocalShots;
+            _pendingLocalShots = 0;
+            TotalLocalShots += pending;
+            return pending;
+        }
+
+        /// <summary>Diagnostic: total locally detected shots this session.</summary>
+        public int TotalLocalShots { get; private set; }
 
         void SubmitP2(in M2P2Input input)
         {
@@ -402,22 +448,25 @@ namespace BeMyArms.M3
             return input;
         }
 
-        M2P1Input BuildManualP1()
+        M2P1Input BuildManualP1(bool canAct)
         {
             var input = new M2P1Input();
-            input.Jump = _pendingP1.Jump;
-            input.Dodge = _pendingP1.Dodge;
-            input.Slide = _pendingP1.Slide;
-            input.Vault = _pendingP1.Vault;
-            input.LightKick = _pendingP1.LightKick;
-            input.HeavyKick = _pendingP1.HeavyKick;
+            if (canAct)
+            {
+                input.Jump = _pendingP1.Jump;
+                input.Dodge = _pendingP1.Dodge;
+                input.Slide = _pendingP1.Slide;
+                input.Vault = _pendingP1.Vault;
+                input.LightKick = _pendingP1.LightKick;
+                input.HeavyKick = _pendingP1.HeavyKick;
+            }
             _pendingP1 = default;
 
             if (!M3LocalInput.GameplayActive) return input;
 #if ENABLE_INPUT_SYSTEM
             Keyboard kb = Keyboard.current;
             Mouse mouse = Mouse.current;
-            if (kb != null)
+            if (kb != null && canAct)
             {
                 input.MoveX = (kb.dKey.isPressed ? 1f : 0f) - (kb.aKey.isPressed ? 1f : 0f);
                 input.MoveZ = (kb.wKey.isPressed ? 1f : 0f) - (kb.sKey.isPressed ? 1f : 0f);
@@ -434,6 +483,11 @@ namespace BeMyArms.M3
             M3LocalInput.ConsumeInjectedLook(out float injectedYaw, out float injectedPitch);
             input.LookYawDelta += injectedYaw;
             input.LookPitchDelta -= injectedPitch; // injected pitch is "look up" positive
+            if (canAct)
+            {
+                input.MoveX = Mathf.Clamp(input.MoveX + M3LocalInput.InjectedMoveX, -1f, 1f);
+                input.MoveZ = Mathf.Clamp(input.MoveZ + M3LocalInput.InjectedMoveZ, -1f, 1f);
+            }
 #endif
             return input;
         }
@@ -469,6 +523,7 @@ namespace BeMyArms.M3
                 Keyboard kb = Keyboard.current;
                 if (mouse != null) input.Fire = mouse.leftButton.isPressed;
                 if (kb != null) input.Reload = kb.rKey.isPressed;
+                input.Fire |= M3LocalInput.InjectedFire;
             }
 #endif
             return input;

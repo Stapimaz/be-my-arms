@@ -265,3 +265,62 @@ architecture: one Duel private match, one P1, one P2, one rifle.
 - Runtime on the built player (`Builds/M7/BeMyArms.exe`), real private Duel match, both roles:
   `bboxH=1.94 p1=ok p2=ok weapon=ok inView=True`, no duplicate bodies, cursor locked during
   gameplay, rifle equipped, no runtime console errors.
+
+## 14. Runtime/session correctness + animation + FPS feel (2026-09-26, second pass)
+
+The first human playtest of §13 still failed on concrete runtime systems. Root causes and fixes:
+
+**Private-match / process lifecycle**
+
+- `ResetSessionState()` called `NetworkObject.Despawn(true)` on the **client**, which NGO rejects
+  ("Only server can despawn objects"). A client must never server-despawn; the method now only shuts
+  down listening managers and destroys leftover objects locally.
+- Each match now uses a **fresh free UDP port** (`M7PrivateMatch.PickFreePort`), so an orphaned
+  previous server can never make a new client connect to an old match or fail to bind.
+- The locally launched dedicated server is owned by the client: the allocator passes
+  `-m7-owner-pid`, `Application.quitting` kills it on normal exit/Alt+F4, and `M7ServerWatchdog`
+  (armed in the server, probing the owner PID with `HasExited`) terminates it on a hard client kill.
+  Verified: hard client kill → server exits; WM_CLOSE → both exit; relaunch → fresh menu and fresh
+  match; return-to-lobby exercises the path with zero despawn/exception logs.
+
+**Buy-phase P1**
+
+- P1 look is accepted during Buy but movement/actions are stripped server-side (`LookOnly`) and in
+  the client prediction, so the body stays frozen while look stays responsive. Verified with the new
+  `qa_inject_input`: position unchanged through Buy, then moves once Live begins.
+
+**Animation (root cause: the derived FBX had constant curves)**
+
+- `tools/pipeline/build-quaternius-bodies.py` exported every take with the **rest pose** because no
+  action was evaluated during export. It now stashes each action as an NLA strip and bakes the NLA
+  strips, so the clips carry real keyed motion (`maxFCurveDelta` Idle 0.07 … Sprint 0.93).
+- Import settings mark `*_Loop` clips as looping (previously every clip played once and froze), and
+  the controller has a Death→Locomotion transition so a revived body cannot stay in the terminal
+  Death state. Humanoid auto-mapping was tested and rejected (avatar `isHuman=false`, 0 bones
+  mapped), so the Generic path-bound rig is kept deliberately.
+- Verified at runtime: Animator `Speed` is driven by movement (0.39/1.60 for moving bots), clip time
+  advances and loops, bones visibly change, and a mid-live capture shows the fighter mid-stride.
+
+**P2 first-person view**
+
+- Replaced the "camera on the animated P2 anchor" idea with the conventional shooter split: a stable
+  logical eye at a fixed height over the shared body, camera rotation straight from local aim, the
+  whole local world-body hidden, and a dedicated camera-local arms+rifle viewmodel.
+- The viewmodel renders through a URP **Overlay** camera at a narrower FOV so it composites over the
+  world (a plain second camera replaced the frame). Rifle sits on the right like a normal FPS.
+
+**Immediate firing feel**
+
+- `M3DuelClient` detects a locally valid rifle trigger pull every frame (cadence-limited, independent
+  of replicated ammo) and `M7LocalPlayer` immediately plays the rifle sound, muzzle flash, viewmodel
+  kick and a small recoverable camera recoil impulse. Hitmarkers/damage/kills remain authoritative.
+
+**Bot de-synchronisation**
+
+- Each body/round seeds its own reaction window, burst length, pause, firing phase and aim-error
+  character (`InitializeBotProfile`), so practice bots no longer fire in lockstep.
+
+**Targeted checks added**
+
+- `qa_inject_input` (held move/fire through the real gated input path) and `LocalShots` in
+  `qa_player_state`; the viewmodel overlay camera is excluded from the duplicate-camera check.

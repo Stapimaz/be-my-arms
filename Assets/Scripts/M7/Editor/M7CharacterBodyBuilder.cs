@@ -45,9 +45,9 @@ namespace BeMyArms.M7.EditorTools
         static readonly Vector3 P2ModelOffset = new Vector3(0f, -1.445f, -0.065f);
 
         // First-person viewmodel: the arms model is authored with its chest at ~y=1.35, so it is
-        // dropped just below the camera and pushed slightly behind it so only the arms and weapon
-        // sit in front of the near clip plane.
-        static readonly Vector3 ViewmodelModelOffset = new Vector3(0f, -1.435f, -0.20f);
+        // dropped just below the camera and pushed behind it so only the arms and weapon sit in
+        // front of the near clip plane.
+        static readonly Vector3 ViewmodelModelOffset = new Vector3(0f, -1.60f, 0f);
 
         [MenuItem("Be My Arms/M7/Build Character Bodies")]
         public static void BuildFromMenu() => BuildAll();
@@ -89,6 +89,26 @@ namespace BeMyArms.M7.EditorTools
             if (importer.importCameras) { importer.importCameras = false; dirty = true; }
             if (importer.importLights) { importer.importLights = false; dirty = true; }
             if (importer.importBlendShapes) { importer.importBlendShapes = false; dirty = true; }
+
+            // The plugin exports clean clip names but Unity defaults every take to "play once",
+            // which freezes locomotion after one cycle. Mark the loop clips as looping and keep the
+            // names stable for the controller.
+            ModelImporterClipAnimation[] clips = importer.defaultClipAnimations;
+            if (clips != null && clips.Length > 0)
+            {
+                for (int i = 0; i < clips.Length; i++)
+                {
+                    ModelImporterClipAnimation clip = clips[i];
+                    string take = string.IsNullOrEmpty(clip.takeName) ? clip.name : clip.takeName;
+                    string shortName = take.Contains("|") ? take.Substring(take.LastIndexOf('|') + 1) : take;
+                    bool loop = shortName.EndsWith("_Loop");
+                    if (clip.name != shortName) { clip.name = shortName; dirty = true; }
+                    if (clip.loopTime != loop) { clip.loopTime = loop; clip.loopPose = loop; dirty = true; }
+                }
+                importer.clipAnimations = clips;
+                dirty = true;
+            }
+
             if (dirty) importer.SaveAndReimport();
         }
 
@@ -161,6 +181,9 @@ namespace BeMyArms.M7.EditorTools
             Transition(fall, land, 0.02f, ("Grounded", AnimatorConditionMode.If, 0f));
             Transition(land, loco, 0.05f, 0.85f, true, ("Grounded", AnimatorConditionMode.If, 0f));
             Transition(loco, death, 0.05f, ("Alive", AnimatorConditionMode.IfNot, 0f));
+            // Recover from Death when a new round revives the body (otherwise the animator stays in
+            // the terminal Death state forever and the character freezes in a bind pose).
+            Transition(death, loco, 0.15f, ("Alive", AnimatorConditionMode.If, 0f));
 
             AssetDatabase.SaveAssets();
             return controller;
@@ -238,20 +261,20 @@ namespace BeMyArms.M7.EditorTools
 
             var aimPivot = new GameObject("AimPivot");
             aimPivot.transform.SetParent(root.transform, false);
-            aimPivot.transform.localPosition = new Vector3(0f, -0.12f, -0.05f);
+            aimPivot.transform.localPosition = new Vector3(0.05f, -0.24f, 0.08f);
             aimPivot.transform.localRotation = Quaternion.identity;
 
             GameObject weapon = InstantiatePrefab(RiflePrefabPath, aimPivot.transform);
             if (weapon != null)
             {
                 weapon.name = "ViewmodelWeapon";
-                weapon.transform.localPosition = new Vector3(0.10f, -0.02f, 0.38f);
+                weapon.transform.localPosition = new Vector3(0.05f, 0f, 0.30f);
                 weapon.transform.localRotation = Quaternion.identity;
-                weapon.transform.localScale = Vector3.one * 0.8f;
+                weapon.transform.localScale = Vector3.one * 0.6f;
             }
 
-            Transform gripR = Marker(aimPivot.transform, "HandTarget_R", new Vector3(0.11f, -0.07f, 0.12f));
-            Transform gripL = Marker(aimPivot.transform, "HandTarget_L", new Vector3(0.02f, -0.03f, 0.40f));
+            Transform gripR = Marker(aimPivot.transform, "HandTarget_R", new Vector3(0.05f, -0.06f, 0.22f));
+            Transform gripL = Marker(aimPivot.transform, "HandTarget_L", new Vector3(0f, -0.02f, 0.40f));
             TwoBoneIKConstraint ikL = FindConstraint(model, "ArmIK_L");
             TwoBoneIKConstraint ikR = FindConstraint(model, "ArmIK_R");
             if (ikL != null) ikL.data.target = gripL;

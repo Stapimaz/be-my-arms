@@ -140,6 +140,42 @@ def trim_actions():
     log(f"actions kept={kept} removed={removed}")
 
 
+def report_motion(arm):
+    """Sanity log: confirm the actions actually carry keyed motion before exporting."""
+    data = arm.animation_data
+    ad_action = data.action if data is not None else None
+    for action in bpy.data.actions:
+        biggest = 0.0
+        for fcurve in action.fcurves:
+            values = [kp.co[1] for kp in fcurve.keyframe_points]
+            if len(values) >= 2:
+                biggest = max(biggest, max(values) - min(values))
+        log(f"action {action.name}: maxFCurveDelta={biggest:.4f}")
+        if ad_action is None and biggest == 0.0 and action.name.endswith("_Loop"):
+            log(f"WARNING: action {action.name} appears constant")
+
+
+def stash_actions(arm):
+    """Blender only bakes the *evaluated* action. With no action assigned, 'export all actions'
+    writes the rest pose into every take (the bug this fixes). Stash each action as an NLA strip so
+    the exporter evaluates and bakes each one independently."""
+    if arm.animation_data is None:
+        arm.animation_data_create()
+    data = arm.animation_data
+    data.action = None
+    for track in list(data.nla_tracks):
+        data.nla_tracks.remove(track)
+    count = 0
+    for action in bpy.data.actions:
+        start = int(action.frame_range[0])
+        track = data.nla_tracks.new()
+        track.name = action.name
+        strip = track.strips.new(action.name, start, action)
+        strip.name = action.name
+        count += 1
+    log(f"stashed {count} actions into NLA")
+
+
 def export_fbx(path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     for obj in bpy.data.objects:
@@ -155,16 +191,22 @@ def export_fbx(path):
         axis_forward="-Z",
         axis_up="Y",
         bake_anim=True,
-        bake_anim_use_all_actions=True,
-        bake_anim_use_nla_strips=False,
+        bake_anim_use_all_actions=False,
+        bake_anim_use_nla_strips=True,
+        bake_anim_force_startend_keying=True,
         add_leaf_bones=False,
         armature_nodetype="NULL",
-        mesh_smooth_type="FACE",
+        mesh_smooth_type="OFF",
         use_mesh_modifiers=True,
         primary_bone_axis="Y",
         secondary_bone_axis="X",
     )
     log(f"wrote {path} ({os.path.getsize(path)} bytes)")
+
+
+def shade_smooth(mesh_obj):
+    for polygon in mesh_obj.data.polygons:
+        polygon.use_smooth = True
 
 
 def build_variant(src, out_dir, filename, remove_fragments):
@@ -174,7 +216,10 @@ def build_variant(src, out_dir, filename, remove_fragments):
     arm.name = "Rig"
     mesh.name = "Body"
     remove_vertices(mesh, remove_fragments)
+    shade_smooth(mesh)
     trim_actions()
+    report_motion(arm)
+    stash_actions(arm)
     export_fbx(os.path.join(out_dir, filename))
 
 

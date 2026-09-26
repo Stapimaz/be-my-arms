@@ -161,6 +161,20 @@ namespace BeMyArms.QA
             return new QaSimpleResult { Success = true, Detail = $"queued yaw={yaw} pitch={pitch}" };
         }
 
+        [CliCommand("qa_inject_input",
+            "Development only: set held local movement/fire injection (same path and same Buy/live gating as real input). Values persist until changed; set 0/false to release.",
+            MainThreadRequired = true, RuntimeOnly = true, Tags = new[] { "qa", "input" })]
+        public static QaSimpleResult InjectInput(
+            [CliArg("movex", "Body-relative strafe [-1..1]; 0 releases.")] float moveX = 0f,
+            [CliArg("movez", "Body-relative forward [-1..1]; 0 releases.")] float moveZ = 0f,
+            [CliArg("fire", "Hold the trigger while true.")] bool fire = false)
+        {
+            M3LocalInput.InjectedMoveX = moveX;
+            M3LocalInput.InjectedMoveZ = moveZ;
+            M3LocalInput.InjectedFire = fire;
+            return new QaSimpleResult { Success = true, Detail = $"move=({moveX},{moveZ}) fire={fire}" };
+        }
+
         // ---- Structured gameplay state -------------------------------------------------------
 
         [CliCommand("qa_player_state",
@@ -218,6 +232,7 @@ namespace BeMyArms.QA
                         result.BodyAlive = local.Body.Alive.Value;
                         result.ActiveWeapon = ((M3WeaponId)local.Body.WeaponId.Value).ToString();
                         result.Ammo = local.Body.Ammo.Value;
+                        result.LocalShots = local.TotalLocalShots;
 
                         M7CharacterAnimator animator = local.Body.GetComponent<M7CharacterAnimator>();
                         result.P1 = DescribeGroup(animator != null ? animator.P1Skin : null);
@@ -267,7 +282,10 @@ namespace BeMyArms.QA
 
                 result.ViewmodelCount = CountObjectsNamed("M7_P2Viewmodel");
                 result.ViewmodelWeaponCount = CountObjectsNamed("ViewmodelWeapon");
-                result.CameraCount = Object.FindObjectsByType<Camera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Length;
+                int cameraCount = 0;
+                foreach (Camera cam in Object.FindObjectsByType<Camera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+                    if (cam.name != "M7_ViewModelCamera") cameraCount++; // the FP viewmodel overlay is expected
+                result.CameraCount = cameraCount;
 
                 var duplicates = new List<string>();
                 var bodyCounts = new Dictionary<string, int>();
@@ -578,6 +596,7 @@ namespace BeMyArms.QA
         public bool BodyAlive { get; set; }
         public string ActiveWeapon { get; set; }
         public int Ammo { get; set; }
+        public int LocalShots { get; set; }
         public float[] BodyPosition { get; set; }
         public float BodyYaw { get; set; }
 

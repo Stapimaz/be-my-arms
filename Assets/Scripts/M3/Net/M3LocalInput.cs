@@ -28,6 +28,15 @@ namespace BeMyArms.M3
         public static float InjectedLookYaw;
         public static float InjectedLookPitch;
 
+        /// <summary>
+        /// Development-only held movement/fire injection, set by qa_inject_input. It flows through the
+        /// exact same local input path (and the same Buy/live gating) as a real keyboard/mouse so the
+        /// prediction, freeze and shot-feedback paths can be verified without physical input.
+        /// </summary>
+        public static float InjectedMoveX;
+        public static float InjectedMoveZ;
+        public static bool InjectedFire;
+
         /// <summary>Read and clear the pending look injection.</summary>
         public static void ConsumeInjectedLook(out float yaw, out float pitch)
         {

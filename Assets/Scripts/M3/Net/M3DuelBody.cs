@@ -95,6 +95,19 @@ namespace BeMyArms.M3
         float _lastBotZ;
         float _grenadeCooldown = 5f;
         float _botLiveTime;
+
+        // Per-body randomised bot profile (seeded per spawn/round) so practice bots do not share one
+        // deterministic firing clock.
+        int _botSeed;
+        float _botReaction;
+        float _botBurstOn;
+        float _botBurstPeriod;
+        float _botFirePhase;
+        float _botAimRate1;
+        float _botAimRate2;
+        float _botAimPhase1;
+        float _botAimPhase2;
+        float _botAimDrift;
         double _serverTime;
         float _accumulator;
         int _rejectedFires;
@@ -136,7 +149,30 @@ namespace BeMyArms.M3
                 State.Value = _sim.State;
                 Alive.Value = true;
                 ApplyActiveWeapon();
+                InitializeBotProfile();
             }
+        }
+
+        /// <summary>
+        /// Seeds this body's practice-bot timing. Each body/round gets different reaction, burst
+        /// length, pause, firing phase and aim-error character so bots do not fire in lockstep.
+        /// </summary>
+        void InitializeBotProfile()
+        {
+            _botSeed = UnityEngine.Random.Range(0, 1 << 30);
+            var rng = new System.Random(unchecked(_botSeed * 486187739 + SlotP1 * 73856093 + SlotP2 * 19349663));
+            _botReaction = Mathf.Lerp(1.1f, 2.6f, (float)rng.NextDouble());
+            _botBurstOn = Mathf.Lerp(0.22f, 0.5f, (float)rng.NextDouble());
+            _botBurstPeriod = Mathf.Lerp(1.2f, 2.2f, (float)rng.NextDouble());
+            _botFirePhase = (float)rng.NextDouble() * _botBurstPeriod;
+            _botAimRate1 = Mathf.Lerp(0.7f, 1.6f, (float)rng.NextDouble());
+            _botAimRate2 = Mathf.Lerp(0.2f, 0.7f, (float)rng.NextDouble());
+            _botAimPhase1 = (float)rng.NextDouble() * 6.2831853f;
+            _botAimPhase2 = (float)rng.NextDouble() * 6.2831853f;
+            _botAimDrift = Mathf.Lerp(0.9f, 1.5f, (float)rng.NextDouble());
+            _botClock = (float)rng.NextDouble() * 6.2831853f;
+            _botP2Clock = (float)rng.NextDouble() * 6.2831853f;
+            _grenadeCooldown = Mathf.Lerp(8f, 18f, (float)rng.NextDouble());
         }
 
         /// <summary>Server-only: set team/body and the P1 slot base after spawning (a NetworkVariable
@@ -169,7 +205,8 @@ namespace BeMyArms.M3
         {
             if (_director == null || _director.CurrentPhase == M3Phase.Warmup || !Alive.Value) return;
             if (!HasSlot(rpcParams.Receive.SenderClientId, SlotP1)) { _director.NoteUnauthorized(); return; }
-            if (!_director.InputsAccepted) return; // buy/round-end freeze
+            // P1 input is accepted during Buy so look stays responsive; movement/actions are stripped
+            // in ServerTick until the live phase (see LookOnly).
             _p1Queue.Enqueue(_serverTime, InputDelaySeconds, input);
         }
 
@@ -271,7 +308,9 @@ namespace BeMyArms.M3
             }
             while (_p1Queue.TryDequeue(_serverTime, out M2P1Input p1))
             {
-                _sim.ApplyP1(p1, dt);
+                // Look is always applied; movement/actions only once the round is live, so the body
+                // stays frozen through Buy even though look input is accepted.
+                _sim.ApplyP1(_director != null && _director.IsLive ? p1 : LookOnly(p1), dt);
                 LastAckedP1Sequence.Value = p1.Sequence;
             }
 
@@ -538,6 +577,7 @@ namespace BeMyArms.M3
             ApplyActiveWeapon();
             _buy.ResetForRound();
             _utilityCharges[0] = _utilityCharges[1] = _utilityCharges[2] = 0;
+            InitializeBotProfile();
             for (int i = 0; i < _lag.Length; i++) _lag[i].Clear();
             _p1Queue.Clear();
             _p2Queue.Clear();
@@ -567,7 +607,7 @@ namespace BeMyArms.M3
         {
             var input = new M2P1Input();
             // Idle through the reaction window so the player is not rushed at the start of live.
-            if (_botLiveTime < BotReactionSeconds) return input;
+            if (_botLiveTime < _botReaction) return input;
 
             M3DuelBody target = NearestEnemy(out float distance);
             if (target == null) { input.MoveZ = 0.5f; return input; }
@@ -592,11 +632,11 @@ namespace BeMyArms.M3
                 _botStuckTime = 0f;
             }
 
-            bool advance = distance > 10f && _botLiveTime > BotReactionSeconds;
+            bool advance = distance > 10f && _botLiveTime > _botReaction;
             input.MoveZ = _botStuckTime > 0f ? 0f : (advance ? 1f : 0.35f);
             input.MoveX = _botStuckTime > 0f ? _botStrafeDir : Mathf.Sin(_botClock * 0.7f) * (distance < 12f ? 0.9f : 0.25f);
             input.Jump = _botStuckTime > 0.3f; // hop over low cover when progress stalls
-            input.Sprint = distance > 16f && _botLiveTime > BotReactionSeconds + 1.5f;
+            input.Sprint = distance > 16f && _botLiveTime > _botReaction + 1.5f;
             _botClock += dt;
             return input;
         }
@@ -611,24 +651,25 @@ namespace BeMyArms.M3
             float dz = target.State.Value.PosZ - _sim.State.PosZ;
             input.AimYaw = Mathf.Atan2(dx, dz) * Mathf.Rad2Deg;
 
-            // Forgiving practice baseline: hold fire through a reaction window, use distance-scaled
-            // aim error, and fire in short bursts with pauses so the player can read and react.
+            // Forgiving practice baseline with per-bot character: hold fire through a randomised
+            // reaction window, drift the aim with two per-bot sine components, and fire in short
+            // bursts whose length/pause/phase differ per bot so they never fire in lockstep.
             _botP2Clock += 1f / 60f;
-            float error = BotAimErrorBase + distance * BotAimErrorPerMeter;
-            input.AimYaw += Mathf.Sin(_botP2Clock * 1.31f) * error
-                          + Mathf.Sin(_botP2Clock * 0.47f + 2.1f) * error * 0.5f;
-            input.AimPitch += Mathf.Sin(_botP2Clock * 0.93f + 1.3f) * error * 0.4f;
-            bool burst = (_botP2Clock % BotBurstPeriodSeconds) < BotBurstOnSeconds;
-            input.Fire = burst && distance < BotMaxEngageDistance && _botLiveTime > BotReactionSeconds;
+            float error = (BotAimErrorBase + distance * BotAimErrorPerMeter) * _botAimDrift;
+            input.AimYaw += Mathf.Sin(_botP2Clock * _botAimRate1 + _botAimPhase1) * error
+                          + Mathf.Sin(_botP2Clock * _botAimRate2 + _botAimPhase2) * error * 0.6f;
+            input.AimPitch += Mathf.Sin(_botP2Clock * _botAimRate2 * 1.7f + _botAimPhase1) * error * 0.4f;
+            bool burst = ((_botP2Clock + _botFirePhase) % _botBurstPeriod) < _botBurstOn;
+            input.Fire = burst && distance < BotMaxEngageDistance && _botLiveTime > _botReaction;
             input.Reload = _weapon.Ammo <= 0;
 
             // Occasional utility through the normal P2 authority path.
             _grenadeCooldown -= 1f / 60f;
-            if (_director != null && _director.IsLive && _botLiveTime > BotReactionSeconds + 4f &&
+            if (_director != null && _director.IsLive && _botLiveTime > _botReaction + 4f &&
                 distance < 24f && _grenadeCooldown <= 0f && TryConsumeUtility(M3UtilityKind.Grenade))
             {
                 _director.ServerApplyUtility(TeamIndex, M3UtilityKind.Grenade, _sim.State.PosX, _sim.State.PosZ, _sim.State.AimYaw);
-                _grenadeCooldown = 12f;
+                _grenadeCooldown = Mathf.Lerp(10f, 18f, UnityEngine.Random.value);
             }
             return input;
         }
@@ -640,6 +681,17 @@ namespace BeMyArms.M3
         {
             if (!IsServer) return;
             ServerApplyLoadout(M3WeaponId.Rifle);
+        }
+
+        /// <summary>Keeps only look deltas from a P1 input (movement/actions stripped).</summary>
+        static M2P1Input LookOnly(in M2P1Input input)
+        {
+            return new M2P1Input
+            {
+                Sequence = input.Sequence,
+                LookYawDelta = input.LookYawDelta,
+                LookPitchDelta = input.LookPitchDelta
+            };
         }
 
         void Log(string message)
