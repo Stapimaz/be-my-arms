@@ -363,8 +363,9 @@ namespace BeMyArms.M3
                 float lateral = Mathf.Abs(toX * fz - toZ * fx);
                 if (forward <= 0f || forward > range || lateral > 0.9f) continue;
 
-                // Arms reach the torso, not the legs or head.
-                if (es.PosY + 2.0f < feet || es.PosY > feet + 1.9f) continue;
+                // Arms reach the torso, not a body far above or below.
+                float enemyTop = es.PosY + (es.HitHeight > 0.01f ? es.HitHeight : 1.8f);
+                if (enemyTop < feet || es.PosY > feet + 1.9f) continue;
 
                 if (forward < bestForward) { bestForward = forward; best = enemy; }
             }
@@ -401,7 +402,7 @@ namespace BeMyArms.M3
 
             // Vertical aim must agree with the authoritative hit ray: build the direction from BOTH
             // the (sector-legal) yaw and the pitch, and test it against the enemy's vertical extent.
-            float eye = _sim.State.PosY + 1.45f;
+            float eye = _sim.State.PosY + (_sim.State.EyeHeight > 0.01f ? _sim.State.EyeHeight : 1.45f);
             Vector3 origin = new Vector3(_sim.State.PosX, eye, _sim.State.PosZ);
             Vector3 dir = Quaternion.Euler(input.AimPitch, input.AimYaw, 0f) * Vector3.forward;
 
@@ -420,7 +421,8 @@ namespace BeMyArms.M3
                 if (!_lag[i].TryRewind(_serverTime - LagRewindSeconds, out _, out float ex, out float ez)) continue;
 
                 float enemyFeet = enemy.State.Value.PosY;
-                float forward = RaySegmentDistance(origin, dir, ex, enemyFeet, ez, 1.8f, stats.RangeMeters, out float lateral);
+                float enemyHeight = enemy.State.Value.HitHeight > 0.01f ? enemy.State.Value.HitHeight : 1.8f;
+                float forward = RaySegmentDistance(origin, dir, ex, enemyFeet, ez, enemyHeight, stats.RangeMeters, out float lateral);
                 if (lateral > TargetRadius + 0.15f || forward <= 0f) continue;
                 if (wallBlocked && wallDistance < forward) continue;
                 if (forward < bestForward)

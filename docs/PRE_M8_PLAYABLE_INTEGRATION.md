@@ -354,3 +354,36 @@ Follow-up feel pass on the improved build.
 - Running player, P1: animator `Speed` constant 4.5 while holding W (no flicker); bones advance and
   loop; fighters animate mid-stride in world and no bind-pose/death regressions.
 - `M7PipelineCommands.Validate()` PASSED (weapons 3); compile clean.
+
+## 16. Directional locomotion + crouch + sector-edge feel (2026-09-26, fourth pass)
+
+- **Directional locomotion.** The sim already published `PlanarSpeed`/`MoveForward`; it now also
+  publishes `MoveRight` (body-local lateral). `M7CharacterAnimator` leads the **legs** toward the
+  body-local movement direction (hip-lead, up to 55°) and counter-rotates the spine so the fighter
+  keeps facing BodyYaw/look — conventional third-person strafing without turning the fighter. The
+  CC0 clip sets available (Quaternius UAL1 Standard, UAL2) have no authored strafe/backward clips and
+  UAL2 uses a different rig, so no compatible directional clips could be sourced; the existing
+  authored leg swing is redirected instead. Backward still plays the cycle reversed.
+- **Crouch (authoritative + predicted).** `M2P1Input.Crouch` (hold Left Ctrl) drives
+  `M2BodyState.Crouching`/`HitHeight`/`EyeHeight` in the shared sim: crouch move speed 2.5 m/s, hit
+  profile 1.15 m (vs 1.8), eye 1.05 m (vs 1.45). The server's hit ray uses the shooter eye height and
+  the victim's `HitHeight`; `M2MovementCollision.CanStand` blocks standing under low cover. A
+  full-body Animator **override layer** (weight driven from the replicated stance) blends the
+  authored `Crouch_Idle_Loop`/`Crouch_Fwd_Loop` clips; the weapon mount and both cameras (P1 pivot,
+  P2 eye) follow the stance. The generator now exports the crouch clips.
+- **P2 sector-edge feel.** `M3DuelClient.ApplySectorResistance` scales outward mouse yaw by a smooth
+  falloff that stiffens from 55% of the half-sector to the limit (never fully zero), while inward
+  movement is unresisted. The world-stabilized accumulator is hard-clamped inside the legal sector,
+  so there is no phantom travel beyond the boundary. Server authority and the hard legal sector are
+  unchanged; Model C, BodyYaw centring and "no body chase" are preserved.
+
+**Targeted checks**
+
+- Running player, P1: `qa_player_state` forward → legYaw 0°, strafe R → +55°, strafe L → −55° with
+  stable `PlanarSpeed` 4.5; crouch → `Crouching=true hitH=1.15 spd=2.5 crouchW=1 camY=1.27` vs
+  standing `hitH=1.8 crouchW=0 camY=1.67`.
+- Running player, P2: outward +15° steps approach the limit with diminishing increments
+  (~11° → ~4° → ~1.4°), inward −12° applies immediately, and `AimYawOffset` never exceeds the
+  hard sector limit (69°).
+- `qa_grip_state` body/viewmodel hands still on the weapon (≤0.023 m); no exceptions; content
+  validation PASSED.

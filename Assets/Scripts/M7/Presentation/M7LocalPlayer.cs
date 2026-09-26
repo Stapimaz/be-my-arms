@@ -278,7 +278,8 @@ namespace BeMyArms.M7
         {
             if (_pivot == null || _camera == null) return;
             float pitch = Mathf.Clamp(_client.LocalLookPitch, P1MinPitch, P1MaxPitch);
-            Vector3 pivot = _client.VisualPosition + Vector3.up * P1PivotHeight;
+            float eyeHeight = state.EyeHeight > 0.01f ? state.EyeHeight : 1.45f;
+            Vector3 pivot = _client.VisualPosition + Vector3.up * (eyeHeight + 0.10f);
             _pivot.SetPositionAndRotation(pivot, Quaternion.Euler(pitch, _client.LocalLookYaw, 0f));
         }
 
@@ -288,9 +289,10 @@ namespace BeMyArms.M7
             float pitch = Mathf.Clamp(_client.LocalAimPitch, -80f, 80f) - _camRecoilPitch;
             Quaternion rotation = Quaternion.Euler(pitch, _client.LocalAimYaw + _camRecoilYaw, 0f);
 
-            // Stable logical eye: follows the smoothed shared-body position at a fixed height and is
-            // completely independent of the animated chest/shoulder rig.
-            Vector3 eye = _client.VisualPosition + Vector3.up * P2EyeHeight;
+            // Stable logical eye: follows the smoothed shared-body position at the current stance
+            // height and is completely independent of the animated chest/shoulder rig.
+            float eyeHeight = state.EyeHeight > 0.01f ? state.EyeHeight : 1.45f;
+            Vector3 eye = _client.VisualPosition + Vector3.up * (eyeHeight + 0.13f);
             _p2Cam.transform.SetPositionAndRotation(eye, rotation);
         }
 

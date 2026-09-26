@@ -39,6 +39,8 @@ KEEP_CLIPS = (
     "Pistol_Shoot",
     "Pistol_Reload",
     "Pistol_Idle_Loop",
+    "Crouch_Idle_Loop",
+    "Crouch_Fwd_Loop",
 )
 
 ARM_BONES = ("DEF-upper_arm.", "DEF-forearm.", "DEF-hand.", "DEF-f_", "DEF-thumb.")

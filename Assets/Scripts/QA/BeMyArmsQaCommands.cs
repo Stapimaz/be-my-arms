@@ -168,12 +168,14 @@ namespace BeMyArms.QA
         public static QaSimpleResult InjectInput(
             [CliArg("movex", "Body-relative strafe [-1..1]; 0 releases.")] float moveX = 0f,
             [CliArg("movez", "Body-relative forward [-1..1]; 0 releases.")] float moveZ = 0f,
-            [CliArg("fire", "Hold the trigger while true.")] bool fire = false)
+            [CliArg("fire", "Hold the trigger while true.")] bool fire = false,
+            [CliArg("crouch", "Hold crouch while true.")] bool crouch = false)
         {
             M3LocalInput.InjectedMoveX = moveX;
             M3LocalInput.InjectedMoveZ = moveZ;
             M3LocalInput.InjectedFire = fire;
-            return new QaSimpleResult { Success = true, Detail = $"move=({moveX},{moveZ}) fire={fire}" };
+            M3LocalInput.InjectedCrouch = crouch;
+            return new QaSimpleResult { Success = true, Detail = $"move=({moveX},{moveZ}) fire={fire} crouch={crouch}" };
         }
 
         [CliCommand("qa_grip_state",
@@ -273,6 +275,12 @@ namespace BeMyArms.QA
                     M2BodyState state = local.ViewState;
                     result.BodyPosition = V3(state.PosX, state.PosY, state.PosZ);
                     result.BodyYaw = Round(state.BodyYaw);
+                    result.Crouching = state.Crouching;
+                    result.HitHeight = Round(state.HitHeight);
+                    result.PlanarSpeed = Round(state.PlanarSpeed);
+                    result.MoveForward = Round(state.MoveForward);
+                    result.MoveRight = Round(state.MoveRight);
+                    result.AimYawOffset = Round(local.LocalAimOffset);
 
                     if (local.Body != null)
                     {
@@ -280,6 +288,12 @@ namespace BeMyArms.QA
                         result.ActiveWeapon = ((M3WeaponId)local.Body.WeaponId.Value).ToString();
                         result.Ammo = local.Body.Ammo.Value;
                         result.LocalShots = local.TotalLocalShots;
+                        M7CharacterAnimator presentation = local.Body.GetComponent<M7CharacterAnimator>();
+                        if (presentation != null)
+                        {
+                            result.LegYaw = Round(presentation.CurrentLegYaw);
+                            result.CrouchWeight = Round(presentation.CrouchWeight);
+                        }
 
                         M7CharacterAnimator animator = local.Body.GetComponent<M7CharacterAnimator>();
                         result.P1 = DescribeGroup(animator != null ? animator.P1Skin : null);
@@ -395,6 +409,8 @@ namespace BeMyArms.QA
             return $"scene={r.Scene} phase={r.MatchPhase} role=P{r.LocalRole + 1} slot={r.LocalSlot} " +
                    $"drawn={r.BodyRenderedParts} p1={p1} p2={p2} weapon={w} bboxH={r.BodyBoundsSize?[1]} inView={r.BodyInViewport} " +
                    $"cam={r.CameraName} input={r.InputGameplayActive} cursor={r.CursorLock}/{r.CursorVisible} focused={r.ApplicationFocused} " +
+                   $"crouch={r.Crouching} hitH={r.HitHeight} spd={r.PlanarSpeed} mv=({r.MoveForward},{r.MoveRight}) " +
+                   $"legYaw={r.LegYaw} crouchW={r.CrouchWeight} aimOff={r.AimYawOffset} " +
                    $"vm={r.ViewmodelCount} dupes={r.DuplicateSummary}";
         }
 
@@ -644,6 +660,14 @@ namespace BeMyArms.QA
         public string ActiveWeapon { get; set; }
         public int Ammo { get; set; }
         public int LocalShots { get; set; }
+        public bool Crouching { get; set; }
+        public float HitHeight { get; set; }
+        public float PlanarSpeed { get; set; }
+        public float MoveForward { get; set; }
+        public float MoveRight { get; set; }
+        public float AimYawOffset { get; set; }
+        public float LegYaw { get; set; }
+        public float CrouchWeight { get; set; }
         public float[] BodyPosition { get; set; }
         public float BodyYaw { get; set; }
 

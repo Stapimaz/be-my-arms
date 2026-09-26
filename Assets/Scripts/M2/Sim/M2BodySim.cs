@@ -20,8 +20,15 @@ namespace BeMyArms.M2
     {
         public float WalkSpeed = 4.5f;
         public float SprintSpeed = 7f;
+        public float CrouchSpeed = 2.5f;
         public float Gravity = -20f;
         public float JumpSpeed = 7f;
+
+        // Stance dimensions (metres): standing vs crouched hit profile and eye/view height.
+        public float StandHeight = 1.8f;
+        public float CrouchHeight = 1.15f;
+        public float StandEyeHeight = 1.45f;
+        public float CrouchEyeHeight = 1.05f;
 
         public float DodgeSpeed = 11f;
         public float DodgeDuration = 0.22f;
@@ -76,6 +83,8 @@ namespace BeMyArms.M2
             State.Health = MaxHealth;
             State.Grounded = true;
             State.MovementState = (byte)M2MovementState.Idle;
+            State.HitHeight = StandHeight;
+            State.EyeHeight = StandEyeHeight;
         }
 
         public void ApplyP1(in M2P1Input input, float deltaTime)
@@ -130,6 +139,20 @@ namespace BeMyArms.M2
             }
 
             if (TryStartAction(input)) return;
+
+            // ---- Stance (crouch) ----
+            // Standing back up requires headroom; while blocked by a low ceiling the body stays
+            // crouched so the transition is physical rather than cosmetic.
+            if (input.Crouch)
+            {
+                State.Crouching = true;
+            }
+            else if (State.Crouching && (Collision == null || Collision.CanStand(State.PosX, State.PosY, State.PosZ, StandHeight)))
+            {
+                State.Crouching = false;
+            }
+            State.HitHeight = State.Crouching ? CrouchHeight : StandHeight;
+            State.EyeHeight = State.Crouching ? CrouchEyeHeight : StandEyeHeight;
 
             Locomotion(input, deltaTime);
         }
@@ -226,17 +249,18 @@ namespace BeMyArms.M2
             float wx = rx * mx + fx * mz;
             float wz = rz * mx + fz * mz;
 
-            float speed = input.Sprint && length > 0.01f ? SprintSpeed : WalkSpeed;
+            float speed = input.Sprint && !State.Crouching && length > 0.01f ? SprintSpeed : (State.Crouching ? CrouchSpeed : WalkSpeed);
             State.PosX += wx * speed * deltaTime;
             State.PosZ += wz * speed * deltaTime;
             Collision?.ResolveHorizontal(ref State);
             ApplyVertical(deltaTime);
 
             // Stable locomotion presentation signal (never derived from frame-to-frame deltas). The
-            // applied planar speed is input magnitude * move speed; MoveForward is the body-local
-            // forward component so backward movement can play the cycle in reverse.
+            // applied planar speed is input magnitude * move speed; MoveForward/MoveRight are the
+            // body-local movement direction so the animation can strafe/back without guessing.
             State.PlanarSpeed = length > 0.01f ? length * speed : 0f;
             State.MoveForward = length > 0.01f ? mz : 0f;
+            State.MoveRight = length > 0.01f ? mx : 0f;
 
             if (!State.Grounded) State.MovementState = (byte)M2MovementState.Fall;
             else if (length < 0.01f) State.MovementState = (byte)M2MovementState.Idle;

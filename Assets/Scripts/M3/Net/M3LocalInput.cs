@@ -36,6 +36,7 @@ namespace BeMyArms.M3
         public static float InjectedMoveX;
         public static float InjectedMoveZ;
         public static bool InjectedFire;
+        public static bool InjectedCrouch;
 
         /// <summary>Read and clear the pending look injection.</summary>
         public static void ConsumeInjectedLook(out float yaw, out float pitch)

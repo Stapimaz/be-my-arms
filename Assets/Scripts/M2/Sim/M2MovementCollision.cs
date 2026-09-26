@@ -103,7 +103,9 @@ namespace BeMyArms.M2
             if (Solids.Count == 0) return;
 
             float feet = s.PosY;
-            float head = s.PosY + BodyHeight;
+            // Use the current stance height so a crouched body can pass under low cover.
+            float bodyHeight = s.HitHeight > 0.01f ? s.HitHeight : BodyHeight;
+            float head = s.PosY + bodyHeight;
 
             // Two passes so corners between two boxes settle cleanly.
             for (int pass = 0; pass < 2; pass++)
@@ -136,6 +138,27 @@ namespace BeMyArms.M2
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// True when the body has vertical clearance to stand to <paramref name="standHeight"/> at
+        /// (x, feetY, z): no solid overlaps the body cylinder in the band between the current
+        /// crouched height and the standing height.
+        /// </summary>
+        public bool CanStand(float x, float feetY, float z, float standHeight)
+        {
+            float lowBand = feetY + StepHeight;
+            float highBand = feetY + standHeight;
+            for (int i = 0; i < Solids.Count; i++)
+            {
+                Box b = Solids[i];
+                if (b.MaxY <= lowBand) continue;  // steppable / below the body
+                if (b.MinY >= highBand) continue; // above the standing head
+                if (x <= b.MinX - BodyRadius || x >= b.MaxX + BodyRadius) continue;
+                if (z <= b.MinZ - BodyRadius || z >= b.MaxZ + BodyRadius) continue;
+                return false; // a ceiling/ledge blocks standing up here
+            }
+            return true;
         }
 
         /// <summary>Nearest solid hit along a ray (bullet blocking). Returns false when nothing is hit.</summary>

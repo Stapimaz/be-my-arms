@@ -18,6 +18,7 @@ namespace BeMyArms.M2
         public bool Vault;
         public bool LightKick;
         public bool HeavyKick;
+        public bool Crouch;
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
@@ -34,6 +35,7 @@ namespace BeMyArms.M2
             serializer.SerializeValue(ref Vault);
             serializer.SerializeValue(ref LightKick);
             serializer.SerializeValue(ref HeavyKick);
+            serializer.SerializeValue(ref Crouch);
         }
     }
 
@@ -86,6 +88,12 @@ namespace BeMyArms.M2
         // animation never has to infer speed from frame-to-frame position deltas.
         public float PlanarSpeed;
         public float MoveForward;
+        public float MoveRight;
+
+        // Stance (authoritative crouch): a lower hit profile + eye height and slower movement.
+        public bool Crouching;
+        public float HitHeight;
+        public float EyeHeight;
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
@@ -109,6 +117,10 @@ namespace BeMyArms.M2
             serializer.SerializeValue(ref Health);
             serializer.SerializeValue(ref PlanarSpeed);
             serializer.SerializeValue(ref MoveForward);
+            serializer.SerializeValue(ref MoveRight);
+            serializer.SerializeValue(ref Crouching);
+            serializer.SerializeValue(ref HitHeight);
+            serializer.SerializeValue(ref EyeHeight);
         }
     }
 }

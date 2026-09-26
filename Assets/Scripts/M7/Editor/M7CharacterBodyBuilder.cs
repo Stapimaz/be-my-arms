@@ -186,6 +186,34 @@ namespace BeMyArms.M7.EditorTools
             // the terminal Death state forever and the character freezes in a bind pose).
             Transition(death, loco, 0.15f, ("Alive", AnimatorConditionMode.If, 0f));
 
+            // Crouch is a full-body override layer whose weight is driven from the replicated stance,
+            // so stand<->crouch blends smoothly without a web of state transitions.
+            controller.AddLayer("Crouch");
+            AnimatorControllerLayer crouchLayer = controller.layers[controller.layers.Length - 1];
+            crouchLayer.name = "Crouch";
+            crouchLayer.defaultWeight = 0f;
+            crouchLayer.blendingMode = AnimatorLayerBlendingMode.Override;
+            if (crouchLayer.stateMachine == null)
+            {
+                var machine = new AnimatorStateMachine();
+                machine.name = "Crouch";
+                AssetDatabase.AddObjectToAsset(machine, controller);
+                crouchLayer.stateMachine = machine;
+            }
+            var crouchBlend = new BlendTree
+            {
+                name = "CrouchLocomotion",
+                blendType = BlendTreeType.Simple1D,
+                blendParameter = "Speed",
+                useAutomaticThresholds = false
+            };
+            AssetDatabase.AddObjectToAsset(crouchBlend, controller);
+            crouchBlend.AddChild(Clip(fbx, "Crouch_Idle_Loop"), 0f);
+            crouchBlend.AddChild(Clip(fbx, "Crouch_Fwd_Loop"), 2.5f);
+            AnimatorState crouchState = crouchLayer.stateMachine.AddState("CrouchLocomotion", new Vector3(0f, 0f, 0f));
+            crouchState.motion = crouchBlend;
+            crouchLayer.stateMachine.defaultState = crouchState;
+
             AssetDatabase.SaveAssets();
             return controller;
         }

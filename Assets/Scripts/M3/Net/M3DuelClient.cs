@@ -52,6 +52,9 @@ namespace BeMyArms.M3
         public float LocalAimYaw { get; private set; }
         public float LocalAimPitch { get; private set; }
 
+        /// <summary>Diagnostic: the local P2 aim offset from the body-centred sector (degrees).</summary>
+        public float LocalAimOffset => M2BodySim.Normalize(LocalAimYaw - _smoothedBodyYaw);
+
         /// <summary>Last raw mouse delta the local input path read (diagnostics).</summary>
         public Vector2 LastMouseDelta { get; private set; }
         /// <summary>Look yaw currently held by the prediction sim itself (diagnostics).</summary>
@@ -121,6 +124,7 @@ namespace BeMyArms.M3
         // Raw (unclamped) local P2 aim; the presentation and the sent aim are clamped to the sector.
         float _manualAimYaw;
         float _manualAimPitch;
+        bool _aimInitialized;
 
         // Edge-triggered actions are latched every frame so a press between send ticks is not lost.
         M2P1Input _pendingP1;
@@ -472,6 +476,7 @@ namespace BeMyArms.M3
                 input.MoveZ = (kb.wKey.isPressed ? 1f : 0f) - (kb.sKey.isPressed ? 1f : 0f);
                 input.Sprint = kb.leftShiftKey.isPressed;
                 input.AlignBody = kb.leftAltKey.isPressed;
+                input.Crouch = kb.leftCtrlKey.isPressed;
             }
             if (mouse != null)
             {
@@ -487,6 +492,7 @@ namespace BeMyArms.M3
             {
                 input.MoveX = Mathf.Clamp(input.MoveX + M3LocalInput.InjectedMoveX, -1f, 1f);
                 input.MoveZ = Mathf.Clamp(input.MoveZ + M3LocalInput.InjectedMoveZ, -1f, 1f);
+                input.Crouch |= M3LocalInput.InjectedCrouch;
             }
 #endif
             return input;
@@ -494,6 +500,7 @@ namespace BeMyArms.M3
 
         M2P2Input BuildManualP2()
         {
+            float deltaYaw = 0f;
 #if ENABLE_INPUT_SYSTEM
             if (M3LocalInput.GameplayActive)
             {
@@ -502,16 +509,19 @@ namespace BeMyArms.M3
                 {
                     Vector2 delta = mouse.delta.ReadValue() * M3LocalInput.MouseSensitivity;
                     LastMouseDelta = delta;
-                    _manualAimYaw += delta.x;
+                    deltaYaw += delta.x;
                     _manualAimPitch = Mathf.Clamp(_manualAimPitch - delta.y, -MaxPitchDegrees, MaxPitchDegrees);
                 }
                 M3LocalInput.ConsumeInjectedLook(out float injectedYaw, out float injectedPitch);
-                _manualAimYaw += injectedYaw;
+                deltaYaw += injectedYaw;
                 _manualAimPitch = Mathf.Clamp(_manualAimPitch - injectedPitch, -MaxPitchDegrees, MaxPitchDegrees); // injected pitch is "look up" positive
             }
 #endif
-            var input = new M2P2Input();
             float innerHalf = Mathf.Max(1f, SectorHalfDegrees - 1f);
+            if (!_aimInitialized) { _manualAimYaw = _smoothedBodyYaw; _aimInitialized = true; }
+            _manualAimYaw = ApplySectorResistance(_manualAimYaw, deltaYaw, _smoothedBodyYaw, innerHalf);
+
+            var input = new M2P2Input();
             LocalAimYaw = M2BodySim.ClampToSector(_manualAimYaw, _smoothedBodyYaw, innerHalf);
             LocalAimPitch = Mathf.Clamp(_manualAimPitch, -MaxPitchDegrees, MaxPitchDegrees);
             input.AimYaw = LocalAimYaw;
@@ -527,6 +537,31 @@ namespace BeMyArms.M3
             }
 #endif
             return input;
+        }
+
+        /// <summary>
+        /// Progressive, exponential-feeling resistance as P2 aim approaches the sector edge: moving
+        /// outward loses sensitivity smoothly and becomes very stiff near the limit, while moving
+        /// back inward is immediate. The world-stabilized accumulator is hard-clamped inside the
+        /// sector, so there is no phantom travel beyond the boundary.
+        /// </summary>
+        static float ApplySectorResistance(float worldYaw, float deltaYaw, float bodyYaw, float innerHalf)
+        {
+            float offset = M2BodySim.Normalize(worldYaw - bodyYaw);
+            float applied = deltaYaw;
+            if (Mathf.Abs(deltaYaw) > 0.0001f)
+            {
+                bool outward = Mathf.Sign(deltaYaw) == Mathf.Sign(offset);
+                if (outward)
+                {
+                    const float softStart = 0.55f; // begin resisting at 55% of the half-sector
+                    float t = Mathf.InverseLerp(innerHalf * softStart, innerHalf, Mathf.Abs(offset));
+                    float sensitivity = Mathf.Lerp(0.06f, 1f, 1f - Mathf.SmoothStep(0f, 1f, t));
+                    applied = deltaYaw * sensitivity;
+                }
+            }
+            float clamped = Mathf.Clamp(offset + applied, -innerHalf, innerHalf);
+            return M2BodySim.Normalize(bodyYaw + clamped);
         }
 
         /// <summary>Closest living enemy body (2v2 has two).</summary>
