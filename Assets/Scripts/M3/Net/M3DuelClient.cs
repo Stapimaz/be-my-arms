@@ -540,14 +540,14 @@ namespace BeMyArms.M3
         }
 
         /// <summary>
-        /// Soft/asymptotic resistance as P2 aim approaches the sector edge. Outward mouse yaw is
-        /// compressed by the remaining angular distance to the boundary:
-        ///   applied = remaining * (1 - exp(-|delta| / remaining))
-        /// so the closer the aim is to the limit the less of the same delta is applied, and it
-        /// smoothly asymptotes to the boundary (no hard wall). Far from the edge this is ~1:1, and
-        /// inward movement is always exactly 1:1. The accumulator is hard-clamped inside the sector
-        /// only as a numerical/server safety fallback, so there is never hidden input beyond it.
+        /// Fixed-width soft zone near the sector boundary (~14 degrees). Inside the zone, outward mouse
+        /// yaw is scaled by gain = pow(clamp01(remaining / softZone), 1.5) so resistance starts
+        /// perceptibly before the edge and smoothly approaches zero at the boundary; outside the zone
+        /// sensitivity is normal. Inward movement is always exactly 1:1. The hard clamp is only a
+        /// numerical/server safety fallback, so no input ever accumulates beyond the limit.
         /// </summary>
+        public const float SectorSoftZoneDegrees = 14f;
+
         public static float ApplySectorResistance(float worldYaw, float deltaYaw, float bodyYaw, float innerHalf)
         {
             float offset = M2BodySim.Normalize(worldYaw - bodyYaw);
@@ -557,10 +557,12 @@ namespace BeMyArms.M3
                 bool outward = Mathf.Sign(deltaYaw) == Mathf.Sign(offset) && Mathf.Abs(offset) > 0.001f;
                 if (outward)
                 {
-                    float remaining = Mathf.Max(0f, innerHalf - Mathf.Abs(offset));
-                    applied = remaining <= 0.0001f
-                        ? 0f
-                        : Mathf.Sign(deltaYaw) * remaining * (1f - Mathf.Exp(-Mathf.Abs(deltaYaw) / remaining));
+                    float remaining = innerHalf - Mathf.Abs(offset);
+                    if (remaining < SectorSoftZoneDegrees)
+                    {
+                        float gain = Mathf.Pow(Mathf.Clamp01(remaining / SectorSoftZoneDegrees), 1.5f);
+                        applied = deltaYaw * gain;
+                    }
                 }
             }
             float clamped = Mathf.Clamp(offset + applied, -innerHalf, innerHalf);

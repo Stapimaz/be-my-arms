@@ -39,6 +39,10 @@ namespace BeMyArms.M7.EditorTools
 
         public const string RiflePrefabPath = "Assets/Art/Weapons/Prefabs/BMA_Weapon_Rifle_Quaternius.prefab";
 
+        // Genuine authored humanoid directional locomotion (CC0), retargeted via Mecanim Humanoid.
+        public const string KayKitModelPath = "Assets/ThirdParty/KayKitCharacterAnimations/Rig_Medium_MovementAdvanced.fbx";
+        public const string BodyAvatarPath = "Assets/Art/Characters/Quaternius/Q_BodyAvatar.asset";
+
         // The shared rig's chest is at y=1.35 and Cosmetic_P2 sits at +(0,0.13,0.06) from it, while
         // the imported model's own chest (spine.003) is at y≈1.315. The skin therefore drops its
         // model so those two chest heights coincide when mounted at the socket.
@@ -72,45 +76,148 @@ namespace BeMyArms.M7.EditorTools
             Debug.Log("[M7char] built P1/P2 skins + P2 arms viewmodel from the Quaternius rig");
         }
 
-        /// <summary>Idempotent import settings: Generic rig, animations on, no editor-only objects.</summary>
+        /// <summary>
+        /// Idempotent import settings. The Quaternius bodies are imported as Humanoid using a
+        /// hand-authored avatar for their DEF-* skeleton (auto-mapping fails), so their clips become
+        /// retargetable humanoid motions; the CC0 KayKit directional clips are imported humanoid with
+        /// Unity's auto-avatar. Both then drive the same humanoid Animator.
+        /// </summary>
         public static void EnsureImportSettings()
         {
-            ApplyImportSettings(P1ModelPath);
-            ApplyImportSettings(P2ModelPath);
-            ApplyImportSettings(ArmsModelPath);
+            _bodyAvatar = EnsureBodyHumanoidAvatar();
+            ApplyBodyImport(P1ModelPath, _bodyAvatar);
+            ApplyBodyImport(P2ModelPath, _bodyAvatar);
+            ApplyBodyImport(ArmsModelPath, _bodyAvatar);
+            ApplyHumanoidImport(KayKitModelPath);
         }
 
-        static void ApplyImportSettings(string path)
+        static Avatar _bodyAvatar;
+
+        /// <summary>Builds (once) the humanoid avatar for the DEF-* skeleton from the P1 body.</summary>
+        static Avatar EnsureBodyHumanoidAvatar()
+        {
+            var importer = AssetImporter.GetAtPath(P1ModelPath) as ModelImporter;
+            if (importer != null &&
+                importer.animationType == ModelImporterAnimationType.Human &&
+                importer.avatarSetup == ModelImporterAvatarSetup.CopyFromOther &&
+                importer.sourceAvatar != null)
+            {
+                return importer.sourceAvatar;
+            }
+
+            // The avatar is built from the imported hierarchy, so the model must be readable first.
+            if (importer != null && importer.animationType != ModelImporterAnimationType.Generic)
+            {
+                importer.animationType = ModelImporterAnimationType.Generic;
+                importer.SaveAndReimport();
+            }
+
+            GameObject model = AssetDatabase.LoadAssetAtPath<GameObject>(P1ModelPath);
+            if (model == null)
+            {
+                Debug.LogError("[M7char] cannot build humanoid avatar: missing " + P1ModelPath);
+                return null;
+            }
+
+            var bones = new List<HumanBone>();
+            AddBone(bones, "Hips", "DEF-hips");
+            AddBone(bones, "Spine", "DEF-spine.001");
+            AddBone(bones, "Chest", "DEF-spine.002");
+            AddBone(bones, "UpperChest", "DEF-spine.003");
+            AddBone(bones, "Neck", "DEF-neck");
+            AddBone(bones, "Head", "DEF-head");
+            AddBone(bones, "LeftShoulder", "DEF-shoulder.L");
+            AddBone(bones, "LeftUpperArm", "DEF-upper_arm.L");
+            AddBone(bones, "LeftLowerArm", "DEF-forearm.L");
+            AddBone(bones, "LeftHand", "DEF-hand.L");
+            AddBone(bones, "RightShoulder", "DEF-shoulder.R");
+            AddBone(bones, "RightUpperArm", "DEF-upper_arm.R");
+            AddBone(bones, "RightLowerArm", "DEF-forearm.R");
+            AddBone(bones, "RightHand", "DEF-hand.R");
+            AddBone(bones, "LeftUpperLeg", "DEF-thigh.L");
+            AddBone(bones, "LeftLowerLeg", "DEF-shin.L");
+            AddBone(bones, "LeftFoot", "DEF-foot.L");
+            AddBone(bones, "LeftToes", "DEF-toe.L");
+            AddBone(bones, "RightUpperLeg", "DEF-thigh.R");
+            AddBone(bones, "RightLowerLeg", "DEF-shin.R");
+            AddBone(bones, "RightFoot", "DEF-foot.R");
+            AddBone(bones, "RightToes", "DEF-toe.R");
+
+            var description = new HumanDescription
+            {
+                human = bones.ToArray(),
+                skeleton = new SkeletonBone[0]
+            };
+            Avatar built = AvatarBuilder.BuildHumanAvatar(model, description);
+            if (built == null || !built.isValid || !built.isHuman)
+            {
+                Debug.LogError($"[M7char] humanoid avatar build failed (human={built != null && built.isHuman} valid={built != null && built.isValid})");
+                return null;
+            }
+
+            EnsureFolder(System.IO.Path.GetDirectoryName(BodyAvatarPath).Replace('\\', '/'));
+            if (AssetDatabase.LoadAssetAtPath<Avatar>(BodyAvatarPath) != null) AssetDatabase.DeleteAsset(BodyAvatarPath);
+            built.name = "Q_BodyAvatar";
+            AssetDatabase.CreateAsset(built, BodyAvatarPath);
+            AssetDatabase.SaveAssets();
+            return AssetDatabase.LoadAssetAtPath<Avatar>(BodyAvatarPath);
+        }
+
+        static void AddBone(List<HumanBone> bones, string humanName, string boneName)
+        {
+            bones.Add(new HumanBone { humanName = humanName, boneName = boneName, limit = new HumanLimit { useDefaultValues = true } });
+        }
+
+        static void ApplyBodyImport(string path, Avatar avatar)
         {
             var importer = AssetImporter.GetAtPath(path) as ModelImporter;
             if (importer == null) return;
             bool dirty = false;
-            if (importer.animationType != ModelImporterAnimationType.Generic) { importer.animationType = ModelImporterAnimationType.Generic; dirty = true; }
+            if (importer.animationType != ModelImporterAnimationType.Human) { importer.animationType = ModelImporterAnimationType.Human; dirty = true; }
+            if (importer.avatarSetup != ModelImporterAvatarSetup.CopyFromOther) { importer.avatarSetup = ModelImporterAvatarSetup.CopyFromOther; dirty = true; }
+            if (avatar != null && importer.sourceAvatar != avatar) { importer.sourceAvatar = avatar; dirty = true; }
+            dirty |= ApplyCommonImport(ref importer);
+            dirty |= ApplyClipLoopFlags(importer);
+            if (dirty) importer.SaveAndReimport();
+        }
+
+        static void ApplyHumanoidImport(string path)
+        {
+            var importer = AssetImporter.GetAtPath(path) as ModelImporter;
+            if (importer == null) return;
+            bool dirty = false;
+            if (importer.animationType != ModelImporterAnimationType.Human) { importer.animationType = ModelImporterAnimationType.Human; dirty = true; }
+            if (importer.avatarSetup != ModelImporterAvatarSetup.CreateFromThisModel) { importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel; dirty = true; }
+            dirty |= ApplyCommonImport(ref importer);
+            if (dirty) importer.SaveAndReimport();
+        }
+
+        static bool ApplyCommonImport(ref ModelImporter importer)
+        {
+            bool dirty = false;
             if (!importer.importAnimation) { importer.importAnimation = true; dirty = true; }
             if (importer.importCameras) { importer.importCameras = false; dirty = true; }
             if (importer.importLights) { importer.importLights = false; dirty = true; }
             if (importer.importBlendShapes) { importer.importBlendShapes = false; dirty = true; }
+            return dirty;
+        }
 
-            // The plugin exports clean clip names but Unity defaults every take to "play once",
-            // which freezes locomotion after one cycle. Mark the loop clips as looping and keep the
-            // names stable for the controller.
+        static bool ApplyClipLoopFlags(ModelImporter importer)
+        {
             ModelImporterClipAnimation[] clips = importer.defaultClipAnimations;
-            if (clips != null && clips.Length > 0)
+            if (clips == null || clips.Length == 0) return false;
+            bool dirty = false;
+            for (int i = 0; i < clips.Length; i++)
             {
-                for (int i = 0; i < clips.Length; i++)
-                {
-                    ModelImporterClipAnimation clip = clips[i];
-                    string take = string.IsNullOrEmpty(clip.takeName) ? clip.name : clip.takeName;
-                    string shortName = take.Contains("|") ? take.Substring(take.LastIndexOf('|') + 1) : take;
-                    bool loop = shortName.EndsWith("_Loop");
-                    if (clip.name != shortName) { clip.name = shortName; dirty = true; }
-                    if (clip.loopTime != loop) { clip.loopTime = loop; clip.loopPose = loop; dirty = true; }
-                }
-                importer.clipAnimations = clips;
-                dirty = true;
+                ModelImporterClipAnimation clip = clips[i];
+                string take = string.IsNullOrEmpty(clip.takeName) ? clip.name : clip.takeName;
+                string shortName = take.Contains("|") ? take.Substring(take.LastIndexOf('|') + 1) : take;
+                bool loop = shortName.EndsWith("_Loop");
+                if (clip.name != shortName) { clip.name = shortName; dirty = true; }
+                if (clip.loopTime != loop) { clip.loopTime = loop; clip.loopPose = loop; dirty = true; }
             }
-
-            if (dirty) importer.SaveAndReimport();
+            importer.clipAnimations = clips;
+            return true;
         }
 
         static void EnsureFolders()
@@ -123,16 +230,21 @@ namespace BeMyArms.M7.EditorTools
 
         // ---- Animator controllers ----
 
-        static AnimationClip Clip(string fbxPath, string suffix)
+        static AnimationClip Clip(string fbxPath, string suffix) => ClipFrom(fbxPath, suffix);
+
+        /// <summary>A genuine directional clip from the CC0 KayKit humanoid library.</summary>
+        static AnimationClip KayKitClip(string suffix) => ClipFrom(KayKitModelPath, suffix);
+
+        static AnimationClip ClipFrom(string path, string suffix)
         {
-            foreach (Object asset in AssetDatabase.LoadAllAssetsAtPath(fbxPath))
+            foreach (Object asset in AssetDatabase.LoadAllAssetsAtPath(path))
             {
                 if (asset is AnimationClip clip &&
                     !clip.name.StartsWith("__preview__") &&
                     (clip.name == suffix || clip.name.EndsWith("|" + suffix)))
                     return clip;
             }
-            Debug.LogWarning($"[M7char] missing clip '{suffix}' in {fbxPath}");
+            Debug.LogWarning($"[M7char] missing clip '{suffix}' in {path}");
             return null;
         }
 
@@ -167,15 +279,11 @@ namespace BeMyArms.M7.EditorTools
             blend.AddChild(Clip(fbx, "Walk_Loop"), new Vector2(0f, 0.64f));
             blend.AddChild(Clip(fbx, "Jog_Fwd_Loop"), new Vector2(0f, 0.82f));
             blend.AddChild(Clip(fbx, "Sprint_Loop"), new Vector2(0f, 1.0f));
-            blend.AddChild(Clip(fbx, "Walk_Back_Loop"), new Vector2(0f, -0.64f));
-            blend.AddChild(Clip(fbx, "Jog_Back_Loop"), new Vector2(0f, -0.82f));
-            blend.AddChild(Clip(fbx, "Sprint_Back_Loop"), new Vector2(0f, -1.0f));
-            blend.AddChild(Clip(fbx, "Walk_Strafe_L_Loop"), new Vector2(-0.64f, 0f));
-            blend.AddChild(Clip(fbx, "Jog_Strafe_L_Loop"), new Vector2(-0.82f, 0f));
-            blend.AddChild(Clip(fbx, "Sprint_Strafe_L_Loop"), new Vector2(-1.0f, 0f));
-            blend.AddChild(Clip(fbx, "Walk_Strafe_R_Loop"), new Vector2(0.64f, 0f));
-            blend.AddChild(Clip(fbx, "Jog_Strafe_R_Loop"), new Vector2(0.82f, 0f));
-            blend.AddChild(Clip(fbx, "Sprint_Strafe_R_Loop"), new Vector2(1.0f, 0f));
+            // Genuine authored CC0 directional clips (KayKit), retargeted onto the humanoid rig:
+            // backward is a real backward walk, A/D are real strafes.
+            blend.AddChild(KayKitClip("Walking_Backwards"), new Vector2(0f, -0.82f));
+            blend.AddChild(KayKitClip("Running_Strafe_Left"), new Vector2(-0.82f, 0f));
+            blend.AddChild(KayKitClip("Running_Strafe_Right"), new Vector2(0.82f, 0f));
 
             AnimatorState loco = sm.AddState("Locomotion", new Vector3(0f, 0f, 0f));
             loco.motion = blend;
@@ -376,6 +484,7 @@ namespace BeMyArms.M7.EditorTools
             var animator = model.GetComponent<Animator>();
             if (animator == null) animator = model.AddComponent<Animator>();
             animator.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<AnimatorController>(controllerPath);
+            animator.avatar = _bodyAvatar;
             animator.applyRootMotion = false;
             animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             animator.updateMode = AnimatorUpdateMode.Normal;

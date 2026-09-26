@@ -415,3 +415,31 @@ Follow-up feel pass on the improved build.
   asymptote 69°; inward −12 → exactly −12.
 - `qa_grip_state`: body L 0.027 m / R 0.000 m, viewmodel 0.000 m (positions unchanged); no
   exceptions; `M7PipelineCommands.Validate()` PASSED.
+
+## 18. Genuine directional clips + soft zone + grip roll (2026-09-26, sixth pass)
+
+- **Discarded the manufactured directional clips.** `build-quaternius-bodies.py` no longer derives
+  strafe/backward by rotating the forward clip's leg-bone curves (that produced an anatomically
+  broken, crossing gait). The generator now only exports the authored Quaternius clips.
+- **Genuine CC0 directional locomotion, retargeted properly.** The bodies are now imported as
+  **Humanoid** using a hand-authored avatar for the DEF-* skeleton (`M7CharacterBodyBuilder`
+  `AvatarBuilder` + `CopyFromOther`), and **KayKit Character Animations** (CC0, Rig_Medium
+  `Walking_Backwards`, `Running_Strafe_Left/Right`) are imported Humanoid with Unity's auto-avatar.
+  The 2D `FreeformCartesian2D` blend (`MoveX`/`MoveY`) then mixes Quaternius forward clips with the
+  real KayKit back/strafe clips, retargeted by muscle space. P1 anatomy is unchanged.
+- **Fixed-width soft sector wall.** `ApplySectorResistance` uses a 14° soft zone: outside it
+  sensitivity is normal; inside, outward yaw is scaled by `gain = pow(clamp01(remaining/softZone),
+  1.5)`, so resistance starts perceptibly before the edge and smoothly approaches zero at the
+  boundary. Inward is exactly 1:1; the hard clamp is safety only.
+- **Grip roll flipped.** `Grip_R` is now +30° about the weapon-forward axis (was −30°), position
+  unchanged; `Grip_L` unchanged.
+
+**Structural checks (no runtime play)**
+
+- Controller: `FreeformCartesian2D` with Idle/Walk/Jog/Sprint + `Walking_Backwards` +
+  `Running_Strafe_Left/Right`; all 17 body clips and 13 KayKit clips are `isHumanMotion`; the skin
+  Animator's avatar is `Q_BodyAvatar` (`isHuman=true`).
+- Sector: outward +15 → 15, 30, 45, 60, 67.7, 68.1, 68.4 … (asymptote 69, resistance from 60°);
+  inward −12 → exactly −12.
+- `Grip_R` local euler `(0, 0, 30)`, position `(0, −0.110, −0.180)` unchanged.
+- `M7PipelineCommands.Validate()` PASSED.

@@ -65,7 +65,7 @@ namespace BeMyArms.M7.EditorTools
             CreateMarker(root.transform, MuzzleName, new Vector3(0f, 0.02f * size.y, 0.5f * size.z), Quaternion.identity);
             // The right (trigger) hand rolls ~30 deg about the weapon-forward axis so the palm wraps
             // the grip; the two-bone IK (targetRotationWeight 1) follows this grip rotation.
-            CreateMarker(root.transform, GripRightName, new Vector3(0f, -0.30f * size.y, -0.20f * size.z), Quaternion.Euler(0f, 0f, -GripRoll));
+            CreateMarker(root.transform, GripRightName, new Vector3(0f, -0.30f * size.y, -0.20f * size.z), Quaternion.Euler(0f, 0f, GripRoll));
             CreateMarker(root.transform, GripLeftName, new Vector3(0f, -0.24f * size.y, 0.20f * size.z), Quaternion.identity);
 
             Directory.CreateDirectory(Path.GetDirectoryName(PrefabPath));
