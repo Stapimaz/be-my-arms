@@ -324,3 +324,33 @@ The first human playtest of §13 still failed on concrete runtime systems. Root 
 
 - `qa_inject_input` (held move/fire through the real gated input path) and `LocalShots` in
   `qa_player_state`; the viewmodel overlay camera is excluded from the duplicate-camera check.
+
+## 15. Locomotion signal + grip + rifle asset (2026-09-26, third pass)
+
+Follow-up feel pass on the improved build.
+
+- **Locomotion flicker root cause:** `M7CharacterAnimator` derived speed from frame-to-frame
+  presentation position, which bursts on replicated/predicted steps and prediction corrections.
+  `M2BodyState` now carries an authoritative `PlanarSpeed` (applied m/s) and `MoveForward`
+  (body-local forward component) computed by the sim and replicated/predicted with the rest of the
+  state. The animator reads those directly; the locomotion blend is stable (constant 4.5 m/s while
+  holding W instead of oscillating). Blend thresholds are now in m/s (0/4.5/5.8/7.0) so walking and
+  sprinting select the right clips, and backing up plays the cycle in reverse (the library ships no
+  dedicated backward/strafe clips, so strafing still uses the forward cycle).
+- **Hand grip root cause:** both the world-body and viewmodel hand targets were hand-authored
+  offsets next to the weapon. They are now markers **on the weapon itself** (`Grip_R`, `Grip_L`,
+  `Muzzle`), derived from the weapon's own bounds by `M7WeaponBuilder`, so both hands grip the rifle
+  wherever it is aimed. Structured check `qa_grip_state` reports hand-tip→grip distance for the body
+  and the viewmodel.
+- **Rifle asset:** replaced the chunky Kenney blaster with the stylized CC0 Quaternius *Low Poly Guns
+  Pack* assault rifle (`Assets/ThirdParty/QuaterniusLowPolyGunsPack`, licence + source in its
+  README). `M7WeaponBuilder` normalizes the imported FBX (barrel aligned to +Z, muzzle forward,
+  0.9 m length) and bakes the grip/muzzle markers, so the world and first-person presentations use
+  the same clean weapon.
+
+**Targeted checks**
+
+- Running player, P2: `qa_grip_state` body L/R = 0.000 m, viewmodel L/R = 0.000 m; no exceptions.
+- Running player, P1: animator `Speed` constant 4.5 while holding W (no flicker); bones advance and
+  loop; fighters animate mid-stride in world and no bind-pose/death regressions.
+- `M7PipelineCommands.Validate()` PASSED (weapons 3); compile clean.

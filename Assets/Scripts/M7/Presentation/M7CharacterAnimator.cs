@@ -22,6 +22,7 @@ namespace BeMyArms.M7
         public Animator P2Animator;
         public Transform AimPivot;
         public Transform Weapon;
+        public Transform Muzzle;
         public TwoBoneIKConstraint ArmIkL;
         public TwoBoneIKConstraint ArmIkR;
 
@@ -32,8 +33,6 @@ namespace BeMyArms.M7
         static readonly int ShootId = Animator.StringToHash("Shoot");
         static readonly int ReloadId = Animator.StringToHash("Reload");
 
-        Vector3 _lastPosition;
-        bool _hasLast;
         float _recoil;
         int _lastAmmo = -1;
         float _nextMuzzle;
@@ -52,28 +51,26 @@ namespace BeMyArms.M7
             M2BodyState state = Client != null ? Client.ViewState : Body.State.Value;
             float dt = Mathf.Max(1e-4f, Time.deltaTime);
 
-            Vector3 position = new Vector3(state.PosX, 0f, state.PosZ);
-            float speed = 0f;
-            if (_hasLast) speed = Vector3.Distance(position, _lastPosition) / dt;
-            _lastPosition = position;
-            _hasLast = true;
-
             bool alive = Body.Alive.Value && state.Health > 0;
-            float speed01 = Mathf.Clamp(speed / 7f, 0f, 1.6f);
-            ApplyAnimator(P1Animator, speed01, state, alive);
-            ApplyAnimator(P2Animator, speed01, state, alive);
+            // PlanarSpeed/MoveForward come straight from the sim (predicted or replicated), so the
+            // locomotion blend is stable and never bursts from frame-to-frame position noise.
+            ApplyAnimator(P1Animator, state, alive);
+            ApplyAnimator(P2Animator, state, alive);
 
             UpdateAim(state, alive);
             UpdateCombat(dt);
         }
 
-        static void ApplyAnimator(Animator animator, float speed01, M2BodyState state, bool alive)
+        static void ApplyAnimator(Animator animator, M2BodyState state, bool alive)
         {
             if (animator == null) return;
-            animator.SetFloat(SpeedId, speed01);
+            animator.SetFloat(SpeedId, state.PlanarSpeed);
             animator.SetBool(GroundedId, state.Grounded);
             animator.SetFloat(VerticalSpeedId, state.VerticalVelocity);
             animator.SetBool(AliveId, alive);
+            // Backing up plays the locomotion cycle in reverse so the feet read as stepping back
+            // (the library ships no dedicated backward/strafe clips). Never reverse a dead body.
+            animator.speed = alive && state.MoveForward < -0.15f ? -1f : 1f;
         }
 
         void UpdateAim(M2BodyState state, bool alive)
@@ -107,8 +104,9 @@ namespace BeMyArms.M7
                 if (Time.time >= _nextMuzzle && M7VfxService.Instance != null && Weapon != null)
                 {
                     _nextMuzzle = Time.time + 0.045f;
-                    M7VfxService.Instance.Spawn(M7VfxId.MuzzleFlash,
-                        Weapon.position + Weapon.forward * 0.45f, Weapon.rotation);
+                    Vector3 point = Muzzle != null ? Muzzle.position : Weapon.position + Weapon.forward * 0.45f;
+                    Quaternion rotation = Muzzle != null ? Muzzle.rotation : Weapon.rotation;
+                    M7VfxService.Instance.Spawn(M7VfxId.MuzzleFlash, point, rotation);
                 }
             }
             _lastAmmo = ammo;

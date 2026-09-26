@@ -23,11 +23,7 @@ namespace BeMyArms.M7.EditorTools
         const string P1SkinPath = M7CharacterBodyBuilder.P1SkinPrefabPath;
         const string P2SkinPath = M7CharacterBodyBuilder.P2SkinPrefabPath;
         const string RiflePath = "Assets/Art/Weapons/Prefabs/BMA_Weapon_Rifle.prefab";
-        const string KenneyRiflePath = M7CharacterBodyBuilder.RiflePrefabPath;
-
-        // Aim-relative grip positions (metres) for the P2 two-bone arm IK.
-        static readonly Vector3 GripRight = new Vector3(0.10f, -0.09f, -0.06f);
-        static readonly Vector3 GripLeft = new Vector3(-0.01f, -0.05f, 0.28f);
+        const string PrimaryRiflePath = M7CharacterBodyBuilder.RiflePrefabPath;
 
         public static void EnsurePrefabs(out GameObject bodyPrefab, out GameObject directorPrefab)
         {
@@ -67,10 +63,11 @@ namespace BeMyArms.M7.EditorTools
             Transform weaponAnchor = Find(rigInstance.transform, "WeaponAnchor");
             var aimPivot = new GameObject("AimPivot");
             aimPivot.transform.SetParent(weaponAnchor != null ? weaponAnchor : rigInstance.transform, false);
-            aimPivot.transform.localPosition = Vector3.zero;
+            // Pulled slightly back from the anchor so the support arm can reach the foregrip.
+            aimPivot.transform.localPosition = new Vector3(0f, 0f, -0.05f);
             aimPivot.transform.localRotation = Quaternion.identity;
 
-            var riflePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(KenneyRiflePath);
+            var riflePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrimaryRiflePath);
             if (riflePrefab == null) riflePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(RiflePath);
             var rifle = (GameObject)Object.Instantiate(riflePrefab);
             rifle.name = "Weapon";
@@ -78,8 +75,9 @@ namespace BeMyArms.M7.EditorTools
             rifle.transform.localPosition = Vector3.zero;
             rifle.transform.localRotation = Quaternion.identity;
 
-            Transform gripR = Marker(aimPivot.transform, "HandTarget_R", GripRight);
-            Transform gripL = Marker(aimPivot.transform, "HandTarget_L", GripLeft);
+            // Hand targets come from the weapon itself (its own bounds), so both hands always grip
+            // the rifle instead of hand-tuned screen offsets.
+            M7WeaponBuilder.EnsureGrips(rifle, out Transform gripR, out Transform gripL, out Transform muzzle);
 
             TwoBoneIKConstraint ikL = FindConstraint(rigInstance, "ArmIK_L");
             TwoBoneIKConstraint ikR = FindConstraint(rigInstance, "ArmIK_R");
@@ -95,6 +93,7 @@ namespace BeMyArms.M7.EditorTools
             animator.P2Animator = FindAnimator(assembled.P2Skin);
             animator.AimPivot = aimPivot.transform;
             animator.Weapon = rifle.transform;
+            animator.Muzzle = muzzle;
             animator.ArmIkL = ikL;
             animator.ArmIkR = ikR;
 

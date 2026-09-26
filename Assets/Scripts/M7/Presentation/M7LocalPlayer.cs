@@ -59,6 +59,7 @@ namespace BeMyArms.M7
 
         GameObject _viewmodel;
         Transform _viewmodelWeapon;
+        Transform _viewmodelMuzzle;
         float _viewmodelKick;
         float _viewmodelKickVelocity;
         float _camRecoilPitch;
@@ -313,6 +314,7 @@ namespace BeMyArms.M7
             _viewmodel.transform.localRotation = Quaternion.identity;
             _viewmodel.transform.localScale = Vector3.one;
             _viewmodelWeapon = FindDeep(_viewmodel.transform, "ViewmodelWeapon");
+            _viewmodelMuzzle = _viewmodelWeapon != null ? FindDeep(_viewmodelWeapon, "Muzzle") : null;
             SetLayerRecursively(_viewmodel, ViewModelLayer);
         }
 
@@ -321,6 +323,7 @@ namespace BeMyArms.M7
             if (_viewmodel != null) Destroy(_viewmodel);
             _viewmodel = null;
             _viewmodelWeapon = null;
+            _viewmodelMuzzle = null;
         }
 
         void UpdateShotFeedback(float dt)
@@ -338,8 +341,9 @@ namespace BeMyArms.M7
                 if (M7VfxService.Instance != null && _viewmodelWeapon != null && Time.time >= _nextMuzzle)
                 {
                     _nextMuzzle = Time.time + 0.03f;
-                    M7VfxService.Instance.Spawn(M7VfxId.MuzzleFlash,
-                        _viewmodelWeapon.position + _viewmodelWeapon.forward * 0.3f, _viewmodelWeapon.rotation);
+                    Vector3 point = _viewmodelMuzzle != null ? _viewmodelMuzzle.position : _viewmodelWeapon.position + _viewmodelWeapon.forward * 0.3f;
+                    Quaternion rotation = _viewmodelMuzzle != null ? _viewmodelMuzzle.rotation : _viewmodelWeapon.rotation;
+                    M7VfxService.Instance.Spawn(M7VfxId.MuzzleFlash, point, rotation);
                 }
             }
 

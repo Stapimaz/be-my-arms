@@ -37,7 +37,7 @@ namespace BeMyArms.M7.EditorTools
         public const string P2ControllerPath = ControllerDir + "/M7_P2_Locomotion.controller";
         public const string ArmsControllerPath = ControllerDir + "/M7_P2_ArmsAim.controller";
 
-        public const string RiflePrefabPath = "Assets/Art/Weapons/Prefabs/BMA_Weapon_Rifle_Kenney.prefab";
+        public const string RiflePrefabPath = "Assets/Art/Weapons/Prefabs/BMA_Weapon_Rifle_Quaternius.prefab";
 
         // The shared rig's chest is at y=1.35 and Cosmetic_P2 sits at +(0,0.13,0.06) from it, while
         // the imported model's own chest (spine.003) is at y≈1.315. The skin therefore drops its
@@ -58,6 +58,7 @@ namespace BeMyArms.M7.EditorTools
             AssetDatabase.Refresh();
             EnsureFolders();
 
+            M7WeaponBuilder.Build();
             BuildLocomotionController(P1ControllerPath, P1ModelPath);
             BuildLocomotionController(P2ControllerPath, P2ModelPath);
             BuildArmsAimController(ArmsControllerPath, ArmsModelPath);
@@ -157,9 +158,9 @@ namespace BeMyArms.M7.EditorTools
             };
             AssetDatabase.AddObjectToAsset(blend, controller);
             blend.AddChild(Clip(fbx, "Idle_Loop"), 0f);
-            blend.AddChild(Clip(fbx, "Walk_Loop"), 0.45f);
-            blend.AddChild(Clip(fbx, "Jog_Fwd_Loop"), 1.0f);
-            blend.AddChild(Clip(fbx, "Sprint_Loop"), 1.6f);
+            blend.AddChild(Clip(fbx, "Walk_Loop"), 4.5f);
+            blend.AddChild(Clip(fbx, "Jog_Fwd_Loop"), 5.8f);
+            blend.AddChild(Clip(fbx, "Sprint_Loop"), 7.0f);
 
             AnimatorState loco = sm.AddState("Locomotion", new Vector3(0f, 0f, 0f));
             loco.motion = blend;
@@ -261,24 +262,26 @@ namespace BeMyArms.M7.EditorTools
 
             var aimPivot = new GameObject("AimPivot");
             aimPivot.transform.SetParent(root.transform, false);
-            aimPivot.transform.localPosition = new Vector3(0.05f, -0.24f, 0.08f);
+            aimPivot.transform.localPosition = new Vector3(0.04f, -0.22f, 0.06f);
             aimPivot.transform.localRotation = Quaternion.identity;
 
             GameObject weapon = InstantiatePrefab(RiflePrefabPath, aimPivot.transform);
             if (weapon != null)
             {
                 weapon.name = "ViewmodelWeapon";
-                weapon.transform.localPosition = new Vector3(0.05f, 0f, 0.30f);
+                weapon.transform.localPosition = new Vector3(0.04f, 0f, 0.16f);
                 weapon.transform.localRotation = Quaternion.identity;
-                weapon.transform.localScale = Vector3.one * 0.6f;
+                weapon.transform.localScale = Vector3.one;
             }
 
-            Transform gripR = Marker(aimPivot.transform, "HandTarget_R", new Vector3(0.05f, -0.06f, 0.22f));
-            Transform gripL = Marker(aimPivot.transform, "HandTarget_L", new Vector3(0f, -0.02f, 0.40f));
             TwoBoneIKConstraint ikL = FindConstraint(model, "ArmIK_L");
             TwoBoneIKConstraint ikR = FindConstraint(model, "ArmIK_R");
-            if (ikL != null) ikL.data.target = gripL;
-            if (ikR != null) ikR.data.target = gripR;
+            if (weapon != null)
+            {
+                M7WeaponBuilder.EnsureGrips(weapon, out Transform gripR, out Transform gripL, out _);
+                if (ikL != null) ikL.data.target = gripL;
+                if (ikR != null) ikR.data.target = gripR;
+            }
 
             Save(root, ArmsPrefabPath);
         }

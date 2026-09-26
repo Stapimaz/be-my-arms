@@ -80,6 +80,11 @@ namespace BeMyArms.M2
 
         public void ApplyP1(in M2P1Input input, float deltaTime)
         {
+            // Presentation signal defaults to stationary; Locomotion sets it while moving. Actions
+            // (dodge/slide/vault/kick) and death therefore read as stationary to the animator.
+            State.PlanarSpeed = 0f;
+            State.MoveForward = 0f;
+
             // ---- Look (decoupled from BodyYaw) ----
             State.LookYaw = Normalize(State.LookYaw + input.LookYawDelta);
             State.LookPitch = Clamp(State.LookPitch + input.LookPitchDelta, -MaxPitchDegrees, MaxPitchDegrees);
@@ -226,6 +231,12 @@ namespace BeMyArms.M2
             State.PosZ += wz * speed * deltaTime;
             Collision?.ResolveHorizontal(ref State);
             ApplyVertical(deltaTime);
+
+            // Stable locomotion presentation signal (never derived from frame-to-frame deltas). The
+            // applied planar speed is input magnitude * move speed; MoveForward is the body-local
+            // forward component so backward movement can play the cycle in reverse.
+            State.PlanarSpeed = length > 0.01f ? length * speed : 0f;
+            State.MoveForward = length > 0.01f ? mz : 0f;
 
             if (!State.Grounded) State.MovementState = (byte)M2MovementState.Fall;
             else if (length < 0.01f) State.MovementState = (byte)M2MovementState.Idle;

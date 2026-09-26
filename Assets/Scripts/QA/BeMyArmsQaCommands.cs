@@ -8,6 +8,7 @@ using BeMyArms.M7;
 using Unity.Netcode;
 using Unity.Pipeline.Commands;
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -173,6 +174,52 @@ namespace BeMyArms.QA
             M3LocalInput.InjectedMoveZ = moveZ;
             M3LocalInput.InjectedFire = fire;
             return new QaSimpleResult { Success = true, Detail = $"move=({moveX},{moveZ}) fire={fire}" };
+        }
+
+        [CliCommand("qa_grip_state",
+            "Report the P2 two-bone hand-to-grip distance for the local world body and the first-person viewmodel, so grip correctness can be checked structurally.",
+            MainThreadRequired = true, RuntimeOnly = true, Tags = new[] { "qa", "animation" })]
+        public static QaSimpleResult GripState()
+        {
+            var sb = new System.Text.StringBuilder();
+
+            M3DuelClient local = null;
+            foreach (M3DuelClient client in Object.FindObjectsByType<M3DuelClient>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+                if (client != null && client.IsLocalOwnBody) { local = client; break; }
+
+            if (local != null && local.Body != null)
+            {
+                M7CharacterAnimator animator = local.Body.GetComponent<M7CharacterAnimator>();
+                if (animator != null) AppendGrips(sb, "body", animator.ArmIkL, animator.ArmIkR);
+            }
+
+            GameObject viewmodel = GameObject.Find("M7_P2Viewmodel");
+            if (viewmodel != null)
+            {
+                TwoBoneIKConstraint left = null, right = null;
+                foreach (TwoBoneIKConstraint c in viewmodel.GetComponentsInChildren<TwoBoneIKConstraint>(true))
+                {
+                    if (c.gameObject.name == "ArmIK_L") left = c;
+                    else if (c.gameObject.name == "ArmIK_R") right = c;
+                }
+                AppendGrips(sb, "viewmodel", left, right);
+            }
+
+            return new QaSimpleResult { Success = true, Detail = sb.ToString().Trim().Length == 0 ? "no grip rigs found" : sb.ToString().Trim() };
+        }
+
+        static void AppendGrips(System.Text.StringBuilder sb, string tag, TwoBoneIKConstraint left, TwoBoneIKConstraint right)
+        {
+            sb.Append(tag).Append(": L ").Append(DescribeGrip(left)).Append("  R ").Append(DescribeGrip(right)).Append('\n');
+        }
+
+        static string DescribeGrip(TwoBoneIKConstraint constraint)
+        {
+            if (constraint == null) return "none";
+            TwoBoneIKConstraintData data = constraint.data;
+            if (data.tip == null || data.target == null) return "incomplete";
+            float distance = Vector3.Distance(data.tip.position, data.target.position);
+            return $"dist={distance:0.000}m w={constraint.weight:0.0} tip={data.tip.name} target={data.target.name}";
         }
 
         // ---- Structured gameplay state -------------------------------------------------------

@@ -81,6 +81,12 @@ namespace BeMyArms.M2
         public bool Grounded;
         public int Health;
 
+        // Locomotion presentation signal: the authoritative planar speed this tick (m/s) and the
+        // body-local movement direction. Replicated/predicted with the rest of the state so the
+        // animation never has to infer speed from frame-to-frame position deltas.
+        public float PlanarSpeed;
+        public float MoveForward;
+
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
             serializer.SerializeValue(ref PosX);
@@ -101,6 +107,8 @@ namespace BeMyArms.M2
             serializer.SerializeValue(ref ActionDirZ);
             serializer.SerializeValue(ref Grounded);
             serializer.SerializeValue(ref Health);
+            serializer.SerializeValue(ref PlanarSpeed);
+            serializer.SerializeValue(ref MoveForward);
         }
     }
 }
