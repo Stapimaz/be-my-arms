@@ -46,6 +46,8 @@ namespace BeMyArms.M7
         [Header("P2 first person")]
         public float P2EyeHeight = 1.58f;
         public float ViewmodelFieldOfView = 68f;
+        /// <summary>Presentation-only smoothing of the camera's inherited body position (seconds).</summary>
+        public float P2BodyPositionSmoothing = 0.06f;
         /// <summary>Presentation-only roll of the viewmodel right hand about its own long axis.</summary>
         public float ViewmodelHandRoll = 30f;
 
@@ -80,6 +82,10 @@ namespace BeMyArms.M7
         bool _camLookInitialized;
         Vector3 _boundsOffset;
         bool _boundsOffsetInitialized;
+
+        // P2 first-person: smoothed inherited body eye position (aim/recoil stay immediate).
+        Vector3 _p2Eye;
+        bool _p2EyeInitialized;
 
         M3DuelClient _client;
         M3DuelDirector _director;
@@ -299,6 +305,7 @@ namespace BeMyArms.M7
             _camLookInitialized = false;
             _boundsOffset = Vector3.zero;
             _boundsOffsetInitialized = false;
+            _p2EyeInitialized = false;
 
             _camera.cullingMask = (role == 1 ? ~(1 << PlayerBodyLayer) : ~0) & ~(1 << ViewModelLayer);
             _camera.fieldOfView = FieldOfView;
@@ -342,14 +349,22 @@ namespace BeMyArms.M7
         void UpdateP2Camera(M2BodyState state)
         {
             if (_p2Cam == null) return;
+            // Aim/recoil rotation stays immediate; only the position inherited from the shared body
+            // (translation + stance height) is eased, so mouse aim has no added latency.
             float pitch = Mathf.Clamp(_client.LocalAimPitch, -80f, 80f) - _camRecoilPitch;
             Quaternion rotation = Quaternion.Euler(pitch, _client.LocalAimYaw + _camRecoilYaw, 0f);
 
             // Stable logical eye: follows the smoothed shared-body position at the current stance
             // height and is completely independent of the animated chest/shoulder rig.
             float eyeHeight = state.EyeHeight > 0.01f ? state.EyeHeight : 1.45f;
-            Vector3 eye = _client.VisualPosition + Vector3.up * (eyeHeight + 0.13f);
-            _p2Cam.transform.SetPositionAndRotation(eye, rotation);
+            Vector3 eyeTarget = _client.VisualPosition + Vector3.up * (eyeHeight + 0.13f);
+
+            float dt = Mathf.Max(1e-4f, Time.deltaTime);
+            float k = 1f - Mathf.Exp(-dt / Mathf.Max(0.001f, P2BodyPositionSmoothing));
+            if (!_p2EyeInitialized) { _p2Eye = eyeTarget; _p2EyeInitialized = true; }
+            else _p2Eye = Vector3.Lerp(_p2Eye, eyeTarget, k);
+
+            _p2Cam.transform.SetPositionAndRotation(_p2Eye, rotation);
         }
 
         // ---- P2 first-person viewmodel + shot feel ----

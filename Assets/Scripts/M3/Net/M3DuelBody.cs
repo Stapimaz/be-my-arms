@@ -46,6 +46,11 @@ namespace BeMyArms.M3
         public float BotBurstPeriodSeconds = 1.7f;
         public float BotMaxEngageDistance = 40f;
 
+        [Header("Bot difficulty (server)")]
+        [Tooltip("Easy bots' target hit probability. The per-shot miss spread is derived from it so " +
+                 "the observed rate through the authoritative hitscan tracks this value (~10%).")]
+        [Range(0.02f, 0.6f)] public float EasyBotAccuracy = 0.10f;
+
         [Header("Networked combat")]
         public float InputDelaySeconds = 0.05f;
         public float LossPercent = 2f;
@@ -99,6 +104,8 @@ namespace BeMyArms.M3
         // Per-body randomised bot profile (seeded per spawn/round) so practice bots do not share one
         // deterministic firing clock.
         int _botSeed;
+        System.Random _botRng;
+        M3BotDifficulty _difficulty = M3BotDifficulty.Easy;
         float _botReaction;
         float _botBurstOn;
         float _botBurstPeriod;
@@ -108,6 +115,11 @@ namespace BeMyArms.M3
         float _botAimPhase1;
         float _botAimPhase2;
         float _botAimDrift;
+        // Easy: the current shot's miss (metres in the target plane) and the calm-strafe timer.
+        float _botShotRight;
+        float _botShotUp;
+        float _botLateralTimer;
+        float _botEasyLateral;
         double _serverTime;
         float _accumulator;
         int _rejectedFires;
@@ -154,25 +166,52 @@ namespace BeMyArms.M3
         }
 
         /// <summary>
-        /// Seeds this body's practice-bot timing. Each body/round gets different reaction, burst
-        /// length, pause, firing phase and aim-error character so bots do not fire in lockstep.
+        /// Seeds this body's bot profile for the current server difficulty. Each body/round gets its
+        /// own seeded RNG, so reaction, burst length, pause, firing phase and (Easy) shot misses all
+        /// differ per bot and bots never synchronise. Hard keeps the original evasive/drifting bot;
+        /// Easy is calmer with longer reaction, shorter bursts/pauses and a controlled hit rate.
         /// </summary>
         void InitializeBotProfile()
         {
+            _difficulty = M3Config.BotDifficulty;
             _botSeed = UnityEngine.Random.Range(0, 1 << 30);
-            var rng = new System.Random(unchecked(_botSeed * 486187739 + SlotP1 * 73856093 + SlotP2 * 19349663));
-            _botReaction = Mathf.Lerp(1.1f, 2.6f, (float)rng.NextDouble());
-            _botBurstOn = Mathf.Lerp(0.22f, 0.5f, (float)rng.NextDouble());
-            _botBurstPeriod = Mathf.Lerp(1.2f, 2.2f, (float)rng.NextDouble());
-            _botFirePhase = (float)rng.NextDouble() * _botBurstPeriod;
-            _botAimRate1 = Mathf.Lerp(0.7f, 1.6f, (float)rng.NextDouble());
-            _botAimRate2 = Mathf.Lerp(0.2f, 0.7f, (float)rng.NextDouble());
-            _botAimPhase1 = (float)rng.NextDouble() * 6.2831853f;
-            _botAimPhase2 = (float)rng.NextDouble() * 6.2831853f;
-            _botAimDrift = Mathf.Lerp(0.9f, 1.5f, (float)rng.NextDouble());
-            _botClock = (float)rng.NextDouble() * 6.2831853f;
-            _botP2Clock = (float)rng.NextDouble() * 6.2831853f;
-            _grenadeCooldown = Mathf.Lerp(8f, 18f, (float)rng.NextDouble());
+            _botRng = new System.Random(unchecked(_botSeed * 486187739 + SlotP1 * 73856093 + SlotP2 * 19349663));
+
+            if (_difficulty == M3BotDifficulty.Easy)
+            {
+                _botReaction = Mathf.Lerp(2.2f, 3.8f, Rand());
+                _botBurstOn = Mathf.Lerp(0.14f, 0.30f, Rand());
+                _botBurstPeriod = Mathf.Lerp(1.9f, 3.3f, Rand());
+            }
+            else
+            {
+                _botReaction = Mathf.Lerp(1.1f, 2.6f, Rand());
+                _botBurstOn = Mathf.Lerp(0.22f, 0.5f, Rand());
+                _botBurstPeriod = Mathf.Lerp(1.2f, 2.2f, Rand());
+            }
+
+            _botFirePhase = Rand() * _botBurstPeriod;
+            _botAimRate1 = Mathf.Lerp(0.7f, 1.6f, Rand());
+            _botAimRate2 = Mathf.Lerp(0.2f, 0.7f, Rand());
+            _botAimPhase1 = Rand() * 6.2831853f;
+            _botAimPhase2 = Rand() * 6.2831853f;
+            _botAimDrift = Mathf.Lerp(0.9f, 1.5f, Rand());
+            _botClock = Rand() * 6.2831853f;
+            _botP2Clock = Rand() * 6.2831853f;
+            _grenadeCooldown = Mathf.Lerp(8f, 18f, Rand());
+            _botLateralTimer = Mathf.Lerp(1.2f, 3.0f, Rand());
+            _botEasyLateral = 0f;
+            SampleBotShot();
+        }
+
+        float Rand() => (float)_botRng.NextDouble();
+
+        /// <summary>Resamples the Easy bot's current shot offset from the configured accuracy target.</summary>
+        void SampleBotShot()
+        {
+            M3BotAim.SampleShotOffset(EasyBotAccuracy, TargetRadius + 0.15f,
+                _botRng.NextDouble(), _botRng.NextDouble(), _botRng.NextDouble(),
+                out _botShotRight, out _botShotUp);
         }
 
         /// <summary>Server-only: set team/body and the P1 slot base after spawning (a NetworkVariable
@@ -319,7 +358,14 @@ namespace BeMyArms.M3
                 ProcessP2(in p2);
                 LastAckedP2Sequence.Value = p2.Sequence;
             }
-            if (IsSlotBot(SlotP2) && _director != null && _director.IsLive) ProcessP2(BuildBotP2());
+            if (IsSlotBot(SlotP2) && _director != null && _director.IsLive)
+            {
+                int ammoBefore = _weapon.Ammo;
+                ProcessP2(BuildBotP2());
+                // A shot actually left the barrel: pick the next shot's miss (Easy) so each round is
+                // an independent sample through the ordinary authoritative hitscan.
+                if (_weapon.Ammo < ammoBefore) SampleBotShot();
+            }
 
             _weapon.Tick(_serverTime);
             Ammo.Value = _weapon.Ammo;
@@ -450,9 +496,10 @@ namespace BeMyArms.M3
 
         /// <summary>
         /// Closest approach between a (normalised) ray and an enemy's vertical body segment, sampled
-        /// along the segment. Returns the forward distance and the lateral miss distance.
+        /// along the segment. Returns the forward distance and the lateral miss distance. Public so the
+        /// bot-accuracy test can exercise the same authoritative geometry.
         /// </summary>
-        static float RaySegmentDistance(Vector3 origin, Vector3 dir, float cx, float feet, float cz,
+        public static float RaySegmentDistance(Vector3 origin, Vector3 dir, float cx, float feet, float cz,
             float height, float range, out float lateral)
         {
             const int samples = 8;
@@ -634,11 +681,39 @@ namespace BeMyArms.M3
                 _botStuckTime = 0f;
             }
 
-            bool advance = distance > 10f && _botLiveTime > _botReaction;
-            input.MoveZ = _botStuckTime > 0f ? 0f : (advance ? 1f : 0.35f);
-            input.MoveX = _botStuckTime > 0f ? _botStrafeDir : Mathf.Sin(_botClock * 0.7f) * (distance < 12f ? 0.9f : 0.25f);
-            input.Jump = _botStuckTime > 0.3f; // hop over low cover when progress stalls
-            input.Sprint = distance > 16f && _botLiveTime > _botReaction + 1.5f;
+            if (_difficulty == M3BotDifficulty.Easy)
+            {
+                // Calm movement partner: face and approach steadily, only occasional modest lateral
+                // movement, and no jumping. The stuck-strafe is kept purely to get around geometry.
+                _botLateralTimer -= dt;
+                if (_botLateralTimer <= 0f)
+                {
+                    if (_botEasyLateral != 0f)
+                    {
+                        _botEasyLateral = 0f;
+                        _botLateralTimer = Mathf.Lerp(1.6f, 3.2f, Rand());
+                    }
+                    else
+                    {
+                        _botEasyLateral = (_botRng.NextDouble() < 0.5 ? -1f : 1f) * Mathf.Lerp(0.18f, 0.32f, Rand());
+                        _botLateralTimer = Mathf.Lerp(0.5f, 1.0f, Rand());
+                    }
+                }
+
+                input.MoveZ = _botStuckTime > 0f ? 0f : (distance > 8f ? 1f : 0.3f);
+                input.MoveX = _botStuckTime > 0f ? _botStrafeDir * 0.8f : _botEasyLateral;
+                input.Jump = false;
+                input.Sprint = distance > 16f && _botLiveTime > _botReaction + 1.5f;
+            }
+            else
+            {
+                bool advance = distance > 10f && _botLiveTime > _botReaction;
+                input.MoveZ = _botStuckTime > 0f ? 0f : (advance ? 1f : 0.35f);
+                input.MoveX = _botStuckTime > 0f ? _botStrafeDir : Mathf.Sin(_botClock * 0.7f) * (distance < 12f ? 0.9f : 0.25f);
+                input.Jump = _botStuckTime > 0.3f; // hop over low cover when progress stalls
+                input.Sprint = distance > 16f && _botLiveTime > _botReaction + 1.5f;
+            }
+
             _botClock += dt;
             return input;
         }
@@ -649,18 +724,41 @@ namespace BeMyArms.M3
             M3DuelBody target = NearestEnemy(out float distance);
             if (target == null) { input.AimYaw = _sim.State.BodyYaw; return input; }
 
-            float dx = target.State.Value.PosX - _sim.State.PosX;
-            float dz = target.State.Value.PosZ - _sim.State.PosZ;
-            input.AimYaw = Mathf.Atan2(dx, dz) * Mathf.Rad2Deg;
-
-            // Forgiving practice baseline with per-bot character: hold fire through a randomised
-            // reaction window, drift the aim with two per-bot sine components, and fire in short
-            // bursts whose length/pause/phase differ per bot so they never fire in lockstep.
+            M2BodyState t = target.State.Value;
+            float dx = t.PosX - _sim.State.PosX;
+            float dz = t.PosZ - _sim.State.PosZ;
             _botP2Clock += 1f / 60f;
-            float error = (BotAimErrorBase + distance * BotAimErrorPerMeter) * _botAimDrift;
-            input.AimYaw += Mathf.Sin(_botP2Clock * _botAimRate1 + _botAimPhase1) * error
-                          + Mathf.Sin(_botP2Clock * _botAimRate2 + _botAimPhase2) * error * 0.6f;
-            input.AimPitch += Mathf.Sin(_botP2Clock * _botAimRate2 * 1.7f + _botAimPhase1) * error * 0.4f;
+
+            if (_difficulty == M3BotDifficulty.Easy)
+            {
+                // Aim at the torso, then shift the shot by a fresh miss sampled in the target plane.
+                // The miss scale comes from EasyBotAccuracy, so the observed hit rate is governed by
+                // the normal authoritative hitscan rather than a smooth aim drift. Misses stay in a
+                // natural cluster around the body instead of firing in unrelated directions.
+                float horiz = Mathf.Max(0.01f, Mathf.Sqrt(dx * dx + dz * dz));
+                float height = t.HitHeight > 0.01f ? t.HitHeight : 1.8f;
+                float eye = _sim.State.PosY + (_sim.State.EyeHeight > 0.01f ? _sim.State.EyeHeight : 1.45f);
+
+                Vector3 chest = new Vector3(t.PosX, t.PosY + height * 0.55f, t.PosZ);
+                float fwdX = dx / horiz, fwdZ = dz / horiz;
+                Vector3 right = new Vector3(fwdZ, 0f, -fwdX);
+                Vector3 aimPoint = chest + right * _botShotRight + Vector3.up * _botShotUp;
+                Vector3 to = aimPoint - new Vector3(_sim.State.PosX, eye, _sim.State.PosZ);
+
+                input.AimYaw = Mathf.Atan2(to.x, to.z) * Mathf.Rad2Deg;
+                input.AimPitch = -Mathf.Atan2(to.y, Mathf.Sqrt(to.x * to.x + to.z * to.z)) * Mathf.Rad2Deg;
+            }
+            else
+            {
+                // Original evasive/drifting bot: two per-bot sine components on top of the aim at the
+                // enemy, fired in per-bot bursts.
+                input.AimYaw = Mathf.Atan2(dx, dz) * Mathf.Rad2Deg;
+                float error = (BotAimErrorBase + distance * BotAimErrorPerMeter) * _botAimDrift;
+                input.AimYaw += Mathf.Sin(_botP2Clock * _botAimRate1 + _botAimPhase1) * error
+                              + Mathf.Sin(_botP2Clock * _botAimRate2 + _botAimPhase2) * error * 0.6f;
+                input.AimPitch += Mathf.Sin(_botP2Clock * _botAimRate2 * 1.7f + _botAimPhase1) * error * 0.4f;
+            }
+
             bool burst = ((_botP2Clock + _botFirePhase) % _botBurstPeriod) < _botBurstOn;
             input.Fire = burst && distance < BotMaxEngageDistance && _botLiveTime > _botReaction;
             input.Reload = _weapon.Ammo <= 0;
@@ -671,7 +769,7 @@ namespace BeMyArms.M3
                 distance < 24f && _grenadeCooldown <= 0f && TryConsumeUtility(M3UtilityKind.Grenade))
             {
                 _director.ServerApplyUtility(TeamIndex, M3UtilityKind.Grenade, _sim.State.PosX, _sim.State.PosZ, _sim.State.AimYaw);
-                _grenadeCooldown = Mathf.Lerp(10f, 18f, UnityEngine.Random.value);
+                _grenadeCooldown = Mathf.Lerp(10f, 18f, Rand());
             }
             return input;
         }

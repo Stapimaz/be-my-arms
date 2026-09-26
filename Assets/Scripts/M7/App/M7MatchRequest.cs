@@ -1,4 +1,5 @@
 using System;
+using BeMyArms.M3;
 using UnityEngine;
 
 namespace BeMyArms.M7
@@ -13,6 +14,9 @@ namespace BeMyArms.M7
         public int Body;
         public int Role;
         public ushort Port;
+
+        /// <summary>Server bot profile for filled slots. Defaults to Easy (practice/playtest).</summary>
+        public M3BotDifficulty BotDifficulty;
 
         public int BodiesPerTeam => Mode == M7MapFamily.Duel ? 1 : 2;
         public int RequiredHumans => 1;

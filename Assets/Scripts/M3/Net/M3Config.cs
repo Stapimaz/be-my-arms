@@ -62,6 +62,12 @@ namespace BeMyArms.M3
 
         public static bool AutoDrive = true;
 
+        /// <summary>
+        /// Server-side bot behaviour profile. Bot-filled private matches default to Easy; a dedicated
+        /// server can override it with <c>-m3-bot-difficulty hard</c>.
+        /// </summary>
+        public static M3BotDifficulty BotDifficulty = M3BotDifficulty.Easy;
+
         /// <summary>Auto-driven clients automatically buy a primary/secondary/utility each round.</summary>
         public static bool AutoBuy = true;
 

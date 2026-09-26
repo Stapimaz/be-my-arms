@@ -21,6 +21,7 @@ namespace BeMyArms.M3
     ///   -m3-buy &lt;s&gt; -m3-live &lt;s&gt; -m3-roundend &lt;s&gt;
     ///   -m3-zone-start/-end/-close/-duration/-dps
     ///   -m3-auto 0|1  -m3-auto-buy 0|1  -m3-auto-fire 0|1  -m3-auto-utility 0|1
+    ///   -m3-bot-difficulty easy|hard
     ///   -m3-start-delay &lt;s&gt; -m3-required-players &lt;n&gt; -m3-exit-after &lt;s&gt; -m3-port &lt;p&gt;
     ///   -m4-mode duel|2v2   -m4-matchmaker 0|1   -m4-mmr token=value,token=value
     /// </summary>
@@ -92,7 +93,7 @@ namespace BeMyArms.M3
 
             Debug.Log($"[M3] bootstrap role={Role} mode={(M3Config.BodiesPerTeam == 2 ? "2v2" : "duel")} matchmaker={M3Config.UseMatchmaker} " +
                       $"token='{M3Config.ClientToken}' port={Port} delay={M3Config.OneWayDelaySeconds * 1000:0}ms loss={M3Config.LossPercent:0}% " +
-                      $"auto={M3Config.AutoDrive} buy={M3Config.BuySeconds:0}s live={M3Config.LiveSeconds:0}s");
+                      $"auto={M3Config.AutoDrive} bot={M3Config.BotDifficulty} buy={M3Config.BuySeconds:0}s live={M3Config.LiveSeconds:0}s");
         }
 
         void OnServerStarted()
@@ -221,6 +222,10 @@ namespace BeMyArms.M3
             if (!string.IsNullOrEmpty(autoFire)) M3Config.AutoFire = autoFire != "0";
             string autoUtility = GetArg("-m3-auto-utility");
             if (!string.IsNullOrEmpty(autoUtility)) M3Config.AutoUtility = autoUtility != "0";
+
+            string botDifficulty = GetArg("-m3-bot-difficulty");
+            if (!string.IsNullOrEmpty(botDifficulty))
+                M3Config.BotDifficulty = botDifficulty.ToLowerInvariant() == "hard" ? M3BotDifficulty.Hard : M3BotDifficulty.Easy;
 
             if (float.TryParse(GetArg("-m3-start-delay"), out float startDelay)) M3Config.StartDelaySeconds = Mathf.Max(0f, startDelay);
             if (int.TryParse(GetArg("-m3-required-players"), out int required)) M3Config.RequiredPlayers = Mathf.Clamp(required, 1, 8);

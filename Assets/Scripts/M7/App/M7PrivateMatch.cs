@@ -50,6 +50,7 @@ namespace BeMyArms.M7
                 .Append($"-m3-role server -m3-port {request.Port} ")
                 .Append($"-m7-arena {request.ArenaScene} ")
                 .Append($"-m4-mode {mode} -m4-matchmaker 0 ")
+                .Append($"-m3-bot-difficulty {(request.BotDifficulty == M3BotDifficulty.Hard ? "hard" : "easy")} ")
                 .Append($"-m3-required-players {request.RequiredHumans} -m3-start-delay 30 ")
                 .Append("-m3-exit-after 1800")
                 .ToString();
@@ -135,6 +136,8 @@ namespace BeMyArms.M7
             M3Config.AutoBuy = autoDrive;
             M3Config.AutoFire = autoDrive;
             M3Config.AutoUtility = autoDrive;
+            // Bot-filled private matches are a practice/playtest surface: default to Easy.
+            M3Config.BotDifficulty = request.BotDifficulty;
 
             if (Allocator != null) Allocator.Allocate(request);
             SceneManager.LoadScene(request.ArenaScene);

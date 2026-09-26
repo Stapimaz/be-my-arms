@@ -574,3 +574,42 @@ the §20 trigger-hand-roll bullet and the §20 wall bullet.
 - Grip: weapon `Grip_R` local rotation is identity; `M7LocalPlayer.CacheViewmodelHand` resolves
   `DEF-hand.R` on the viewmodel prefab and `ApplyViewmodelHandRoll` is a single local post-multiply.
 - `M7PipelineCommands.Validate()` PASSED; Windows player built.
+
+## 22. Bot difficulty for human playtesting + P2 camera body smoothing (2026-09-27)
+
+Makes bot-filled matches usable for human testing. No changes to directional locomotion, the FPS
+hand roll, or the sector wall.
+
+- **Server-side bot difficulty (Easy/Hard).** New `M3BotDifficulty` and `M3Config.BotDifficulty`
+  (default **Easy**). Server-only and configurable: `M3DuelBootstrap` parses
+  `-m3-bot-difficulty easy|hard`, and the private-match launcher (`M7PrivateMatch` +
+  `M7LocalProcessAllocator`, via the new `M7MatchRequest.BotDifficulty`) passes it to the dedicated
+  server. Bot-filled private matches default to Easy; no UI was added.
+- **Easy P2 accuracy is a real ~10% hit rate through the authoritative path.** `M3BotAim` (pure
+  math) gives each shot an explicit offset in the target plane: `EasyBotAccuracy` (~0.10) of shots
+  are jittered inside the body; the rest are pushed just beyond it (1.3–2.8× the hit radius,
+  horizontally dominant because the target is a tall segment). The offset is resampled **per fired
+  round** (detected by an ammo drop in `ServerTick`), so each round is an independent sample resolved
+  by the normal `ProcessP2` hitscan — not a smooth sine drift. Misses stay in a natural cluster
+  (~1.5 m average at the target) rather than unrelated directions. The model ran ~9.7% observed hits
+  across 8–34 m in the accuracy test.
+- **Easy is a calmer movement partner.** Longer reaction (2.2–3.8 s), shorter bursts (0.14–0.30 s)
+  and longer pauses (1.9–3.3 s). `BuildBotP1` Easy replaces the constant sinusoidal strafe with a
+  steady approach to ~8 m plus only occasional modest lateral nudges, and never jumps; the
+  stuck-strafe remains solely to get around geometry. Hard keeps the original evasive strafe and
+  jumps and the original sine aim drift. Each bot still seeds its own RNG (reaction, burst, phase,
+  lateral, shots, grenades), so bots never synchronise.
+- **P2 FPS camera body-motion smoothing (presentation only).** `UpdateP2Camera` now eases the
+  camera's *inherited* eye position (`_client.VisualPosition` + stance height) with an exponential
+  time constant `P2BodyPositionSmoothing` (~60 ms). Aim yaw/pitch and recoil are applied immediately,
+  so mouse aim keeps zero added latency; only translation/stance changes are eased.
+
+**Structural checks (no runtime play)**
+
+- `M3Config.BotDifficulty` defaults to Easy; `-m3-bot-difficulty hard` selects Hard; the private
+  launcher emits the arg and `Begin` sets the static.
+- Accuracy: `M3BotAccuracyTests.EasyAccuracy_ObservedHitRateIsAboutTenPercent` samples the model and
+  runs the real `M3DuelBody.RaySegmentDistance` geometry (8/14/22/34 m) → **rate 0.097**, avg miss
+  1.53 m, max miss 2.10 m.
+- EditMode suite: **112/112 passed**.
+- `M7PipelineCommands.Validate()` PASSED; Windows player built.
