@@ -443,3 +443,34 @@ Follow-up feel pass on the improved build.
   inward −12 → exactly −12.
 - `Grip_R` local euler `(0, 0, 30)`, position `(0, −0.110, −0.180)` unchanged.
 - `M7PipelineCommands.Validate()` PASSED.
+
+## 19. Look-relative WASD + native arms rig + spring wall (2026-09-27)
+
+- **P1 WASD is camera/look-relative.** `M2BodySim.Locomotion` now builds the world move vector from
+  `State.LookYaw` (W = LookYaw forward, S = opposite, A/D = LookYaw left/right) instead of BodyYaw;
+  BodyYaw keeps its follow/align behaviour and is never forced to the movement direction. The
+  directional animation parameters are computed by projecting the actual world movement back into the
+  BodyYaw basis (`MoveForward`/`MoveRight`), so the 2D tree picks the animation for the motion
+  actually happening relative to the fighter. Directional actions (dodge) use the same LookYaw input
+  space.
+- **First-person arms restored to the native Generic rig.** The Humanoid body import is no longer
+  applied to `ArmsModelPath`; it uses `ApplyGenericImport` (Generic, `NoAvatar`), and the viewmodel
+  Animator is Generic (`avatar = null`) with the native Quaternius aim/shoot clips and the existing
+  IK. The +30° `Grip_R` roll is retained.
+- **P2 sector edge is a stateful damped-spring wall.** `M3SectorWall` (per-client state) replaces the
+  stateless curve: normal movement through the sector; in the last `SectorWallZoneDegrees` outward
+  movement is strongly resisted; rejected outward input compresses the spring; while pushing the aim
+  holds at the wall; when released the compression rebounds inward (≈`SectorReboundMaxDegrees`) and
+  damps rapidly; inward movement is 1:1 and clears the spring. The legal target is always clamped
+  inside the sector (no phantom). Tunables: `SectorWallZoneDegrees`, `SectorWallStiffness`,
+  `SectorReboundDamping`, `SectorReboundMaxDegrees`, `SectorEdgePressureGain`.
+
+**Structural checks (no runtime play)**
+
+- Movement: body at +Z, look at +X, press W → world move +X with `MoveForward=0.19 MoveRight=0.98`
+  (reads as a right strafe); W aligned → `MoveForward=1`; S → `MoveForward=−1`; D → `MoveRight=1`.
+- Wall: outward push → offset 0→15→30→45→60→69 then held with pressure 2.0°; release → dips to
+  ~67.1° (rebound) and damps back to ~68.8°; inward −10 → 59° with pressure cleared.
+- Arms: `Q_P2_Arms` `animType=Generic avatarSetup=NoAvatar`, 17 Generic clips; viewmodel Animator
+  `M7_P2_ArmsAim` with `avatar=null`.
+- `M7PipelineCommands.Validate()` PASSED; build succeeded.

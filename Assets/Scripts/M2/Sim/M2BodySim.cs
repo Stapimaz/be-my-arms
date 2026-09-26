@@ -11,7 +11,8 @@ namespace BeMyArms.M2
     /// kicks. Arena collision (<see cref="Collision"/>) resolves bounds, walls, steps and ramps.
     ///
     /// Orientation matches M1: decoupled look with neck limit, smooth body follow, explicit align;
-    /// movement and P2's firing sector use BodyYaw only.
+    /// WASD is camera/look-relative (LookYaw) while BodyYaw is the fighter's facing, and P2's firing
+    /// sector uses BodyYaw.
     ///
     /// Every bit of mutable state that affects motion lives in <see cref="State"/> so
     /// <see cref="M2Reconciler"/> can rewind and replay exactly.
@@ -243,7 +244,9 @@ namespace BeMyArms.M2
             float length = (float)Math.Sqrt(mx * mx + mz * mz);
             if (length > 1f) { mx /= length; mz /= length; }
 
-            BodyForward(out float fx, out float fz);
+            // WASD is camera/look-relative: forward is the LookYaw direction, right is LookYaw + 90.
+            // BodyYaw is the fighter's facing only and keeps its follow/align behaviour.
+            LookForward(out float fx, out float fz);
             float rx = fz;
             float rz = -fx;
             float wx = rx * mx + fx * mz;
@@ -255,12 +258,23 @@ namespace BeMyArms.M2
             Collision?.ResolveHorizontal(ref State);
             ApplyVertical(deltaTime);
 
-            // Stable locomotion presentation signal (never derived from frame-to-frame deltas). The
-            // applied planar speed is input magnitude * move speed; MoveForward/MoveRight are the
-            // body-local movement direction so the animation can strafe/back without guessing.
+            // Locomotion presentation: project the ACTUAL world movement back into the BodyYaw basis
+            // so the directional blend reflects motion relative to the fighter (LookYaw and BodyYaw
+            // can differ). This is not the raw WASD vector.
             State.PlanarSpeed = length > 0.01f ? length * speed : 0f;
-            State.MoveForward = length > 0.01f ? mz : 0f;
-            State.MoveRight = length > 0.01f ? mx : 0f;
+            if (length > 0.01f)
+            {
+                float inv = 1f / length;
+                float nwx = wx * inv, nwz = wz * inv;
+                BodyForward(out float bfx, out float bfz);
+                State.MoveForward = nwx * bfx + nwz * bfz;
+                State.MoveRight = nwx * bfz - nwz * bfx; // dot(n, right=(bfz,-bfx))
+            }
+            else
+            {
+                State.MoveForward = 0f;
+                State.MoveRight = 0f;
+            }
 
             if (!State.Grounded) State.MovementState = (byte)M2MovementState.Fall;
             else if (length < 0.01f) State.MovementState = (byte)M2MovementState.Idle;
@@ -350,11 +364,20 @@ namespace BeMyArms.M2
             fz = (float)Math.Cos(rad);
         }
 
+        void LookForward(out float fx, out float fz)
+        {
+            float rad = State.LookYaw * (float)Math.PI / 180f;
+            fx = (float)Math.Sin(rad);
+            fz = (float)Math.Cos(rad);
+        }
+
+        /// <summary>World direction of a directional action, in the same camera/look-relative input
+        /// space as locomotion (LookYaw), so dodges/actions agree with WASD.</summary>
         void DirectionFromMove(in M2P1Input input, out float dx, out float dz)
         {
             float mx = input.MoveX, mz = input.MoveZ;
             float length = (float)Math.Sqrt(mx * mx + mz * mz);
-            BodyForward(out float fx, out float fz);
+            LookForward(out float fx, out float fz);
             if (length < 0.01f)
             {
                 dx = fx;

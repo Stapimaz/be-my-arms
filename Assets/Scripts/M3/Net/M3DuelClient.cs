@@ -42,6 +42,13 @@ namespace BeMyArms.M3
         public float SectorHalfDegrees = 70f;
         public float MaxPitchDegrees = 80f;
 
+        [Header("P2 sector wall (feel)")]
+        public float SectorWallZoneDegrees = 12f;
+        public float SectorWallStiffness = 120f;
+        public float SectorReboundDamping = 16f;
+        public float SectorReboundMaxDegrees = 2f;
+        public float SectorEdgePressureGain = 0.6f;
+
         [Header("Send")]
         public float SendRateHz = 60f;
         public bool AutoDrive = true;
@@ -125,6 +132,7 @@ namespace BeMyArms.M3
         float _manualAimYaw;
         float _manualAimPitch;
         bool _aimInitialized;
+        M3SectorWall.State _sectorWall;
 
         // Edge-triggered actions are latched every frame so a press between send ticks is not lost.
         M2P1Input _pendingP1;
@@ -519,10 +527,22 @@ namespace BeMyArms.M3
 #endif
             float innerHalf = Mathf.Max(1f, SectorHalfDegrees - 1f);
             if (!_aimInitialized) { _manualAimYaw = _smoothedBodyYaw; _aimInitialized = true; }
-            _manualAimYaw = ApplySectorResistance(_manualAimYaw, deltaYaw, _smoothedBodyYaw, innerHalf);
+            float offset = M2BodySim.Normalize(_manualAimYaw - _smoothedBodyYaw);
+            var tuning = new M3SectorWall.Tuning
+            {
+                WallZoneDegrees = SectorWallZoneDegrees,
+                Stiffness = SectorWallStiffness,
+                Damping = SectorReboundDamping,
+                ReboundMaxDegrees = SectorReboundMaxDegrees,
+                PressureGain = SectorEdgePressureGain
+            };
+            float displayedOffset = M3SectorWall.Step(ref _sectorWall, tuning, offset, deltaYaw, innerHalf, Time.deltaTime, out float targetOffset);
+
+            // The stored target stays legal (no phantom); the spring rebound is presentation-only.
+            _manualAimYaw = M2BodySim.Normalize(_smoothedBodyYaw + targetOffset);
 
             var input = new M2P2Input();
-            LocalAimYaw = M2BodySim.ClampToSector(_manualAimYaw, _smoothedBodyYaw, innerHalf);
+            LocalAimYaw = M2BodySim.Normalize(_smoothedBodyYaw + displayedOffset);
             LocalAimPitch = Mathf.Clamp(_manualAimPitch, -MaxPitchDegrees, MaxPitchDegrees);
             input.AimYaw = LocalAimYaw;
             input.AimPitch = LocalAimPitch;
@@ -537,36 +557,6 @@ namespace BeMyArms.M3
             }
 #endif
             return input;
-        }
-
-        /// <summary>
-        /// Fixed-width soft zone near the sector boundary (~14 degrees). Inside the zone, outward mouse
-        /// yaw is scaled by gain = pow(clamp01(remaining / softZone), 1.5) so resistance starts
-        /// perceptibly before the edge and smoothly approaches zero at the boundary; outside the zone
-        /// sensitivity is normal. Inward movement is always exactly 1:1. The hard clamp is only a
-        /// numerical/server safety fallback, so no input ever accumulates beyond the limit.
-        /// </summary>
-        public const float SectorSoftZoneDegrees = 14f;
-
-        public static float ApplySectorResistance(float worldYaw, float deltaYaw, float bodyYaw, float innerHalf)
-        {
-            float offset = M2BodySim.Normalize(worldYaw - bodyYaw);
-            float applied = deltaYaw;
-            if (Mathf.Abs(deltaYaw) > 0.0001f)
-            {
-                bool outward = Mathf.Sign(deltaYaw) == Mathf.Sign(offset) && Mathf.Abs(offset) > 0.001f;
-                if (outward)
-                {
-                    float remaining = innerHalf - Mathf.Abs(offset);
-                    if (remaining < SectorSoftZoneDegrees)
-                    {
-                        float gain = Mathf.Pow(Mathf.Clamp01(remaining / SectorSoftZoneDegrees), 1.5f);
-                        applied = deltaYaw * gain;
-                    }
-                }
-            }
-            float clamped = Mathf.Clamp(offset + applied, -innerHalf, innerHalf);
-            return M2BodySim.Normalize(bodyYaw + clamped);
         }
 
         /// <summary>Closest living enemy body (2v2 has two).</summary>

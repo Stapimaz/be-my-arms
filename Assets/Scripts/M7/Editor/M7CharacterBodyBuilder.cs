@@ -87,7 +87,9 @@ namespace BeMyArms.M7.EditorTools
             _bodyAvatar = EnsureBodyHumanoidAvatar();
             ApplyBodyImport(P1ModelPath, _bodyAvatar);
             ApplyBodyImport(P2ModelPath, _bodyAvatar);
-            ApplyBodyImport(ArmsModelPath, _bodyAvatar);
+            // The first-person arms keep their native Generic rig + Quaternius aim/shoot clips; only
+            // the world bodies are Humanoid (for locomotion retargeting).
+            ApplyGenericImport(ArmsModelPath);
             ApplyHumanoidImport(KayKitModelPath);
         }
 
@@ -189,6 +191,18 @@ namespace BeMyArms.M7.EditorTools
             if (importer.animationType != ModelImporterAnimationType.Human) { importer.animationType = ModelImporterAnimationType.Human; dirty = true; }
             if (importer.avatarSetup != ModelImporterAvatarSetup.CreateFromThisModel) { importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel; dirty = true; }
             dirty |= ApplyCommonImport(ref importer);
+            if (dirty) importer.SaveAndReimport();
+        }
+
+        static void ApplyGenericImport(string path)
+        {
+            var importer = AssetImporter.GetAtPath(path) as ModelImporter;
+            if (importer == null) return;
+            bool dirty = false;
+            if (importer.animationType != ModelImporterAnimationType.Generic) { importer.animationType = ModelImporterAnimationType.Generic; dirty = true; }
+            if (importer.avatarSetup != ModelImporterAvatarSetup.NoAvatar) { importer.avatarSetup = ModelImporterAvatarSetup.NoAvatar; dirty = true; }
+            dirty |= ApplyCommonImport(ref importer);
+            dirty |= ApplyClipLoopFlags(importer);
             if (dirty) importer.SaveAndReimport();
         }
 
@@ -389,7 +403,7 @@ namespace BeMyArms.M7.EditorTools
             GameObject root = FreshSkinRoot("BMA_P1_Clay", M5RigRole.P1, "clay_p1");
             GameObject model = AttachModel(P1ModelPath, root.transform, Vector3.zero);
             ConfigureSkinMaterials(model, new Color(0.86f, 0.82f, 0.74f), new Color(0.68f, 0.62f, 0.55f));
-            AddAnimator(model, P1ControllerPath);
+            AddAnimator(model, P1ControllerPath, _bodyAvatar);
             Save(root, P1SkinPrefabPath);
         }
 
@@ -398,7 +412,7 @@ namespace BeMyArms.M7.EditorTools
             GameObject root = FreshSkinRoot("BMA_P2_Clay", M5RigRole.P2, "clay_p2");
             GameObject model = AttachModel(P2ModelPath, root.transform, P2ModelOffset);
             ConfigureSkinMaterials(model, new Color(0.30f, 0.36f, 0.44f), new Color(0.22f, 0.27f, 0.34f));
-            Animator animator = AddAnimator(model, P2ControllerPath);
+            Animator animator = AddAnimator(model, P2ControllerPath, _bodyAvatar);
             AddArmRig(model, animator, "Rig");
             Save(root, P2SkinPrefabPath);
         }
@@ -408,7 +422,7 @@ namespace BeMyArms.M7.EditorTools
             var root = new GameObject("BMA_P2_Arms");
             GameObject model = AttachModel(ArmsModelPath, root.transform, ViewmodelModelOffset);
             ConfigureSkinMaterials(model, new Color(0.30f, 0.36f, 0.44f), new Color(0.22f, 0.27f, 0.34f));
-            Animator animator = AddAnimator(model, ArmsControllerPath);
+            Animator animator = AddAnimator(model, ArmsControllerPath, null);
             AddArmRig(model, animator, "Rig");
 
             var aimPivot = new GameObject("AimPivot");
@@ -479,12 +493,12 @@ namespace BeMyArms.M7.EditorTools
             return instance;
         }
 
-        static Animator AddAnimator(GameObject model, string controllerPath)
+        static Animator AddAnimator(GameObject model, string controllerPath, Avatar avatar)
         {
             var animator = model.GetComponent<Animator>();
             if (animator == null) animator = model.AddComponent<Animator>();
             animator.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<AnimatorController>(controllerPath);
-            animator.avatar = _bodyAvatar;
+            animator.avatar = avatar;
             animator.applyRootMotion = false;
             animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             animator.updateMode = AnimatorUpdateMode.Normal;
