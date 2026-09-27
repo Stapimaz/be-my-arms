@@ -33,6 +33,7 @@ namespace BeMyArms.M7.EditorTools
                 instance.transform.localRotation = Quaternion.identity;
                 instance.transform.localScale = Vector3.one;
 
+                ApplyPieceMetrics(name, root);
                 RemapMaterials(root);
                 AddCameraColliders(root);
 
@@ -44,6 +45,30 @@ namespace BeMyArms.M7.EditorTools
 
             AssetDatabase.SaveAssets();
             return built;
+        }
+
+        /// <summary>
+        /// Piece-specific metrics. Low cover is normalised to a height that sits above the crouched
+        /// body top (M2BodySim CrouchHeight 1.15 m) yet below the standing eye (StandEyeHeight
+        /// 1.45 m): crouching then genuinely hides the body while standing can still shoot over it.
+        /// Applied to the shared prefab, so every arena placement stays symmetrical.
+        /// </summary>
+        static void ApplyPieceMetrics(string name, GameObject root)
+        {
+            if (!string.Equals(name, "BMA_Map_Cover_Low", System.StringComparison.Ordinal)) return;
+            const float TargetHeight = 1.30f;
+            float height = RendererBounds(root).size.y;
+            if (height < 0.01f) return;
+            root.transform.localScale = new Vector3(1f, TargetHeight / height, 1f);
+        }
+
+        static Bounds RendererBounds(GameObject root)
+        {
+            Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+            if (renderers.Length == 0) return new Bounds(root.transform.position, Vector3.zero);
+            Bounds b = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++) b.Encapsulate(renderers[i].bounds);
+            return b;
         }
 
         static void RemapMaterials(GameObject root)

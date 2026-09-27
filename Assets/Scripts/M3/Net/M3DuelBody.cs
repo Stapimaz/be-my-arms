@@ -120,6 +120,10 @@ namespace BeMyArms.M3
         float _botShotUp;
         float _botLateralTimer;
         float _botEasyLateral;
+        // Easy P1 engagement: a per-round preferred combat distance (metres) and a latched
+        // approach/hold/retreat state (hysteresis so it does not flip near the thresholds).
+        float _botPreferredRange;
+        int _botEngage;
         double _serverTime;
         float _accumulator;
         int _rejectedFires;
@@ -201,6 +205,8 @@ namespace BeMyArms.M3
             _grenadeCooldown = Mathf.Lerp(8f, 18f, Rand());
             _botLateralTimer = Mathf.Lerp(1.2f, 3.0f, Rand());
             _botEasyLateral = 0f;
+            _botPreferredRange = Mathf.Lerp(9.5f, 13.5f, Rand());
+            _botEngage = 0;
             SampleBotShot();
         }
 
@@ -700,10 +706,18 @@ namespace BeMyArms.M3
                     }
                 }
 
-                input.MoveZ = _botStuckTime > 0f ? 0f : (distance > 8f ? 1f : 0.3f);
+                // Settle at a preferred combat distance instead of charging into the enemy: a small
+                // dead band plus a latched approach/hold/retreat state gives hysteresis, so the bot
+                // does not flip direction near the thresholds. Mostly stationary in the band, with
+                // only occasional modest lateral movement, and no jumping.
+                const float EngageBand = M3BotEngage.DefaultBand;
+                _botEngage = M3BotEngage.Step(_botEngage, distance, _botPreferredRange, EngageBand);
+
+                float forward = _botEngage > 0 ? 1f : (_botEngage < 0 ? -1f : 0f);
+                input.MoveZ = _botStuckTime > 0f ? 0f : forward;
                 input.MoveX = _botStuckTime > 0f ? _botStrafeDir * 0.8f : _botEasyLateral;
                 input.Jump = false;
-                input.Sprint = distance > 16f && _botLiveTime > _botReaction + 1.5f;
+                input.Sprint = _botEngage > 0 && distance > _botPreferredRange + 6f && _botLiveTime > _botReaction + 1.5f;
             }
             else
             {

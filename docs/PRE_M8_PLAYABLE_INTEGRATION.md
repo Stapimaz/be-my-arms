@@ -613,3 +613,34 @@ hand roll, or the sector wall.
   1.53 m, max miss 2.10 m.
 - EditMode suite: **112/112 passed**.
 - `M7PipelineCommands.Validate()` PASSED; Windows player built.
+
+## 23. Easy bot engagement distance + playable crouch cover (2026-09-27)
+
+Focused playtest-quality pass. No changes to bot accuracy, cameras, character animation, hand
+presentation or the P2 sector-wall.
+
+- **Easy P1 bots settle at an engagement distance instead of charging.** Each Easy bot seeds a
+  per-round preferred combat distance (`Mathf.Lerp(9.5, 13.5)` from its own RNG). New pure
+  `M3BotEngage` gives a latched approach/hold/retreat state with a `DefaultBand` half-band (2.5 m):
+  the bot closes until it enters the band, holds (forward/back = 0) with only the occasional modest
+  lateral nudge and no jumping, and backs off when it is clearly too close, stopping once back in the
+  band. Hysteresis (leaving the band only on a clear crossing) avoids rapid flipping; the band is wide
+  enough that two bots' bands always overlap, so a two-bot sim shows both **holding (100 %) at
+  ~12–13 m** with no overlap or chase. The stuck-recovery strafe is unchanged. Hard is untouched.
+- **Low cover is now usable for crouching.** `BMA_Map_Cover_Low` was 1.20 m — barely above the
+  crouched body top (M2 `CrouchHeight` 1.15 m) — so crouching gave almost no protection. The map
+  prefab builder now normalises this piece to an effective **1.30 m** height (root Y scale
+  `1.083`): comfortably above the crouched body so crouching hides it, and still below the standing
+  eye (`StandEyeHeight` 1.45 m) so a standing player reads/shoots over it. It is applied to the shared
+  prefab, so every Duel/2v2 placement stays symmetrical, and because the movement collision and camera
+  colliders are derived from the renderer bounds they pick up the new height automatically.
+
+**Structural checks (no runtime play)**
+
+- Engagement: `M3BotEngageTests` — approach→hold at the band, retreat→hold when crowded, hysteresis
+  on clear crossings, and a two-bot simulation that asserts both bots hold without overlapping.
+- Cover: `BMA_Map_Cover_Low` renderer height 1.300 m (root scale `(1, 1.083, 1)`); the 8 placed Duel
+  instances all measure 1.300 m (prefab change propagates to the committed scenes without a rebuild);
+  only that one map prefab changed.
+- EditMode suite: **116/116 passed**.
+- `M7PipelineCommands.Validate()` PASSED; Windows player built.
