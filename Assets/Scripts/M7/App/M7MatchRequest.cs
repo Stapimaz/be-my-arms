@@ -14,11 +14,14 @@ namespace BeMyArms.M7
         public int Body;
         public int Role;
         public ushort Port;
+        public bool Duo;
+        public bool JoinExisting;
+        public string Address;
 
         /// <summary>Server bot profile for filled slots. Defaults to Easy (practice/playtest).</summary>
         public M3BotDifficulty BotDifficulty;
 
         public int BodiesPerTeam => Mode == M7MapFamily.Duel ? 1 : 2;
-        public int RequiredHumans => 1;
+        public int RequiredHumans => Duo ? 2 : 1;
     }
 }

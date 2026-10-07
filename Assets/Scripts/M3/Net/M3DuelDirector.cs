@@ -78,6 +78,7 @@ namespace BeMyArms.M3
         double _liveStartTime;
         float _serverStartTime;
         string _ticket = "";
+        double _nextPracticeAction;
 
         public override void OnNetworkSpawn()
         {
@@ -259,7 +260,9 @@ namespace BeMyArms.M3
             if (roster == null) return;
 
             bool ready = roster.AssignedCount >= M3Config.RequiredPlayers;
-            bool timedOut = Time.realtimeSinceStartup - _serverStartTime >= M3Config.StartDelaySeconds;
+            if (M3Config.PrivatePractice && M3Config.RequiredPlayers == 2)
+                ready = roster.SlotTaken(0) && roster.SlotTaken(1);
+            bool timedOut = M3Config.StartDelaySeconds > 0f && Time.realtimeSinceStartup - _serverStartTime >= M3Config.StartDelaySeconds;
             if (!ready && !timedOut) return;
 
             for (int slot = 0; slot < SlotCount; slot++)
@@ -299,6 +302,8 @@ namespace BeMyArms.M3
 
         void OnRoundStarted(int round)
         {
+            MatchWinner.Value = -1;
+            ZoneRadius.Value = ZoneStartRadius;
             Utility.Clear();
             _firstContact = false;
 
@@ -344,6 +349,8 @@ namespace BeMyArms.M3
         void OnLiveStarted(int round)
         {
             _liveStartTime = Time.timeAsDouble;
+            for (int team = 0; team < 2; team++)
+                foreach (var body in _bodies[team]) body.ServerBeginLive();
             Log($"round {round} live");
         }
 
@@ -487,6 +494,43 @@ namespace BeMyArms.M3
             if (roster == null || !M3DuelSlots.IsValidSlot(slot, BodiesPerTeam)) return false;
             playerId = roster.TokenForSlot(slot);
             return !string.IsNullOrEmpty(playerId);
+        }
+
+        /// <summary>Practice-only controls use normal server authority; either human can request them.</summary>
+        [ServerRpc(RequireOwnership = false)]
+        public void LeavePracticeServerRpc(ServerRpcParams rpcParams = default)
+        {
+            if (!M3Config.PrivatePractice || M3DuelRoleService.Instance == null) return;
+            var roster = M3DuelRoleService.Instance.Registry;
+            int slot = roster.ReleaseReservation(rpcParams.Receive.SenderClientId);
+            if (slot >= 0) roster.SetBot(slot);
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        public void PracticeActionServerRpc(byte action, ServerRpcParams rpcParams = default)
+        {
+            var roster = M3DuelRoleService.Instance != null ? M3DuelRoleService.Instance.Registry : null;
+            if (action > 2 || !M3Config.PrivatePractice || roster == null || roster.SlotFor(rpcParams.Receive.SenderClientId) < 0 || !_matchStarted) return;
+            if (Time.timeAsDouble < _nextPracticeAction) return;
+            _nextPracticeAction = Time.timeAsDouble + 0.5;
+            if (action == 2)
+            {
+                int slot = roster.SlotFor(rpcParams.Receive.SenderClientId);
+                int first = slot - M3DuelSlots.RoleOf(slot);
+                roster.SwapBodyRoles(first);
+                for (int role = 0; role < 2; role++)
+                {
+                    ulong owner = roster.OwnerOf(first + role);
+                    if (owner != ulong.MaxValue) SendSlot(owner, first + role);
+                }
+            }
+            if (action == 1 || action == 2)
+            {
+                for (int team = 0; team < 2; team++) foreach (var body in _bodies[team]) body.Kills.Value = 0;
+                _match.StartMatch();
+            }
+            else if (action == 0) _match.RestartRound();
+            MirrorState();
         }
 
         static void Log(string message) => Debug.Log($"[M3] t={Time.realtimeSinceStartup:0.000} {message}");

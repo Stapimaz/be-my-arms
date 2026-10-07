@@ -1,4 +1,5 @@
 using System;
+using BeMyArms.M3;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -63,8 +64,45 @@ namespace BeMyArms.M7
             Button quit = M7Ui.Button(root.transform, "Quit", "QUIT", Quit, 26);
             M7Ui.Place(quit.image.rectTransform, new Vector2(0.5f, 0.25f), Vector2.zero, new Vector2(420f, 66f));
 
+            if (M3Config.PrivatePractice)
+            {
+                var heading = M7Ui.Label(root.transform, "PracticeTitle", "PRACTICE TOOLS", 28, TextAnchor.MiddleCenter);
+                M7Ui.Place(heading.rectTransform, new Vector2(0.80f, 0.68f), Vector2.zero, new Vector2(500f, 50f));
+                PracticeButton(root.transform, "Restart encounter", 0.58f, () => PracticeAction(0));
+                PracticeButton(root.transform, "Fresh match", 0.48f, () => PracticeAction(1));
+                PracticeButton(root.transform, "Swap roles + reset", 0.38f, () => PracticeAction(2));
+                if (!M7PrivateMatch.Current.JoinExisting)
+                    PracticeButton(root.transform, "Open local partner", 0.18f, M7PrivateMatch.LaunchLocalPartner);
+                var info = M7Ui.Label(root.transform, "Connection", $"Server {M7PrivateMatch.ConnectionLabel}\nLAN: use this PC's LAN IP and the same port.\nF6 restart encounter · F7 swap roles + reset · F8 fresh match", 22, TextAnchor.MiddleCenter);
+                M7Ui.Place(info.rectTransform, new Vector2(0.5f, 0.08f), Vector2.zero, new Vector2(1500f, 110f));
+            }
+
             BuildSettings(root.transform);
             _root.SetActive(false);
+        }
+
+        static void PracticeButton(Transform parent, string name, float y, Action action)
+        {
+            var button = M7Ui.Button(parent, name, name.ToUpperInvariant(), action, 24);
+            M7Ui.Place(button.image.rectTransform, new Vector2(0.80f, y), Vector2.zero, new Vector2(440f, 70f));
+        }
+
+        void PracticeAction(byte action)
+        {
+            if (M3DuelDirector.Instance == null) return;
+            M3DuelDirector.Instance.PracticeActionServerRpc(action);
+            SetOpen(false);
+        }
+
+        void Update()
+        {
+#if ENABLE_INPUT_SYSTEM
+            var kb = UnityEngine.InputSystem.Keyboard.current;
+            if (!Application.isFocused || !M3Config.PrivatePractice || kb == null) return;
+            if (kb.f6Key.wasPressedThisFrame) PracticeAction(0);
+            if (kb.f7Key.wasPressedThisFrame) PracticeAction(2);
+            if (kb.f8Key.wasPressedThisFrame) PracticeAction(1);
+#endif
         }
 
         void BuildSettings(Transform parent)

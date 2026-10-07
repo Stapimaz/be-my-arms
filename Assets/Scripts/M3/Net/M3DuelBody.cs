@@ -19,11 +19,11 @@ namespace BeMyArms.M3
         [Header("Sim tuning (mirrors M2)")]
         public float WalkSpeed = 4.5f;
         public float SprintSpeed = 7f;
-        public float JumpSpeed = 7f;
-        public float Gravity = -20f;
-        public float NeckYawLimitDegrees = 80f;
-        public float BodyFollowThresholdDegrees = 50f;
-        public float BodyFollowSpeedDegreesPerSecond = 120f;
+        public float JumpSpeed = M2BodySim.DefaultJumpSpeed;
+        public float Gravity = M2BodySim.DefaultGravity;
+        public float NeckYawLimitDegrees = M2BodySim.DefaultNeckYawLimitDegrees;
+        public float BodyFollowThresholdDegrees = M2BodySim.DefaultBodyFollowThresholdDegrees;
+        public float BodyFollowSpeedDegreesPerSecond = M2BodySim.DefaultBodyFollowSpeedDegreesPerSecond;
         public float BodyAlignSpeedDegreesPerSecond = 540f;
         public float SectorHalfDegrees = 70f;
         public float MaxPitchDegrees = 80f;
@@ -70,6 +70,28 @@ namespace BeMyArms.M3
         public NetworkVariable<bool> OutsideZone = new(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         public NetworkVariable<uint> LastAckedP1Sequence = new(0u, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         public NetworkVariable<uint> LastAckedP2Sequence = new(0u, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        public NetworkVariable<uint> ShotsFired = new(0u, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        public NetworkVariable<bool> P1Bot = new(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        public NetworkVariable<bool> P2Bot = new(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        public NetworkVariable<bool> Firing = new(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        public NetworkVariable<float> ProtectionRemaining = new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        public NetworkVariable<int> TurnRequest = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        double _turnRequestUntil;
+
+        [ServerRpc(RequireOwnership = false)]
+        public void RequestTurnServerRpc(int side, uint epoch, ServerRpcParams rpcParams = default)
+        {
+            if (!Alive.Value || epoch != _controlEpoch || _director == null || !(_director.IsBuy || _director.IsLive) ||
+                !HasSlot(rpcParams.Receive.SenderClientId, SlotP2)) return;
+            TurnRequest.Value = Math.Sign(side);
+            _turnRequestUntil = _serverTime + 1.5;
+        }
+
+        readonly M3AimHistory _aimHistory = new M3AimHistory();
+        M2P2Input _heldP2;
+        double _lastP2Time = -1;
+        uint _acceptedP2, _controlEpoch, _simulationTick;
+        ulong _ownerP1 = ulong.MaxValue, _ownerP2 = ulong.MaxValue;
 
         public int TeamIndex => Team.Value;
         public int BodyId => BodyIndex.Value;
@@ -79,7 +101,7 @@ namespace BeMyArms.M3
         M2BodySim _sim;
         M2WeaponState _weapon;
         M2LagCompensation[] _lag = Array.Empty<M2LagCompensation>();
-        readonly M2DelayQueue<M2P1Input> _p1Queue = new M2DelayQueue<M2P1Input>();
+        readonly M3P1CommandStream _p1Stream = new M3P1CommandStream();
         readonly M2DelayQueue<M2P2Input> _p2Queue = new M2DelayQueue<M2P2Input>();
         readonly M3BuyPhase _buy = new M3BuyPhase();
         readonly int[] _utilityCharges = new int[3];
@@ -148,6 +170,7 @@ namespace BeMyArms.M3
                 BodyFollowSpeedDegreesPerSecond = BodyFollowSpeedDegreesPerSecond,
                 BodyAlignSpeedDegreesPerSecond = BodyAlignSpeedDegreesPerSecond,
                 SectorHalfDegrees = SectorHalfDegrees,
+                SectorOvertravelDegrees = M3SectorWall.OvertravelDegrees,
                 MaxPitchDegrees = MaxPitchDegrees,
                 MaxHealth = MaxHealthDefault
             };
@@ -157,7 +180,7 @@ namespace BeMyArms.M3
             if (map != null) _sim.Collision = map.BuildCollision();
 
             _weapon = new M2WeaponState();
-            _p1Queue.LossPercent = LossPercent;
+            _p1Stream.LossPercent = LossPercent;
             _p2Queue.LossPercent = LossPercent;
 
             if (IsServer)
@@ -248,11 +271,11 @@ namespace BeMyArms.M3
         [ServerRpc(RequireOwnership = false)]
         public void SubmitP1ServerRpc(M2P1Input input, ServerRpcParams rpcParams = default)
         {
-            if (_director == null || _director.CurrentPhase == M3Phase.Warmup || !Alive.Value) return;
+            if (_director == null || !Alive.Value || !(_director.IsBuy || _director.IsLive)) return;
             if (!HasSlot(rpcParams.Receive.SenderClientId, SlotP1)) { _director.NoteUnauthorized(); return; }
             // P1 input is accepted during Buy so look stays responsive; movement/actions are stripped
             // in ServerTick until the live phase (see LookOnly).
-            _p1Queue.Enqueue(_serverTime, InputDelaySeconds, input);
+            _p1Stream.Submit(input, _serverTime, InputDelaySeconds);
         }
 
         [ServerRpc(RequireOwnership = false)]
@@ -260,7 +283,9 @@ namespace BeMyArms.M3
         {
             if (_director == null || _director.CurrentPhase == M3Phase.Warmup || !Alive.Value) return;
             if (!HasSlot(rpcParams.Receive.SenderClientId, SlotP2)) { _director.NoteUnauthorized(); return; }
-            if (!_director.InputsAccepted) return;
+            if (!(_director.IsBuy || _director.IsLive)) return;
+            if (input.ControlEpoch != _controlEpoch || input.Sequence <= _acceptedP2 || !M3InputStream.Valid(input) || _p2Queue.Count >= 120) return;
+            _acceptedP2 = input.Sequence;
             _p2Queue.Enqueue(_serverTime, InputDelaySeconds, input);
         }
 
@@ -322,6 +347,20 @@ namespace BeMyArms.M3
         void ServerTick(float dt)
         {
             _serverTime += dt;
+            var registry = M3DuelRoleService.Instance != null ? M3DuelRoleService.Instance.Registry : null;
+            if (registry != null)
+            {
+                ulong p1Owner = registry.OwnerOf(SlotP1), p2Owner = registry.OwnerOf(SlotP2);
+                bool bot1 = registry.IsBot(SlotP1), bot2 = registry.IsBot(SlotP2);
+                if (p1Owner != _ownerP1 || p2Owner != _ownerP2 || bot1 != P1Bot.Value || bot2 != P2Bot.Value)
+                {
+                    _ownerP1 = p1Owner; _ownerP2 = p2Owner;
+                    P1Bot.Value = bot1; P2Bot.Value = bot2;
+                    ResetInputStreams();
+                }
+            }
+            _sim.State.ControlEpoch = _controlEpoch;
+            _sim.State.SimulationTick = ++_simulationTick;
 
             // Bots hold still for a moment at the start of the live phase so a learning player has
             // time to look around before they are engaged.
@@ -329,6 +368,7 @@ namespace BeMyArms.M3
             else _botLiveTime = 0f;
 
             if (_spawnGraceRemaining > 0f) _spawnGraceRemaining = Mathf.Max(0f, _spawnGraceRemaining - dt);
+            ProtectionRemaining.Value = _spawnGraceRemaining;
 
             if (_blindRemaining > 0f)
             {
@@ -347,27 +387,41 @@ namespace BeMyArms.M3
                 else _lag[i].Record(_serverTime, _sim.State.BodyYaw, ex, ez);
             }
 
-            if (IsSlotBot(SlotP1) && _director != null && _director.IsLive)
-            {
-                _sim.ApplyP1(BuildBotP1(dt), dt);
-            }
-            while (_p1Queue.TryDequeue(_serverTime, out M2P1Input p1))
-            {
-                // Look is always applied; movement/actions only once the round is live, so the body
-                // stays frozen through Buy even though look input is accepted.
-                _sim.ApplyP1(_director != null && _director.IsLive ? p1 : LookOnly(p1), dt);
-                LastAckedP1Sequence.Value = p1.Sequence;
-            }
+            // Movement advances exactly once per server tick, never once per packet. Missing
+            // packets briefly hold continuous controls, but cannot repeat look deltas/actions.
+            M2P1Input p1 = _p1Stream.Consume(_serverTime);
+            LastAckedP1Sequence.Value = _p1Stream.Acknowledged;
+            if (IsSlotBot(SlotP1) && _director != null && _director.IsLive) p1 = BuildBotP1(dt);
+            if (_director == null || !_director.IsLive) p1 = _director != null && _director.IsBuy ? M3InputStream.LookOnly(p1) : default;
+            if (_director != null && (_director.IsBuy || _director.IsLive)) _sim.ApplyP1(p1, dt);
+            _aimHistory.Record(_simulationTick, _sim.State.BodyYaw);
 
-            while (_p2Queue.TryDequeue(_serverTime, out M2P2Input p2))
+            _weapon.Tick(_serverTime);
+            M2P2Input p2 = _serverTime - _lastP2Time <= M3InputStream.SilenceTimeoutSeconds ? _heldP2 : new M2P2Input { AimYaw = _sim.State.AimYaw, AimPitch = _sim.State.AimPitch };
+            bool queuedFire = false, queuedReload = false;
+            while (_p2Queue.TryDequeue(_serverTime, out M2P2Input nextP2))
             {
-                ProcessP2(in p2);
+                // Retain a short trigger/reload tap even if several packets arrive together.
+                queuedFire |= nextP2.Fire;
+                queuedReload |= nextP2.Reload;
+                p2 = nextP2;
+                _heldP2 = nextP2;
+                _heldP2.Reload = false;
+                _lastP2Time = _serverTime;
                 LastAckedP2Sequence.Value = p2.Sequence;
             }
+            p2.Fire |= queuedFire;
+            p2.Reload |= queuedReload;
+            if (_director == null || !_director.IsLive) { p2.Fire = false; p2.Reload = false; }
+            Firing.Value = Alive.Value && p2.Fire && !_weapon.IsReloading && _weapon.Ammo > 0;
+            if (_serverTime >= _turnRequestUntil) TurnRequest.Value = 0;
+            if (!IsSlotBot(SlotP2)) ProcessP2(p2);
             if (IsSlotBot(SlotP2) && _director != null && _director.IsLive)
             {
                 int ammoBefore = _weapon.Ammo;
-                ProcessP2(BuildBotP2());
+                M2P2Input bot = BuildBotP2();
+                Firing.Value = Alive.Value && bot.Fire && !_weapon.IsReloading && _weapon.Ammo > 0;
+                ProcessP2(bot);
                 // A shot actually left the barrel: pick the next shot's miss (Easy) so each round is
                 // an independent sample through the ordinary authoritative hitscan.
                 if (_weapon.Ammo < ammoBefore) SampleBotShot();
@@ -432,23 +486,27 @@ namespace BeMyArms.M3
 
             if (!input.Fire || _blindRemaining > 0f) { _sim.ApplyP2(in input); return; }
 
-            // All lag samples share the shooter's own yaw; use the first for sector legality.
-            if (_lag.Length == 0 || !_lag[0].TryRewind(_serverTime - LagRewindSeconds, out float historicalBodyYaw, out _, out _))
+            // Humans validate against the exact body snapshot used by local aiming, not an unrelated
+            // smoothed yaw / guessed fixed rewind. Bots aim against the current server body.
+            float historicalBodyYaw = _sim.State.BodyYaw;
+            if (!IsSlotBot(SlotP2) && !_aimHistory.TryGet(input.BodyTick, _simulationTick, out historicalBodyYaw))
             {
                 _sim.ApplyP2(in input);
                 return;
             }
 
             float offset = M2BodySim.Normalize(input.AimYaw - historicalBodyYaw);
-            bool legalHistorically = Mathf.Abs(offset) <= SectorHalfDegrees + 0.001f;
+            float aimLimit = SectorHalfDegrees + M3SectorWall.OvertravelDegrees;
+            bool legalHistorically = Mathf.Abs(offset) <= aimLimit + 0.001f;
 
-            M2WeaponState.FireResult fire = _weapon.TryFire(_serverTime);
-            if (!legalHistorically || fire != M2WeaponState.FireResult.Ok)
+            if (!legalHistorically)
             {
                 _rejectedFires++;
                 _sim.ApplyP2(in input);
                 return;
             }
+            if (_weapon.TryFire(_serverTime) != M2WeaponState.FireResult.Ok) { _sim.ApplyP2(in input); return; }
+            ShotsFired.Value++;
 
             M3WeaponStats stats = M3Loadouts.Stats(_activeWeapon);
 
@@ -621,6 +679,8 @@ namespace BeMyArms.M3
         {
             if (!IsServer) return;
             _sim.Initialize(yaw, x, z, y);
+            ResetInputStreams();
+            _sim.State.SimulationTick = _simulationTick;
             _sim.State.Health = MaxHealthDefault;
             _spawnGraceRemaining = SpawnGraceSeconds;
             _blindRemaining = 0f;
@@ -633,12 +693,20 @@ namespace BeMyArms.M3
             _buy.ResetForRound();
             _utilityCharges[0] = _utilityCharges[1] = _utilityCharges[2] = 0;
             InitializeBotProfile();
+            _botLiveTime = 0f;
+            _botStuckTime = 0f;
+            _lastBotX = x; _lastBotZ = z;
+            _prevMovementState = M2MovementState.Idle;
             for (int i = 0; i < _lag.Length; i++) _lag[i].Clear();
-            _p1Queue.Clear();
             _p2Queue.Clear();
             State.Value = _sim.State;
             transform.position = new Vector3(x, y, z);
             transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+        }
+
+        public void ServerBeginLive()
+        {
+            if (IsServer) { _spawnGraceRemaining = SpawnGraceSeconds; _botLiveTime = 0f; }
         }
 
         M3DuelBody NearestEnemy(out float distance)
@@ -679,7 +747,8 @@ namespace BeMyArms.M3
                                      (_sim.State.PosZ - _lastBotZ) * (_sim.State.PosZ - _lastBotZ));
             _lastBotX = _sim.State.PosX;
             _lastBotZ = _sim.State.PosZ;
-            if (moved < 0.01f) _botStuckTime += dt;
+            // Holding range is intentional. Only attempted travel can be blocked.
+            if (moved < 0.01f && (_difficulty != M3BotDifficulty.Easy || _botEngage != 0)) _botStuckTime += dt;
             else _botStuckTime = Mathf.Max(0f, _botStuckTime - dt * 2f);
             if (_botStuckTime > 0.4f)
             {
@@ -797,15 +866,24 @@ namespace BeMyArms.M3
             ServerApplyLoadout(M3WeaponId.Rifle);
         }
 
-        /// <summary>Keeps only look deltas from a P1 input (movement/actions stripped).</summary>
-        static M2P1Input LookOnly(in M2P1Input input)
+        void ResetInputStreams()
         {
-            return new M2P1Input
+            var roster = M3DuelRoleService.Instance != null ? M3DuelRoleService.Instance.Registry : null;
+            if (roster != null)
             {
-                Sequence = input.Sequence,
-                LookYawDelta = input.LookYawDelta,
-                LookPitchDelta = input.LookPitchDelta
-            };
+                _ownerP1 = roster.OwnerOf(SlotP1); _ownerP2 = roster.OwnerOf(SlotP2);
+                P1Bot.Value = roster.IsBot(SlotP1); P2Bot.Value = roster.IsBot(SlotP2);
+            }
+            _controlEpoch++;
+            _sim.State.ControlEpoch = _controlEpoch;
+            _acceptedP2 = 0;
+            LastAckedP1Sequence.Value = LastAckedP2Sequence.Value = 0;
+            _heldP2 = default;
+            _lastP2Time = -1;
+            Firing.Value = false; TurnRequest.Value = 0; _turnRequestUntil = 0;
+            _p1Stream.Reset(_controlEpoch); _p2Queue.Clear();
+            _aimHistory.Clear();
+            _aimHistory.Record(_simulationTick, _sim.State.BodyYaw);
         }
 
         void Log(string message)

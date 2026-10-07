@@ -10,6 +10,7 @@ namespace BeMyArms.M7
     /// </summary>
     public class M7AppBootstrap : MonoBehaviour
     {
+        static bool _clientEntryConsumed;
         void Awake()
         {
             if (M7PrivateMatch.IsServerLaunch(out string arenaScene))
@@ -22,6 +23,21 @@ namespace BeMyArms.M7
                 }
                 Debug.Log($"[M7] launching dedicated server on arena '{arenaScene}' (ownerPid={ownerPid})");
                 SceneManager.LoadScene(arenaScene, LoadSceneMode.Single);
+                return;
+            }
+
+            // Launch arguments are a process entry, not a command to re-enter when returning to menu.
+            if (_clientEntryConsumed) { ShowMenu(); return; }
+            _clientEntryConsumed = true;
+            string join = M7PrivateMatch.GetArg("-m7-join");
+            if (!string.IsNullOrEmpty(join) && ushort.TryParse(M7PrivateMatch.GetArg("-m7-port"), out ushort port))
+            {
+                M7PrivateMatch.Begin(new M7MatchRequest
+                {
+                    Mode = M7MapFamily.Duel, ArenaScene = "M7DuelArena", Duo = true,
+                    JoinExisting = true, Address = join, Port = port,
+                    Role = M7PrivateMatch.GetArg("-m7-join-role") == "p2" ? 1 : 0
+                });
                 return;
             }
 
@@ -44,6 +60,11 @@ namespace BeMyArms.M7
                 return;
             }
 
+            ShowMenu();
+        }
+
+        void ShowMenu()
+        {
             EnsureCamera();
             gameObject.AddComponent<M7MenuController>();
         }

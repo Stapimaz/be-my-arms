@@ -40,7 +40,7 @@ namespace BeMyArms.M7.Tests
             go.AddComponent<M7MenuController>();
             yield return null;
 
-            AssertButtonsVisible("PLAY", "SETTINGS", "QUIT");
+            AssertButtonsVisible("PLAY", "DUO PRACTICE", "SETTINGS", "QUIT");
 
             // The real callback navigates to the private lobby; the lobby's own controls must be
             // laid out on-screen too (the same bug class that hid the main-menu buttons).
@@ -48,6 +48,14 @@ namespace BeMyArms.M7.Tests
             yield return null; // menu clears on end-of-frame Destroy, lobby builds in the callback
 
             AssertButtonsVisible("Duel", "TwoVsTwo", "P1", "P2", "Start", "Back");
+
+            FindButton("Back").onClick.Invoke();
+            yield return null;
+            FindButton("DUO PRACTICE").onClick.Invoke();
+            yield return null;
+            AssertButtonsVisible("P1", "P2", "Host", "Join", "Back");
+            var inputs = Object.FindObjectsByType<InputField>(FindObjectsSortMode.None);
+            Assert.AreEqual(2, inputs.Length, "join needs an editable address and port");
 
             Object.Destroy(go);
             yield return null;

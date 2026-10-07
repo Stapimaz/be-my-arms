@@ -31,7 +31,7 @@ namespace BeMyArms.M7.EditorTools
                 {
                     Id = id,
                     Clip = clip,
-                    Volume = 1f,
+                    Volume = id == M7AudioId.Footstep ? .35f : id == M7AudioId.Gear ? .18f : id == M7AudioId.RifleShot ? .75f : .55f,
                     PitchJitter = loop ? 0f : 0.06f,
                     Spatial = !loop && id != M7AudioId.UiClick && id != M7AudioId.UiHover,
                     Loop = loop
@@ -47,6 +47,15 @@ namespace BeMyArms.M7.EditorTools
         {
             switch (id)
             {
+                case M7AudioId.MagazineOut: return "sfx_magazine_out";
+                case M7AudioId.MagazineIn: return "sfx_magazine_in";
+                case M7AudioId.Bolt: return "sfx_bolt";
+                case M7AudioId.Jump: return "sfx_jump";
+                case M7AudioId.Land: return "sfx_land";
+                case M7AudioId.Slide: return "sfx_slide";
+                case M7AudioId.Vault: return "sfx_vault";
+                case M7AudioId.Kick: return "sfx_kick";
+                case M7AudioId.Gear: return "sfx_gear";
                 case M7AudioId.RifleShot: return "sfx_rifle_shot";
                 case M7AudioId.PistolShot: return "sfx_pistol_shot";
                 case M7AudioId.ShotgunShot: return "sfx_shotgun_shot";

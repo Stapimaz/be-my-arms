@@ -54,22 +54,7 @@ namespace BeMyArms.M7.EditorTools
 
         public static void BuildAll()
         {
-            EnsureImportSettings();
-            AssetDatabase.Refresh();
-            EnsureFolders();
-
-            M7WeaponBuilder.Build();
-            BuildLocomotionController(P1ControllerPath, P1ModelPath);
-            BuildLocomotionController(P2ControllerPath, P2ModelPath);
-            BuildArmsAimController(ArmsControllerPath, ArmsModelPath);
-
-            BuildP1Skin();
-            BuildP2Skin();
-            BuildArmsViewmodel();
-
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-            Debug.Log("[M7char] built P1/P2 skins + P2 arms viewmodel from the Quaternius rig");
+            M7FighterBuilder.BuildAll();
         }
 
         /// <summary>

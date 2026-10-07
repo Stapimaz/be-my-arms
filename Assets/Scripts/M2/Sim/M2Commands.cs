@@ -6,6 +6,7 @@ namespace BeMyArms.M2
     public struct M2P1Input : INetworkSerializable
     {
         public uint Sequence;
+        public uint ControlEpoch;
         public float MoveX;
         public float MoveZ;
         public float LookYawDelta;
@@ -15,7 +16,6 @@ namespace BeMyArms.M2
         public bool Jump;
         public bool Dodge;
         public bool Slide;
-        public bool Vault;
         public bool LightKick;
         public bool HeavyKick;
         public bool Crouch;
@@ -23,6 +23,7 @@ namespace BeMyArms.M2
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
             serializer.SerializeValue(ref Sequence);
+            serializer.SerializeValue(ref ControlEpoch);
             serializer.SerializeValue(ref MoveX);
             serializer.SerializeValue(ref MoveZ);
             serializer.SerializeValue(ref LookYawDelta);
@@ -32,7 +33,6 @@ namespace BeMyArms.M2
             serializer.SerializeValue(ref Jump);
             serializer.SerializeValue(ref Dodge);
             serializer.SerializeValue(ref Slide);
-            serializer.SerializeValue(ref Vault);
             serializer.SerializeValue(ref LightKick);
             serializer.SerializeValue(ref HeavyKick);
             serializer.SerializeValue(ref Crouch);
@@ -43,6 +43,8 @@ namespace BeMyArms.M2
     public struct M2P2Input : INetworkSerializable
     {
         public uint Sequence;
+        public uint ControlEpoch;
+        public uint BodyTick;
         public float AimYaw;
         public float AimPitch;
         public bool Fire;
@@ -51,6 +53,8 @@ namespace BeMyArms.M2
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
             serializer.SerializeValue(ref Sequence);
+            serializer.SerializeValue(ref ControlEpoch);
+            serializer.SerializeValue(ref BodyTick);
             serializer.SerializeValue(ref AimYaw);
             serializer.SerializeValue(ref AimPitch);
             serializer.SerializeValue(ref Fire);
@@ -64,6 +68,8 @@ namespace BeMyArms.M2
     /// </summary>
     public struct M2BodyState : INetworkSerializable
     {
+        public uint ControlEpoch;
+        public uint SimulationTick;
         public float PosX;
         public float PosY;
         public float PosZ;
@@ -97,6 +103,8 @@ namespace BeMyArms.M2
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
+            serializer.SerializeValue(ref ControlEpoch);
+            serializer.SerializeValue(ref SimulationTick);
             serializer.SerializeValue(ref PosX);
             serializer.SerializeValue(ref PosY);
             serializer.SerializeValue(ref PosZ);

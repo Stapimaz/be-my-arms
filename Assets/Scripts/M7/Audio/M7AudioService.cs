@@ -24,7 +24,9 @@ namespace BeMyArms.M7
             _pool = new AudioSource[Mathf.Max(1, PoolSize)];
             for (int i = 0; i < _pool.Length; i++)
             {
-                _pool[i] = gameObject.AddComponent<AudioSource>();
+                var voice = new GameObject("SfxVoice_" + i);
+                voice.transform.SetParent(transform, false);
+                _pool[i] = voice.AddComponent<AudioSource>();
                 _pool[i].playOnAwake = false;
             }
             _music = new AudioSource[Mathf.Max(1, MusicPoolSize)];
@@ -45,7 +47,7 @@ namespace BeMyArms.M7
         public void PlayAt(M7AudioId id, Vector3? position)
         {
             M7AudioClipEntry entry = Library != null ? Library.Get(id) : null;
-            if (entry == null) return;
+            if (entry == null || entry.Clip == null || Application.isBatchMode) return;
 
             AudioSource source = _pool[_next];
             _next = (_next + 1) % _pool.Length;
@@ -54,7 +56,8 @@ namespace BeMyArms.M7
             source.volume = Mathf.Clamp01(entry.Volume);
             source.pitch = 1f + Random.Range(-entry.PitchJitter, entry.PitchJitter);
             source.loop = entry.Loop;
-            source.spatialBlend = entry.Spatial ? 1f : 0f;
+            source.spatialBlend = entry.Spatial && position.HasValue ? 1f : 0f;
+            source.dopplerLevel = 0f;
             if (position.HasValue && entry.Spatial)
             {
                 source.transform.position = position.Value;
@@ -68,6 +71,7 @@ namespace BeMyArms.M7
         /// <summary>Plays a looping music/ambience bed, replacing the current one.</summary>
         public void PlayMusic(M7AudioId id)
         {
+            if (Application.isBatchMode) return;
             M7AudioClipEntry entry = Library != null ? Library.Get(id) : null;
             if (entry == null) return;
             AudioSource source = _music[_nextMusic];

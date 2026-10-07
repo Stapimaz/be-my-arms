@@ -20,6 +20,9 @@ namespace BeMyArms.M3
 
         /// <summary>Port override for the private-match flow (0 = use the scene/CLI port).</summary>
         public static ushort PortOverride;
+        public static string ServerAddress = "127.0.0.1";
+        public static bool PrivatePractice;
+        public static bool StrictSlots;
 
         /// <summary>Preferred number of human players (bodies per team * 2 players per body * 2 teams).</summary>
         public static int ExpectedPlayers = 4;

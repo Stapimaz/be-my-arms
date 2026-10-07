@@ -27,7 +27,8 @@ namespace BeMyArms.M7
         ZoneWarning,
         AmbArena,
         MusicMenu,
-        MusicMatch
+        MusicMatch,
+        MagazineOut, MagazineIn, Bolt, Jump, Land, Slide, Vault, Kick, Gear
     }
 
     [Serializable]
@@ -49,7 +50,9 @@ namespace BeMyArms.M7
             M7AudioId.Reload, M7AudioId.Footstep, M7AudioId.HitBody, M7AudioId.Headshot,
             M7AudioId.Elimination, M7AudioId.RoundStart, M7AudioId.RoundEnd, M7AudioId.MatchEnd,
             M7AudioId.UiClick, M7AudioId.UiHover, M7AudioId.GrenadeExplosion, M7AudioId.FlashBang,
-            M7AudioId.SmokeDeploy, M7AudioId.ZoneWarning
+            M7AudioId.SmokeDeploy, M7AudioId.ZoneWarning,
+            M7AudioId.MagazineOut, M7AudioId.MagazineIn, M7AudioId.Bolt, M7AudioId.Jump,
+            M7AudioId.Land, M7AudioId.Slide, M7AudioId.Vault, M7AudioId.Kick, M7AudioId.Gear
         };
 
         public static readonly M7AudioId[] Music = { M7AudioId.AmbArena, M7AudioId.MusicMenu, M7AudioId.MusicMatch };

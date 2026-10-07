@@ -50,6 +50,20 @@ namespace BeMyArms.M7
             return (RectTransform)go.transform;
         }
 
+        public static InputField TextInput(Transform parent, string name, string value)
+        {
+            var panel = Panel(parent, name, new Color(0.12f, 0.15f, 0.19f, 1f));
+            var field = panel.gameObject.AddComponent<InputField>();
+            var text = Label(panel.transform, "Text", "", 26, TextAnchor.MiddleLeft);
+            Fill(text.rectTransform, 14f, 4f, 14f, 4f);
+            text.supportRichText = false;
+            field.textComponent = text;
+            field.targetGraphic = panel;
+            field.text = value;
+            field.characterLimit = 128;
+            return field;
+        }
+
         public static Image Panel(Transform parent, string name, Color color)
         {
             var rect = Rect(parent, name);
@@ -67,6 +81,7 @@ namespace BeMyArms.M7
             label.text = text;
             label.alignment = anchor;
             label.color = Color.white;
+            label.raycastTarget = false;
             label.horizontalOverflow = HorizontalWrapMode.Overflow;
             label.verticalOverflow = VerticalWrapMode.Overflow;
             return label;

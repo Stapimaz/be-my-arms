@@ -14,8 +14,8 @@ namespace BeMyArms.M3
     /// local slot is assigned by the server (direct mode or matchmaker).
     ///
     /// Input sampling is deliberately decoupled from the network send rate: for the local player the
-    /// mouse and look/aim are sampled and applied every rendered frame, while the RPC stream runs at
-    /// <see cref="SendRateHz"/> and consumes the input accumulated since the last send. This is what
+    /// mouse and look/aim are sampled and applied every rendered frame, while movement and its RPC
+    /// stream use the same fixed 60 Hz step on both sides and consume latched edges once. This is what
     /// makes the camera smooth at high frame rates without smoothing over a low-frequency sample.
     ///
     /// Camera/viewmodel/cursor presentation is owned by the M7 layer (M7LocalPlayer); this component
@@ -33,23 +33,16 @@ namespace BeMyArms.M3
         [Header("Tuning (must match the server body)")]
         public float WalkSpeed = 4.5f;
         public float SprintSpeed = 7f;
-        public float JumpSpeed = 7f;
-        public float Gravity = -20f;
-        public float NeckYawLimitDegrees = 80f;
-        public float BodyFollowThresholdDegrees = 50f;
-        public float BodyFollowSpeedDegreesPerSecond = 120f;
+        public float JumpSpeed = M2BodySim.DefaultJumpSpeed;
+        public float Gravity = M2BodySim.DefaultGravity;
+        public float NeckYawLimitDegrees = M2BodySim.DefaultNeckYawLimitDegrees;
+        public float BodyFollowThresholdDegrees = M2BodySim.DefaultBodyFollowThresholdDegrees;
+        public float BodyFollowSpeedDegreesPerSecond = M2BodySim.DefaultBodyFollowSpeedDegreesPerSecond;
         public float BodyAlignSpeedDegreesPerSecond = 540f;
         public float SectorHalfDegrees = 70f;
         public float MaxPitchDegrees = 80f;
 
-        [Header("P2 sector rubber wall (feel)")]
-        public float SectorWallZoneDegrees = 10f;
-        public float SectorKickDegrees = 0.7f;
-        public float SectorKickDecaySeconds = 0.12f;
-        public float SectorWallEdgeEpsilonDegrees = 0.35f;
-
         [Header("Send")]
-        public float SendRateHz = 60f;
         public bool AutoDrive = true;
         public bool AutoBuy = true;
         public bool AutoFire = true;
@@ -59,7 +52,9 @@ namespace BeMyArms.M3
         public float LocalAimPitch { get; private set; }
 
         /// <summary>Diagnostic: the local P2 aim offset from the body-centred sector (degrees).</summary>
-        public float LocalAimOffset => M2BodySim.Normalize(LocalAimYaw - _smoothedBodyYaw);
+        public float LocalAimOffset => M2BodySim.Normalize(LocalAimYaw - (_body != null ? _body.State.Value.BodyYaw : 0f));
+        public int SectorBlockedSide { get; private set; }
+        public uint ControlEpoch => _epoch;
 
         /// <summary>Last raw mouse delta the local input path read (diagnostics).</summary>
         public Vector2 LastMouseDelta { get; private set; }
@@ -92,7 +87,12 @@ namespace BeMyArms.M3
         {
             get
             {
-                if (IsOwnBody && EffectiveRole == 0) return _reconciler.Predicted.LookYaw;
+                if (IsOwnBody && EffectiveRole == 0 && _reconciler != null)
+                {
+                    var state = _reconciler.Predicted;
+                    float offset = M2BodySim.Normalize(state.LookYaw + _accumP1.LookYawDelta - state.BodyYaw);
+                    return M2BodySim.Normalize(state.BodyYaw + Mathf.Clamp(offset, -NeckYawLimitDegrees, NeckYawLimitDegrees));
+                }
                 if (_body != null && _body.IsSpawned) return _body.State.Value.LookYaw;
                 return 0f;
             }
@@ -103,7 +103,7 @@ namespace BeMyArms.M3
         {
             get
             {
-                if (IsOwnBody && EffectiveRole == 0) return _reconciler.Predicted.LookPitch;
+                if (IsOwnBody && EffectiveRole == 0 && _reconciler != null) return Mathf.Clamp(_reconciler.Predicted.LookPitch + _accumP1.LookPitchDelta, -MaxPitchDegrees, MaxPitchDegrees);
                 if (_body != null && _body.IsSpawned) return _body.State.Value.LookPitch;
                 return 0f;
             }
@@ -116,10 +116,10 @@ namespace BeMyArms.M3
 
         uint _p1Sequence = 1; // sequence of the in-progress tick (0 is reserved for "none acked")
         uint _p2Sequence;
-        float _nextSendTime;
         float _autoClock;
-        float _smoothedBodyYaw;
-        bool _hasSmoothedYaw;
+        float _tickAccumulator;
+        uint _epoch = uint.MaxValue, _snapshotTick;
+        int _resetRole = -1;
         int _boughtRound = -1;
         int _utilityRound = -1;
         float _utilityStartTime;
@@ -127,17 +127,18 @@ namespace BeMyArms.M3
         bool _smokeSent;
         bool _flashSent;
 
-        // Raw (unclamped) local P2 aim; the presentation and the sent aim are clamped to the sector.
+        // Legal world-space local P2 aim; presentation and the submitted aim use this exact value.
         float _manualAimYaw;
         float _manualAimPitch;
-        bool _aimInitialized;
-        M3SectorWall.State _sectorWall;
+        bool _pendingFire, _pendingReload;
+        bool _fireArmed;
+        uint _lastServerShots;
 
         // Edge-triggered actions are latched every frame so a press between send ticks is not lost.
         M2P1Input _pendingP1;
         bool _pendingGrenade, _pendingSmoke, _pendingFlash;
 
-        // Input accumulated over the current tick; sent at SendRateHz.
+        // Input accumulated over the current fixed simulation tick.
         M2P1Input _accumP1;
 
         // Local P2 trigger feedback (presentation only; never authoritative).
@@ -149,18 +150,16 @@ namespace BeMyArms.M3
         Vector3 _visualPosition;
         float _visualYaw;
         bool _hasVisual;
+        uint _visualEpoch = uint.MaxValue;
 
         int BodiesPerTeam => Mathf.Clamp(M3Config.BodiesPerTeam, 1, 2);
         public int EffectiveRole => M3DuelSlots.IsValidSlot(LocalSlotIndex, BodiesPerTeam) ? M3DuelSlots.RoleOf(LocalSlotIndex) : M3Config.ClientRole;
         public int LocalTeam => M3DuelSlots.IsValidSlot(LocalSlotIndex, BodiesPerTeam) ? M3DuelSlots.TeamOf(LocalSlotIndex, BodiesPerTeam) : M3Config.ClientTeam;
         public int LocalBody => M3DuelSlots.IsValidSlot(LocalSlotIndex, BodiesPerTeam) ? M3DuelSlots.BodyOf(LocalSlotIndex, BodiesPerTeam) : M3Config.ClientBody;
-        public bool IsOwnBody => _body != null && _body.IsSpawned && _body.TeamIndex == LocalTeam && _body.BodyId == LocalBody;
+        public bool IsOwnBody => M3DuelSlots.IsValidSlot(LocalSlotIndex, BodiesPerTeam) && _body != null && _body.IsSpawned && _body.TeamIndex == LocalTeam && _body.BodyId == LocalBody;
 
         void Start()
         {
-            if (!M3DuelSlots.IsValidSlot(LocalSlotIndex, BodiesPerTeam))
-                LocalSlotIndex = M3DuelSlots.Encode(M3Config.ClientTeam, M3Config.ClientBody, M3Config.ClientRole, BodiesPerTeam);
-
             AutoDrive = M3Config.AutoDrive;
             AutoBuy = M3Config.AutoBuy;
             AutoFire = M3Config.AutoFire;
@@ -178,6 +177,7 @@ namespace BeMyArms.M3
                 BodyFollowSpeedDegreesPerSecond = BodyFollowSpeedDegreesPerSecond,
                 BodyAlignSpeedDegreesPerSecond = BodyAlignSpeedDegreesPerSecond,
                 SectorHalfDegrees = SectorHalfDegrees,
+                SectorOvertravelDegrees = M3SectorWall.OvertravelDegrees,
                 MaxPitchDegrees = MaxPitchDegrees
             };
             _predictSim.Initialize(0f);
@@ -196,96 +196,79 @@ namespace BeMyArms.M3
             if (_director == null) _director = M3DuelDirector.Instance;
 
             float dt = Mathf.Max(0.0001f, Time.deltaTime);
-            PollInputEdges();
-
             if (!IsOwnBody)
             {
                 ApplyPresentation(dt);
                 return;
             }
 
+            if (_epoch != _body.State.Value.ControlEpoch || _resetRole != EffectiveRole) ResetControls();
+            PollInputEdges();
+
             HandleBuy();
 
-            bool sendTick = Time.time >= _nextSendTime;
-            if (sendTick) _nextSendTime = Time.time + 1f / Mathf.Max(1f, SendRateHz);
-            float sendDt = 1f / Mathf.Max(1f, SendRateHz);
-
-            if (EffectiveRole == 0) UpdateP1Role(dt, sendDt, sendTick);
-            else UpdateP2Role(dt, sendTick);
+            _tickAccumulator = Mathf.Min(0.1f, _tickAccumulator + dt);
+            if (EffectiveRole == 0) UpdateP1Role(dt);
+            else UpdateP2Role(dt);
 
             ApplyPresentation(dt);
         }
 
         // ---- P1 ----
 
-        void UpdateP1Role(float dt, float sendDt, bool sendTick)
+        void UpdateP1Role(float dt)
         {
             // Look is accepted during Buy; translation/actions are not. Sanitise on both the
             // prediction and the sent command so the client never visually simulates movement the
             // server is rejecting.
-            bool canAct = _director != null && _director.InputsAccepted;
-
-            if (AutoDrive)
-            {
-                DrainSnapshots();
-                if (!sendTick) return;
-                M2P1Input input = canAct ? BuildAutoP1(sendDt) : new M2P1Input();
-                input.Sequence = _p1Sequence++;
-                _reconciler.Predict(input, sendDt, _predictSim);
-                _body.SubmitP1ServerRpc(input);
-                return;
-            }
-
-            // Local player: sample and predict every rendered frame so look/body presentation is
-            // smooth; accumulate the same input and send it once per network tick.
-            M2P1Input frame = BuildManualP1(canAct);
-            frame.Sequence = _p1Sequence;
-            _reconciler.Predict(frame, dt, _predictSim);
-
-            _accumP1.MoveX = frame.MoveX;
-            _accumP1.MoveZ = frame.MoveZ;
-            _accumP1.Sprint = frame.Sprint;
-            _accumP1.AlignBody = frame.AlignBody;
-            _accumP1.LookYawDelta += frame.LookYawDelta;
-            _accumP1.LookPitchDelta += frame.LookPitchDelta;
-            _accumP1.Jump |= frame.Jump;
-            _accumP1.Dodge |= frame.Dodge;
-            _accumP1.Slide |= frame.Slide;
-            _accumP1.Vault |= frame.Vault;
-            _accumP1.LightKick |= frame.LightKick;
-            _accumP1.HeavyKick |= frame.HeavyKick;
-
             DrainSnapshots();
-
-            if (!sendTick) return;
-            _accumP1.Sequence = _p1Sequence++;
-            _body.SubmitP1ServerRpc(_accumP1);
-            _accumP1 = default;
+            bool canLook = _director != null && (_director.IsBuy || _director.IsLive) && _body.Alive.Value;
+            bool canAct = canLook && _director.IsLive;
+            if (!canLook) { _accumP1 = default; _pendingP1 = default; _tickAccumulator = 0f; return; }
+            if (!AutoDrive)
+            {
+                if (!M3LocalInput.GameplayActive) { _accumP1 = default; _pendingP1 = default; }
+                M2P1Input frame = BuildManualP1(canAct);
+                M3InputStream.Accumulate(ref _accumP1, frame);
+            }
+            while (_tickAccumulator + 1e-6f >= M3InputStream.TickSeconds)
+            {
+                _tickAccumulator = Mathf.Max(0f, _tickAccumulator - M3InputStream.TickSeconds);
+                M2P1Input input = AutoDrive ? (canAct ? BuildAutoP1(M3InputStream.TickSeconds) : default) : _accumP1;
+                if (!canAct) input = M3InputStream.LookOnly(input);
+                input.Sequence = _p1Sequence++;
+                input.ControlEpoch = _epoch;
+                input.LookYawDelta = Mathf.Clamp(input.LookYawDelta, -180f, 180f);
+                input.LookPitchDelta = Mathf.Clamp(input.LookPitchDelta, -180f, 180f);
+                _reconciler.Predict(input, M3InputStream.TickSeconds, _predictSim);
+                _body.SubmitP1ServerRpc(input);
+                _accumP1 = M3InputStream.Held(_accumP1);
+            }
         }
 
         // ---- P2 ----
 
-        void UpdateP2Role(float dt, bool sendTick)
+        void UpdateP2Role(float dt)
         {
-            UpdateSmoothedBodyYaw(dt);
-
-            if (AutoDrive)
-            {
-                if (!sendTick) return;
-                M2P2Input auto = BuildAutoP2();
-                auto.Sequence = ++_p2Sequence;
-                SubmitP2(auto);
-                return;
-            }
-
             // Local player: mouse drives the raw aim every frame; presentation and the sent command
             // use the sector-clamped aim. Fire/reload are held state, sent each tick. Local trigger
             // feedback is detected every frame (independent of the authoritative ammo replication)
             // so the shot feels immediate.
-            M2P2Input input = BuildManualP2();
-            DetectLocalShot(input, dt);
-            if (!sendTick) return;
+            M2P2Input input = AutoDrive ? BuildAutoP2() : BuildManualP2(dt);
+            bool live = _director != null && _director.IsLive && _body.Alive.Value;
+            if (!live || (!AutoDrive && !M3LocalInput.GameplayActive))
+            { input.Fire = input.Reload = false; _pendingFire = _pendingReload = false; }
+            if (!AutoDrive) DetectLocalShot(input, dt);
+            _pendingFire |= input.Fire;
+            _pendingReload |= input.Reload;
+            if (_tickAccumulator < M3InputStream.TickSeconds) return;
+            _tickAccumulator %= M3InputStream.TickSeconds;
             input.Sequence = ++_p2Sequence;
+            input.ControlEpoch = _epoch;
+            input.BodyTick = _body.State.Value.SimulationTick;
+            input.Fire |= _pendingFire;
+            input.Reload |= _pendingReload;
+            _pendingFire = _pendingReload = false;
             SubmitP2(input);
         }
 
@@ -296,10 +279,16 @@ namespace BeMyArms.M3
         void DetectLocalShot(in M2P2Input input, float dt)
         {
             int serverAmmo = _body.Ammo.Value;
-            if (serverAmmo != _lastServerAmmo) { _lastServerAmmo = serverAmmo; _optimisticSpent = 0; }
+            uint shots = _body.ShotsFired.Value;
+            uint confirmed = shots >= _lastServerShots ? shots - _lastServerShots : 0;
+            _optimisticSpent = Mathf.Max(0, _optimisticSpent - (int)confirmed);
+            _lastServerShots = shots;
+            if (serverAmmo > _lastServerAmmo) _optimisticSpent = 0;
+            _lastServerAmmo = serverAmmo;
             _localShotCooldown = Mathf.Max(0f, _localShotCooldown - dt);
+            if (!input.Fire && _localShotCooldown <= 0f) _optimisticSpent = 0;
 
-            if (!M3LocalInput.GameplayActive || _body.Reloading.Value) return;
+            if (!M3LocalInput.GameplayActive || !_body.Alive.Value || _director == null || !_director.IsLive || _body.Reloading.Value || _body.BlindRemaining.Value > 0f || input.Reload) return;
             if (!input.Fire || _localShotCooldown > 0f) return;
             if (serverAmmo - _optimisticSpent <= 0) return;
 
@@ -328,40 +317,59 @@ namespace BeMyArms.M3
             else HandleUtility();
         }
 
-        void UpdateSmoothedBodyYaw(float dt)
-        {
-            float serverBodyYaw = _body.State.Value.BodyYaw;
-            if (!_hasSmoothedYaw)
-            {
-                _smoothedBodyYaw = serverBodyYaw;
-                _hasSmoothedYaw = true;
-                return;
-            }
-            float k = 1f - Mathf.Exp(-12f * dt);
-            _smoothedBodyYaw = Mathf.LerpAngle(_smoothedBodyYaw, serverBodyYaw, k);
-        }
-
         void DrainSnapshots()
         {
+            if (_snapshotTick == _body.State.Value.SimulationTick) return;
+            _snapshotTick = _body.State.Value.SimulationTick;
             _reconciler.Reconcile(_body.State.Value, _body.LastAckedP1Sequence.Value, _predictSim);
+        }
+
+        void ResetControls()
+        {
+            M2BodyState state = _body.State.Value;
+            _epoch = state.ControlEpoch;
+            _resetRole = EffectiveRole;
+            _snapshotTick = state.SimulationTick;
+            _reconciler.Reset(state);
+            _predictSim.State = state;
+            _p1Sequence = 1; _p2Sequence = 0;
+            _pendingP1 = _accumP1 = default;
+            _pendingFire = _pendingReload = _pendingGrenade = _pendingSmoke = _pendingFlash = false;
+            _fireArmed = false;
+            _tickAccumulator = 0f;
+            _manualAimYaw = LocalAimYaw = state.AimYaw;
+            _manualAimPitch = LocalAimPitch = state.AimPitch;
+            SectorBlockedSide = 0;
+            _sectorReturnVelocity = 0f;
+            _localShotCooldown = 0f; _optimisticSpent = _pendingLocalShots = 0;
+            _lastServerAmmo = _body.Ammo.Value;
+            _lastServerShots = _body.ShotsFired.Value;
+            _hasVisual = false;
+            LastMouseDelta = Vector2.zero;
         }
 
         /// <summary>Latch edge-triggered actions every frame so the rate-limited send cannot miss one.</summary>
         void PollInputEdges()
         {
-            if (AutoDrive || !M3LocalInput.GameplayActive) return;
+            if (AutoDrive || !M3LocalInput.GameplayActive || _director == null || !_director.IsLive || !_body.Alive.Value)
+            { _pendingP1 = default; _pendingGrenade = _pendingSmoke = _pendingFlash = false; return; }
 #if ENABLE_INPUT_SYSTEM
             Keyboard kb = Keyboard.current;
             if (kb == null) return;
-            if (kb.spaceKey.wasPressedThisFrame) _pendingP1.Jump = true;
-            if (kb.qKey.wasPressedThisFrame) _pendingP1.Dodge = true;
-            if (kb.cKey.wasPressedThisFrame) _pendingP1.Slide = true;
-            if (kb.eKey.wasPressedThisFrame) _pendingP1.Vault = true;
-            if (kb.fKey.wasPressedThisFrame) _pendingP1.LightKick = true;
-            if (kb.vKey.wasPressedThisFrame) _pendingP1.HeavyKick = true;
-            if (kb.gKey.wasPressedThisFrame) _pendingGrenade = true;
-            if (kb.tKey.wasPressedThisFrame) _pendingSmoke = true;
-            if (kb.yKey.wasPressedThisFrame) _pendingFlash = true;
+            if (EffectiveRole == 0)
+            {
+                if (kb.spaceKey.wasPressedThisFrame) _pendingP1.Jump = true;
+                if (kb.qKey.wasPressedThisFrame) _pendingP1.Dodge = true;
+                if (kb.cKey.wasPressedThisFrame) _pendingP1.Slide = true;
+                if (kb.fKey.wasPressedThisFrame) _pendingP1.LightKick = true;
+                if (kb.vKey.wasPressedThisFrame) _pendingP1.HeavyKick = true;
+            }
+            else
+            {
+                if (kb.gKey.wasPressedThisFrame) _pendingGrenade = true;
+                if (kb.tKey.wasPressedThisFrame) _pendingSmoke = true;
+                if (kb.yKey.wasPressedThisFrame) _pendingFlash = true;
+            }
 #endif
         }
 
@@ -453,7 +461,7 @@ namespace BeMyArms.M3
             {
                 input.AimYaw = _body.State.Value.BodyYaw;
             }
-            LocalAimYaw = M2BodySim.ClampToSector(input.AimYaw, _smoothedBodyYaw, Mathf.Max(1f, SectorHalfDegrees - 1f));
+            LocalAimYaw = M2BodySim.ClampToSector(input.AimYaw, _body.State.Value.BodyYaw, SectorHalfDegrees);
             LocalAimPitch = Mathf.Clamp(input.AimPitch, -MaxPitchDegrees, MaxPitchDegrees);
             input.AimYaw = LocalAimYaw;
             return input;
@@ -462,12 +470,11 @@ namespace BeMyArms.M3
         M2P1Input BuildManualP1(bool canAct)
         {
             var input = new M2P1Input();
-            if (canAct)
+            if (canAct && M3LocalInput.GameplayActive)
             {
                 input.Jump = _pendingP1.Jump;
                 input.Dodge = _pendingP1.Dodge;
                 input.Slide = _pendingP1.Slide;
-                input.Vault = _pendingP1.Vault;
                 input.LightKick = _pendingP1.LightKick;
                 input.HeavyKick = _pendingP1.HeavyKick;
             }
@@ -477,13 +484,16 @@ namespace BeMyArms.M3
 #if ENABLE_INPUT_SYSTEM
             Keyboard kb = Keyboard.current;
             Mouse mouse = Mouse.current;
-            if (kb != null && canAct)
+            if (kb != null)
             {
-                input.MoveX = (kb.dKey.isPressed ? 1f : 0f) - (kb.aKey.isPressed ? 1f : 0f);
-                input.MoveZ = (kb.wKey.isPressed ? 1f : 0f) - (kb.sKey.isPressed ? 1f : 0f);
-                input.Sprint = kb.leftShiftKey.isPressed;
                 input.AlignBody = kb.leftAltKey.isPressed;
-                input.Crouch = kb.leftCtrlKey.isPressed;
+                if (canAct)
+                {
+                    input.MoveX = (kb.dKey.isPressed ? 1f : 0f) - (kb.aKey.isPressed ? 1f : 0f);
+                    input.MoveZ = (kb.wKey.isPressed ? 1f : 0f) - (kb.sKey.isPressed ? 1f : 0f);
+                    input.Sprint = kb.leftShiftKey.isPressed;
+                    input.Crouch = kb.leftCtrlKey.isPressed;
+                }
             }
             if (mouse != null)
             {
@@ -505,7 +515,9 @@ namespace BeMyArms.M3
             return input;
         }
 
-        M2P2Input BuildManualP2()
+        float _sectorReturnVelocity;
+
+        M2P2Input BuildManualP2(float dt)
         {
             float deltaYaw = 0f;
 #if ENABLE_INPUT_SYSTEM
@@ -520,27 +532,24 @@ namespace BeMyArms.M3
                     _manualAimPitch = Mathf.Clamp(_manualAimPitch - delta.y, -MaxPitchDegrees, MaxPitchDegrees);
                 }
                 M3LocalInput.ConsumeInjectedLook(out float injectedYaw, out float injectedPitch);
-                deltaYaw += injectedYaw;
+                deltaYaw += injectedYaw + M3LocalInput.InjectedLookYawRate * dt;
                 _manualAimPitch = Mathf.Clamp(_manualAimPitch - injectedPitch, -MaxPitchDegrees, MaxPitchDegrees); // injected pitch is "look up" positive
             }
 #endif
-            float innerHalf = Mathf.Max(1f, SectorHalfDegrees - 1f);
-            if (!_aimInitialized) { _manualAimYaw = _smoothedBodyYaw; _aimInitialized = true; }
-            float offset = M2BodySim.Normalize(_manualAimYaw - _smoothedBodyYaw);
-            var tuning = new M3SectorWall.Tuning
+            float bodyYaw = _body.State.Value.BodyYaw;
+            _manualAimYaw = M3SectorWall.Step(_manualAimYaw, bodyYaw, deltaYaw, SectorHalfDegrees,
+                dt, ref _sectorReturnVelocity, out int blockedSide);
+            SectorBlockedSide = blockedSide;
+#if ENABLE_INPUT_SYSTEM
+            if (M3LocalInput.GameplayActive && Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
             {
-                WallZoneDegrees = SectorWallZoneDegrees,
-                KickDegrees = SectorKickDegrees,
-                KickDecaySeconds = SectorKickDecaySeconds,
-                EdgeEpsilonDegrees = SectorWallEdgeEpsilonDegrees
-            };
-            float displayedOffset = M3SectorWall.Step(ref _sectorWall, tuning, offset, deltaYaw, innerHalf, Time.deltaTime, out float targetOffset);
-
-            // The stored target stays legal (no phantom); the inward kick is presentation-only.
-            _manualAimYaw = M2BodySim.Normalize(_smoothedBodyYaw + targetOffset);
+                float requestOffset = M2BodySim.Normalize(_manualAimYaw - bodyYaw);
+                _body.RequestTurnServerRpc(Mathf.Abs(requestOffset) < 1f ? 0 : (requestOffset < 0f ? -1 : 1), _epoch);
+            }
+#endif
 
             var input = new M2P2Input();
-            LocalAimYaw = M2BodySim.Normalize(_smoothedBodyYaw + displayedOffset);
+            LocalAimYaw = _manualAimYaw;
             LocalAimPitch = Mathf.Clamp(_manualAimPitch, -MaxPitchDegrees, MaxPitchDegrees);
             input.AimYaw = LocalAimYaw;
             input.AimPitch = LocalAimPitch;
@@ -549,10 +558,16 @@ namespace BeMyArms.M3
             {
                 Mouse mouse = Mouse.current;
                 Keyboard kb = Keyboard.current;
-                if (mouse != null) input.Fire = mouse.leftButton.isPressed;
-                if (kb != null) input.Reload = kb.rKey.isPressed;
+                bool pressed = mouse != null && mouse.leftButton.wasPressedThisFrame;
+                bool canFire = _director != null && _director.IsLive && _body.Alive.Value;
+                input.Fire = M3InputStream.FireGate(ref _fireArmed, canFire, mouse != null && mouse.leftButton.isPressed, pressed);
+                if (input.Fire && pressed) _pendingFire = true;
+                input.Fire |= _pendingFire;
+                if (kb != null && kb.rKey.wasPressedThisFrame) _pendingReload = true;
+                input.Reload = _pendingReload;
                 input.Fire |= M3LocalInput.InjectedFire;
             }
+            else M3InputStream.FireGate(ref _fireArmed, false, false, false);
 #endif
             return input;
         }
@@ -580,6 +595,7 @@ namespace BeMyArms.M3
             if (Presentation == null || _body == null || !_body.IsSpawned) return;
 
             M2BodyState state = IsOwnBody && EffectiveRole == 0 ? _reconciler.Predicted : _body.State.Value;
+            if (_visualEpoch != state.ControlEpoch) { _visualEpoch = state.ControlEpoch; _hasVisual = false; }
             Vector3 targetPos = new Vector3(state.PosX, state.PosY, state.PosZ);
             float targetYaw = state.BodyYaw;
 

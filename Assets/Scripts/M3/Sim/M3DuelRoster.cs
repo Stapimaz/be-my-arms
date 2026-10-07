@@ -167,7 +167,7 @@ namespace BeMyArms.M3
 
         public void SetBot(int slot)
         {
-            if (M3DuelSlots.IsValidSlot(slot, BodiesPerTeam)) _botSlots.Add(slot);
+            if (M3DuelSlots.IsValidSlot(slot, BodiesPerTeam) && !SlotTaken(slot)) _botSlots.Add(slot);
         }
 
         public void ClearBot(int slot) => _botSlots.Remove(slot);
@@ -185,6 +185,16 @@ namespace BeMyArms.M3
                 return slot;
             }
             return -1;
+        }
+
+        /// <summary>Explicit practice leave frees the reconnect reservation as well as ownership.</summary>
+        public int ReleaseReservation(ulong clientId)
+        {
+            int slot = SlotFor(clientId);
+            if (slot < 0) return -1;
+            var tokens = new List<string>(_tokenSlot.Keys);
+            foreach (string token in tokens) if (_tokenSlot[token] == slot) _tokenSlot.Remove(token);
+            return Release(clientId);
         }
 
         public bool HasSlot(ulong clientId, int slot)
@@ -236,6 +246,35 @@ namespace BeMyArms.M3
             foreach (var kvp in _connectionSlot)
                 if (kvp.Value == slot) return kvp.Key;
             return ulong.MaxValue;
+        }
+
+        public ulong OwnerOf(int slot) => Owner(slot);
+
+        /// <summary>Private practice requests are exact: a taken/reserved role is never silently substituted.</summary>
+        public int AssignExact(ulong clientId, string token, int slot, out ulong displaced)
+        {
+            displaced = ulong.MaxValue;
+            if (string.IsNullOrEmpty(token) || !M3DuelSlots.IsValidSlot(slot, BodiesPerTeam)) return -1;
+            if (_tokenSlot.TryGetValue(token, out int remembered)) return AssignSlot(clientId, token, remembered, out displaced);
+            if (SlotTaken(slot) || !string.IsNullOrEmpty(TokenForSlot(slot))) return -1;
+            return AssignSlot(clientId, token, slot, out displaced);
+        }
+
+        /// <summary>Atomically exchange the two roles of a body, including token reconnect bindings.</summary>
+        public void SwapBodyRoles(int slotP1)
+        {
+            int slotP2 = slotP1 + 1;
+            var clients = new List<ulong>(_connectionSlot.Keys);
+            foreach (ulong client in clients)
+                if (_connectionSlot[client] == slotP1) _connectionSlot[client] = slotP2;
+                else if (_connectionSlot[client] == slotP2) _connectionSlot[client] = slotP1;
+            var tokens = new List<string>(_tokenSlot.Keys);
+            foreach (string token in tokens)
+                if (_tokenSlot[token] == slotP1) _tokenSlot[token] = slotP2;
+                else if (_tokenSlot[token] == slotP2) _tokenSlot[token] = slotP1;
+            bool bot1 = _botSlots.Remove(slotP1), bot2 = _botSlots.Remove(slotP2);
+            if (bot1) _botSlots.Add(slotP2);
+            if (bot2) _botSlots.Add(slotP1);
         }
 
         public int FindFreeSlot()

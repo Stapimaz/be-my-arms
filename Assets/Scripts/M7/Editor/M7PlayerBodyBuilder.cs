@@ -20,15 +20,14 @@ namespace BeMyArms.M7.EditorTools
         public const string BodyPrefabPath = "Assets/Art/Characters/M7PlayerBody.prefab";
         public const string DirectorPrefabPath = "Assets/Art/Characters/M7PlayerDirector.prefab";
 
-        const string P1SkinPath = M7CharacterBodyBuilder.P1SkinPrefabPath;
-        const string P2SkinPath = M7CharacterBodyBuilder.P2SkinPrefabPath;
+        const string P1SkinPath = M7FighterBuilder.P1SkinPath;
+        const string P2SkinPath = M7FighterBuilder.P2SkinPath;
         const string RiflePath = "Assets/Art/Weapons/Prefabs/BMA_Weapon_Rifle.prefab";
-        const string PrimaryRiflePath = M7CharacterBodyBuilder.RiflePrefabPath;
+        const string PrimaryRiflePath = M7FighterBuilder.RiflePath;
 
         public static void EnsurePrefabs(out GameObject bodyPrefab, out GameObject directorPrefab)
         {
-            M7CharacterBodyBuilder.EnsureImportSettings();
-            M7CharacterBodyBuilder.BuildAll();
+            M7FighterBuilder.BuildAll();
             bodyPrefab = BuildBody();
             directorPrefab = BuildDirector(bodyPrefab);
         }
@@ -52,6 +51,19 @@ namespace BeMyArms.M7.EditorTools
             var p2Skin = AssetDatabase.LoadAssetAtPath<GameObject>(P2SkinPath);
             M5AssembledBody assembled = M5MountAssembler.Assemble(rigInstance, p1Skin, p2Skin);
             if (!assembled.IsValid) Debug.LogWarning("[M7] player body rig invalid: " + assembled.Report);
+            // P2 is a separate cosmetic surface, skinned to P1's SAME bone transforms. There
+            // is no second locomotion Animator or translated, independently rotating fragment.
+            var sharedAnimator = FindAnimator(assembled.P1Skin);
+            var armsSurface = Find(sharedAnimator.transform, "P2_Surface");
+            if (armsSurface != null) armsSurface.SetParent(assembled.P2Skin.transform, true);
+            foreach (var builder in rigInstance.GetComponentsInChildren<RigBuilder>(true)) Object.DestroyImmediate(builder);
+            var authority = go.GetComponent<M3DuelBody>();
+            var prediction = go.GetComponent<M3DuelClient>();
+            authority.JumpSpeed = prediction.JumpSpeed = BeMyArms.M2.M2BodySim.DefaultJumpSpeed;
+            authority.Gravity = prediction.Gravity = BeMyArms.M2.M2BodySim.DefaultGravity;
+            authority.NeckYawLimitDegrees = prediction.NeckYawLimitDegrees = BeMyArms.M2.M2BodySim.DefaultNeckYawLimitDegrees;
+            authority.BodyFollowThresholdDegrees = prediction.BodyFollowThresholdDegrees = BeMyArms.M2.M2BodySim.DefaultBodyFollowThresholdDegrees;
+            authority.BodyFollowSpeedDegreesPerSecond = prediction.BodyFollowSpeedDegreesPerSecond = BeMyArms.M2.M2BodySim.DefaultBodyFollowSpeedDegreesPerSecond;
 
             // Hitbox triggers stay out of the camera deoccluder's raycasts (Default layer only) and
             // out of any Unity physics query, since gameplay collision is deterministic and custom.
@@ -64,7 +76,7 @@ namespace BeMyArms.M7.EditorTools
             var aimPivot = new GameObject("AimPivot");
             aimPivot.transform.SetParent(weaponAnchor != null ? weaponAnchor : rigInstance.transform, false);
             // Pulled slightly back from the anchor so the support arm can reach the foregrip.
-            aimPivot.transform.localPosition = new Vector3(0f, 0f, -0.05f);
+            aimPivot.transform.localPosition = new Vector3(.10f, -.04f, -.17f);
             aimPivot.transform.localRotation = Quaternion.identity;
 
             var riflePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrimaryRiflePath);
@@ -90,12 +102,17 @@ namespace BeMyArms.M7.EditorTools
             animator.P1Skin = assembled.P1Skin != null ? assembled.P1Skin.transform : null;
             animator.P2Skin = assembled.P2Skin != null ? assembled.P2Skin.transform : null;
             animator.P1Animator = FindAnimator(assembled.P1Skin);
-            animator.P2Animator = FindAnimator(assembled.P2Skin);
+            animator.P2Animator = animator.P1Animator;
             animator.AimPivot = aimPivot.transform;
             animator.Weapon = rifle.transform;
             animator.Muzzle = muzzle;
             animator.ArmIkL = ikL;
             animator.ArmIkR = ikR;
+            var pose = go.AddComponent<M7RiflePose>();
+            pose.Model = animator.P2Animator.transform;
+            pose.Weapon = rifle.transform;
+            pose.Body = animator.Body;
+            M7SmoothFighterBuilder.AuthorGrips(sharedAnimator.gameObject, rifle);
 
             var client = go.GetComponent<M3DuelClient>();
             if (client != null) client.Presentation = rigInstance.transform;

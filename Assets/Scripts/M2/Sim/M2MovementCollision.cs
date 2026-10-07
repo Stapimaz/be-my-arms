@@ -177,44 +177,6 @@ namespace BeMyArms.M2
             return any;
         }
 
-        /// <summary>
-        /// Find a vault landing: the first blocking box ahead whose top is reachable (above step
-        /// height, at most maxRise). Returns the landing feet position on/behind it.
-        /// </summary>
-        public bool TryFindVault(float ox, float oy, float oz, float dx, float dz, float reach, float maxRise,
-            out float tx, out float ty, out float tz)
-        {
-            tx = ty = tz = 0f;
-            if (Solids.Count == 0) return false;
-
-            float probeY = oy + BodyHeight * 0.5f;
-            float bestT = float.MaxValue;
-            bool found = false;
-            Box landing = default;
-
-            for (int i = 0; i < Solids.Count; i++)
-            {
-                Box b = Solids[i];
-                float rise = b.MaxY - oy;
-                if (rise <= StepHeight + 0.05f || rise > maxRise) continue;
-                if (!RayBox(b, ox, probeY, oz, dx, 0f, dz, out float t)) continue;
-                if (t > 0f && t <= reach && t < bestT)
-                {
-                    bestT = t;
-                    landing = b;
-                    found = true;
-                }
-            }
-
-            if (!found) return false;
-
-            tx = ox + dx * (bestT + BodyRadius + 0.6f);
-            tz = oz + dz * (bestT + BodyRadius + 0.6f);
-            float ground = SurfaceHeight(tx, tz, landing.MaxY + 0.5f);
-            ty = Math.Max(ground, landing.MaxY);
-            return true;
-        }
-
         /// <summary>Slab-method ray/AABB intersection; t is the entry distance.</summary>
         static bool RayBox(Box b, float ox, float oy, float oz, float dx, float dy, float dz, out float t)
         {

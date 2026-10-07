@@ -62,7 +62,16 @@ namespace BeMyArms.M3
                 return;
             }
 
-            int slot = Registry.AssignPreferred(request.ClientNetworkId, token, desired, out ulong displaced);
+            ulong displaced;
+            int slot = M3Config.StrictSlots
+                ? Registry.AssignExact(request.ClientNetworkId, token, desired, out displaced)
+                : Registry.AssignPreferred(request.ClientNetworkId, token, desired, out displaced);
+            if (slot < 0)
+            {
+                response.Approved = false;
+                response.Reason = "That role is occupied or reserved for its reconnecting player. Choose the other role.";
+                return;
+            }
             if (displaced != ulong.MaxValue)
             {
                 Trace($"reclaim slot {M3DuelSlots.Name(slot, Registry.BodiesPerTeam)} -> client {request.ClientNetworkId}; dropping stale {displaced}");

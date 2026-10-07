@@ -169,12 +169,14 @@ namespace BeMyArms.QA
             [CliArg("movex", "Body-relative strafe [-1..1]; 0 releases.")] float moveX = 0f,
             [CliArg("movez", "Body-relative forward [-1..1]; 0 releases.")] float moveZ = 0f,
             [CliArg("fire", "Hold the trigger while true.")] bool fire = false,
-            [CliArg("crouch", "Hold crouch while true.")] bool crouch = false)
+            [CliArg("crouch", "Hold crouch while true.")] bool crouch = false,
+            [CliArg("yaw_rate", "Sustained P2 mouse yaw in degrees per second; 0 releases pressure.")] float yawRate = 0f)
         {
             M3LocalInput.InjectedMoveX = moveX;
             M3LocalInput.InjectedMoveZ = moveZ;
             M3LocalInput.InjectedFire = fire;
             M3LocalInput.InjectedCrouch = crouch;
+            M3LocalInput.InjectedLookYawRate = yawRate;
             return new QaSimpleResult { Success = true, Detail = $"move=({moveX},{moveZ}) fire={fire} crouch={crouch}" };
         }
 
@@ -191,23 +193,43 @@ namespace BeMyArms.QA
 
             if (local != null && local.Body != null)
             {
-                M7CharacterAnimator animator = local.Body.GetComponent<M7CharacterAnimator>();
-                if (animator != null) AppendGrips(sb, "body", animator.ArmIkL, animator.ArmIkR);
+                var pose = local.Body.GetComponent<M7RiflePose>();
+                if (pose != null) sb.AppendLine($"body: L {pose.LeftGripError:0.000}m R {pose.RightGripError:0.000}m reload={pose.ReloadProgress:0.00}");
             }
 
             GameObject viewmodel = GameObject.Find("M7_P2Viewmodel");
             if (viewmodel != null)
             {
-                TwoBoneIKConstraint left = null, right = null;
-                foreach (TwoBoneIKConstraint c in viewmodel.GetComponentsInChildren<TwoBoneIKConstraint>(true))
-                {
-                    if (c.gameObject.name == "ArmIK_L") left = c;
-                    else if (c.gameObject.name == "ArmIK_R") right = c;
-                }
-                AppendGrips(sb, "viewmodel", left, right);
+                var pose = viewmodel.GetComponent<M7RiflePose>();
+                if (pose != null) sb.AppendLine($"viewmodel: L {pose.LeftGripError:0.000}m R {pose.RightGripError:0.000}m reload={pose.ReloadProgress:0.00}");
             }
 
             return new QaSimpleResult { Success = true, Detail = sb.ToString().Trim().Length == 0 ? "no grip rigs found" : sb.ToString().Trim() };
+        }
+
+        [CliCommand("qa_presentation_state", "Structural rendered-player presentation state: grips, animation, listener, audio and muzzle layering.",
+            MainThreadRequired = true, RuntimeOnly = true, Tags = new[] { "qa", "animation" })]
+        public static object PresentationState()
+        {
+            var player = Object.FindAnyObjectByType<M7LocalPlayer>();
+            var client = player != null ? player.LocalClient : null;
+            var world = client != null ? client.Body.GetComponent<M7RiflePose>() : null;
+            var view = player != null && player.Viewmodel != null ? player.Viewmodel.GetComponent<M7RiflePose>() : null;
+            var animator = client != null ? client.Body.GetComponent<M7CharacterAnimator>() : null;
+            return new
+            {
+                WorldLeftGripError = world != null ? world.LeftGripError : -1,
+                WorldRightGripError = world != null ? world.RightGripError : -1,
+                ViewLeftGripError = view != null ? view.LeftGripError : -1,
+                ViewRightGripError = view != null ? view.RightGripError : -1,
+                ReloadProgress = view != null ? view.ReloadProgress : -1,
+                Listeners = Object.FindObjectsByType<AudioListener>().Count(x => x.enabled),
+                AudioVoicesPlaying = Object.FindObjectsByType<AudioSource>().Count(x => x.isPlaying && !x.loop),
+                ViewmodelLayer = view != null ? view.gameObject.layer : -1,
+                MoveX = animator != null ? animator.P1Animator.GetFloat("MoveX") : 0,
+                MoveZ = animator != null ? animator.P1Animator.GetFloat("MoveZ") : 0,
+                BodyAnimation = animator != null ? animator.P1Animator.GetCurrentAnimatorStateInfo(0).shortNameHash : 0
+            };
         }
 
         static void AppendGrips(System.Text.StringBuilder sb, string tag, TwoBoneIKConstraint left, TwoBoneIKConstraint right)
@@ -225,6 +247,26 @@ namespace BeMyArms.QA
         }
 
         // ---- Structured gameplay state -------------------------------------------------------
+
+        [CliCommand("qa_headless_controls", "Enable the real manual input path in a headless correctness run (no presentation/focus gate exists there).",
+            MainThreadRequired = true, RuntimeOnly = true, Tags = new[] { "qa", "input" })]
+        public static QaSimpleResult HeadlessControls()
+        {
+            if (!Application.isBatchMode) return new QaSimpleResult { Success = false, Detail = "Headless runs only." };
+            foreach (var client in Object.FindObjectsByType<M3DuelClient>(FindObjectsSortMode.None)) client.AutoDrive = false;
+            M3LocalInput.GameplayActive = true;
+            return new QaSimpleResult { Success = true, Detail = "Manual controls enabled for headless input-path checks." };
+        }
+
+        [CliCommand("qa_practice_action", "Request the same authoritative practice reset/swap as the player-facing tools: 0 encounter, 1 match, 2 role swap.",
+            MainThreadRequired = true, RuntimeOnly = true, Tags = new[] { "qa", "input" })]
+        public static QaSimpleResult PracticeAction([CliArg("action", "Practice action 0..2.")] int action = 0)
+        {
+            if (M3DuelDirector.Instance == null || action < 0 || action > 2)
+                return new QaSimpleResult { Success = false, Detail = "No director or invalid action." };
+            M3DuelDirector.Instance.PracticeActionServerRpc((byte)action);
+            return new QaSimpleResult { Success = true, Detail = "Practice action requested." };
+        }
 
         [CliCommand("qa_player_state",
             "Compact structured local-player state for gameplay debugging: local slot/body, match phase, input mode/cursor, camera, look/aim, combined-body parts and viewport visibility, weapon/viewmodel, and duplicate objects.",
@@ -271,6 +313,13 @@ namespace BeMyArms.QA
                     result.P1Sequence = local.P1Sequence;
                     result.LastAckedP1 = local.LastAckedP1;
                     result.PendingP1Inputs = local.PendingP1Inputs;
+                    result.ControlEpoch = local.ControlEpoch;
+                    result.AuthoritativePosition = V3(local.Body.State.Value.PosX, local.Body.State.Value.PosY, local.Body.State.Value.PosZ);
+                    result.AuthoritativeCrouching = local.Body.State.Value.Crouching;
+                    result.P1Bot = local.Body.P1Bot.Value;
+                    result.P2Bot = local.Body.P2Bot.Value;
+                    result.ShotsFired = local.Body.ShotsFired.Value;
+                    result.Reloading = local.Body.Reloading.Value;
 
                     M2BodyState state = local.ViewState;
                     result.BodyPosition = V3(state.PosX, state.PosY, state.PosZ);
@@ -678,6 +727,13 @@ namespace BeMyArms.QA
         public uint P1Sequence { get; set; }
         public uint LastAckedP1 { get; set; }
         public int PendingP1Inputs { get; set; }
+        public uint ControlEpoch { get; set; }
+        public float[] AuthoritativePosition { get; set; }
+        public bool AuthoritativeCrouching { get; set; }
+        public bool P1Bot { get; set; }
+        public bool P2Bot { get; set; }
+        public uint ShotsFired { get; set; }
+        public bool Reloading { get; set; }
 
         public string CameraName { get; set; }
         public float[] CameraPosition { get; set; }

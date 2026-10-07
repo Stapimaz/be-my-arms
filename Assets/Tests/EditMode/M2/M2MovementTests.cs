@@ -5,7 +5,7 @@ namespace BeMyArms.M2.Tests
 {
     /// <summary>
     /// Targeted tests for the recovered 3D movement model: gravity/grounding, jump, step-up,
-    /// ramps, walls, sprint/dodge and vault. Pure and deterministic, so server and prediction agree.
+    /// ramps, walls and sprint/dodge. Pure and deterministic, so server and prediction agree.
     /// </summary>
     public class M2MovementTests
     {
@@ -109,19 +109,32 @@ namespace BeMyArms.M2.Tests
         }
 
         [Test]
-        public void Vault_ClearsReachableLowCover()
+        public void Jump_HasBriskRiseAndFasterFall()
         {
-            var collision = new M2MovementCollision();
-            collision.AddBox(-1f, 0f, 1f, 1f, 1.0f, 1.4f);
-            collision.AddSurface(-1f, 1f, 1f, 1.4f, 1.0f, 1.0f, 2);
-            var sim = NewSim(collision);
+            var sim=NewSim(); sim.ApplyP1(new M2P1Input{Jump=true},Dt);
+            float peak=0; int apexFrame=0, landedFrame=0;
+            for(int i=1;i<90;i++)
+            {
+                sim.ApplyP1(default,Dt);
+                if(sim.State.PosY>peak){peak=sim.State.PosY;apexFrame=i;}
+                if(sim.State.Grounded){landedFrame=i;break;}
+            }
+            Assert.That(peak,Is.InRange(.8f,1.05f));
+            Assert.That(apexFrame*Dt,Is.InRange(.20f,.28f));
+            Assert.That(landedFrame*Dt,Is.InRange(.38f,.51f));
+            Assert.Less(landedFrame-apexFrame,apexFrame+1);
+        }
 
-            Step(sim, 30, new M2P1Input { MoveZ = 1f });
-            sim.ApplyP1(new M2P1Input { Vault = true }, Dt);
-            Assert.AreEqual((byte)M2MovementState.Vault, sim.State.MovementState, "vault should start");
-
-            Step(sim, 40, default);
-            Assert.Greater(sim.State.PosZ, 1.2f, "vault should carry the body over the cover");
+        [TestCase(-40f)] [TestCase(40f)]
+        public void Slide_UsesTheSameLookRelativeForwardAsMovement(float yaw)
+        {
+            var sim=NewSim();sim.State.LookYaw=yaw;
+            sim.ApplyP1(new M2P1Input{Slide=true,MoveZ=1},Dt);
+            float dx=sim.State.ActionDirX,dz=sim.State.ActionDirZ;
+            Step(sim,12,default);
+            Assert.That(sim.State.PosX/sim.State.PosZ,Is.EqualTo(dx/dz).Within(.0001f));
+            Assert.That(dx,Is.EqualTo((float)System.Math.Sin(yaw*System.Math.PI/180)).Within(.0001f));
+            Assert.Greater(sim.State.PlanarSpeed,1);
         }
 
         [Test]

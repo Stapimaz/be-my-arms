@@ -16,6 +16,8 @@ namespace BeMyArms.M7
         Screen _screen = Screen.Main;
         M7MapFamily _mode = M7MapFamily.Duel;
         int _role; // 0 = P1, 1 = P2
+        string _joinAddress = "127.0.0.1";
+        string _joinPort = "7780";
         Text _status;
 
         void Start()
@@ -51,6 +53,7 @@ namespace BeMyArms.M7
             Stack(root.transform, new[]
             {
                 ("PLAY", (System.Action)ShowLobby),
+                ("DUO PRACTICE", (System.Action)ShowDuo),
                 ("SETTINGS", (System.Action)ShowSettings),
                 ("QUIT", (System.Action)Quit),
             }, 0.5f, 0.42f, 78f, 18f);
@@ -144,6 +147,52 @@ namespace BeMyArms.M7
         }
 
         // ---- Settings ----
+
+        void ShowDuo()
+        {
+            Clear();
+            var root = M7Ui.Panel(_canvas.transform, "Duo", new Color(0.05f, 0.06f, 0.08f, 0.98f));
+            M7Ui.Fill(root.rectTransform, 0f, 0f, 0f, 0f);
+            var title = M7Ui.Label(root.transform, "Title", "DUO PRACTICE", 56, TextAnchor.MiddleCenter);
+            M7Ui.Place(title.rectTransform, new Vector2(0.5f, 0.87f), Vector2.zero, new Vector2(1200f, 80f));
+            var hint = M7Ui.Label(root.transform, "Hint", "Two humans share Team A's body against Easy bots.\nHost waits for both roles. The host can open a second client from ESC.", 26, TextAnchor.MiddleCenter);
+            M7Ui.Place(hint.rectTransform, new Vector2(0.5f, 0.76f), Vector2.zero, new Vector2(1400f, 90f));
+            Button p1 = M7Ui.Button(root.transform, "P1", "P1 — BODY", () => { _role = 0; ShowDuo(); });
+            M7Ui.Place(p1.image.rectTransform, new Vector2(0.5f, 0.62f), new Vector2(-180f, 0f), new Vector2(340f, 70f));
+            Button p2 = M7Ui.Button(root.transform, "P2", "P2 — ARMS", () => { _role = 1; ShowDuo(); });
+            M7Ui.Place(p2.image.rectTransform, new Vector2(0.5f, 0.62f), new Vector2(180f, 0f), new Vector2(340f, 70f));
+            Highlight(p1, _role == 0); Highlight(p2, _role == 1);
+            var host = M7Ui.Button(root.transform, "Host", "HOST DUO", () => StartDuo(false), 30);
+            M7Ui.Place(host.image.rectTransform, new Vector2(0.5f, 0.50f), Vector2.zero, new Vector2(500f, 76f));
+            var label = M7Ui.Label(root.transform, "JoinLabel", "JOIN: host IP address and port (shown on host's HUD)", 24, TextAnchor.MiddleCenter);
+            M7Ui.Place(label.rectTransform, new Vector2(0.5f, 0.39f), Vector2.zero, new Vector2(1100f, 48f));
+            var address = M7Ui.TextInput(root.transform, "Address", _joinAddress);
+            M7Ui.Place(address.GetComponent<RectTransform>(), new Vector2(0.5f, 0.32f), new Vector2(-100f, 0f), new Vector2(470f, 60f));
+            address.onValueChanged.AddListener(value => _joinAddress = value.Trim());
+            var port = M7Ui.TextInput(root.transform, "Port", _joinPort);
+            port.contentType = InputField.ContentType.IntegerNumber;
+            M7Ui.Place(port.GetComponent<RectTransform>(), new Vector2(0.5f, 0.32f), new Vector2(240f, 0f), new Vector2(180f, 60f));
+            port.onValueChanged.AddListener(value => _joinPort = value);
+            var join = M7Ui.Button(root.transform, "Join", "JOIN DUO", () => StartDuo(true), 30);
+            M7Ui.Place(join.image.rectTransform, new Vector2(0.5f, 0.22f), Vector2.zero, new Vector2(500f, 76f));
+            var back = M7Ui.Button(root.transform, "Back", "BACK", ShowMain, 24);
+            M7Ui.Place(back.image.rectTransform, new Vector2(0.5f, 0.10f), Vector2.zero, new Vector2(260f, 60f));
+            _status = M7Ui.Label(root.transform, "Status", EditorHint(), 22, TextAnchor.MiddleCenter);
+            M7Ui.Place(_status.rectTransform, new Vector2(0.5f, 0.03f), Vector2.zero, new Vector2(1500f, 44f));
+        }
+
+        void StartDuo(bool join)
+        {
+            if (Application.isEditor) { _status.text = EditorHint(); return; }
+            ushort port = M7PrivateMatch.DefaultPort;
+            if (join && (string.IsNullOrWhiteSpace(_joinAddress) || !ushort.TryParse(_joinPort, out port) || port == 0))
+            { _status.text = "Enter a host address and a port between 1 and 65535."; return; }
+            M7PrivateMatch.Begin(new M7MatchRequest
+            {
+                Mode = M7MapFamily.Duel, ArenaScene = "M7DuelArena", Duo = true,
+                Role = _role, JoinExisting = join, Address = _joinAddress, Port = port
+            });
+        }
 
         void ShowSettings()
         {

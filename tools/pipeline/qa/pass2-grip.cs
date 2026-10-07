@@ -1,0 +1,13 @@
+var go=UnityEngine.Object.Instantiate(UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(BeMyArms.M7.EditorTools.M7FighterBuilder.ArmsPath));
+var a=go.GetComponentInChildren<UnityEngine.Animator>();
+BeMyArms.M7.EditorTools.M7FighterBuilder.Clip("Arms","Idle_Loop").SampleAnimation(a.gameObject,0);
+var pose=go.GetComponent<BeMyArms.M7.M7RiflePose>();
+var left=BeMyArms.M7.M7RiflePose.Find(go.transform,"DEF-upper_arm.L");
+var mid=BeMyArms.M7.M7RiflePose.Find(go.transform,"DEF-forearm.L");
+var hand=BeMyArms.M7.M7RiflePose.Find(go.transform,"DEF-hand.L");
+var grip=BeMyArms.M7.M7RiflePose.Find(go.transform,"Grip_L");
+var before=new { Shoulder=left.position.ToString("F4"), Elbow=mid.position.ToString("F4"), Hand=hand.position.ToString("F4"), Grip=grip.position.ToString("F4"), Reach=UnityEngine.Vector3.Distance(left.position,mid.position)+UnityEngine.Vector3.Distance(mid.position,hand.position), Distance=UnityEngine.Vector3.Distance(left.position,grip.position) };
+pose.Pose(false,0);
+var result=new { before, pose.LeftGripError, pose.RightGripError, After=hand.position.ToString("F4") };
+UnityEngine.Object.DestroyImmediate(go);
+return result;

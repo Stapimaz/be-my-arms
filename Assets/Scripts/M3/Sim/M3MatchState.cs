@@ -54,6 +54,16 @@ namespace BeMyArms.M3
             BeginRound();
         }
 
+        public void RestartRound()
+        {
+            if (RoundIndex < 1) { StartMatch(); return; }
+            Phase = M3Phase.Buy;
+            PhaseTimeRemaining = BuySeconds;
+            LastRoundWinner = -1;
+            MatchWinner = -1;
+            RoundStarted?.Invoke(RoundIndex);
+        }
+
         void BeginRound()
         {
             RoundIndex++;

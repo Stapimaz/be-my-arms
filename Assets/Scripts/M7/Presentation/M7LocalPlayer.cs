@@ -22,9 +22,10 @@ namespace BeMyArms.M7
     /// detection.
     ///
     /// Firing feel is separated from hit confirmation: a locally valid trigger pull immediately plays
-    /// the rifle sound, muzzle flash, viewmodel kick and a small camera recoil impulse, while
+    /// the rifle sound, muzzle flash and viewmodel kick, while
     /// hitmarkers/damage/kills remain server-authoritative.
     /// </summary>
+    [DefaultExecutionOrder(-100)]
     public class M7LocalPlayer : MonoBehaviour
     {
         const int PlayerBodyLayer = 8; // TagManager "PlayerBody"
@@ -48,13 +49,8 @@ namespace BeMyArms.M7
         public float ViewmodelFieldOfView = 68f;
         /// <summary>Presentation-only smoothing of the camera's inherited body position (seconds).</summary>
         public float P2BodyPositionSmoothing = 0.06f;
-        /// <summary>Presentation-only roll of the viewmodel right hand about its own long axis.</summary>
-        public float ViewmodelHandRoll = 30f;
 
         [Header("Shot feel")]
-        public float CameraRecoilPitch = 1.15f;
-        public float CameraRecoilYawJitter = 0.35f;
-        public float CameraRecoilRecovery = 10f;
 
         Camera _camera;
         Camera _viewmodelCamera;
@@ -68,12 +64,8 @@ namespace BeMyArms.M7
         GameObject _viewmodel;
         Transform _viewmodelWeapon;
         Transform _viewmodelMuzzle;
-        Transform _viewmodelHandR;
-        Vector3 _viewmodelHandAxisLocal;
         float _viewmodelKick;
         float _viewmodelKickVelocity;
-        float _camRecoilPitch;
-        float _camRecoilYaw;
         float _nextMuzzle;
 
         // Presentation-only P1 camera state: lightly smoothed look, and a smoothed bounds correction.
@@ -93,6 +85,7 @@ namespace BeMyArms.M7
         bool _collisionLoaded;
         int _layerAppliedForBody = -1;
         int _cameraRole = -1;
+        uint _cameraEpoch = uint.MaxValue;
 
         /// <summary>True while the local player owns gameplay input (in-match, focused, no UI).</summary>
         public bool IsGameplayActive { get; private set; }
@@ -134,6 +127,16 @@ namespace BeMyArms.M7
             if (Application.isBatchMode || _client == null || _camera == null) return;
             EnsureCameraForRole();
 
+            if (_cameraEpoch != _client.ControlEpoch)
+            {
+                _cameraEpoch = _client.ControlEpoch;
+                _camLookInitialized = _p2EyeInitialized = _boundsOffsetInitialized = false;
+                _p1Cam.PreviousStateIsValid = _p2Cam.PreviousStateIsValid = false;
+                _boundsOffset = Vector3.zero;
+                _viewmodelKick = _viewmodelKickVelocity = 0f;
+                if (_viewmodel != null) _viewmodel.GetComponent<M7RiflePose>()?.ResetPresentation();
+            }
+
             M2BodyState state = _client.ViewState;
             if (_client.LocalRoleIndex == 0)
             {
@@ -141,11 +144,9 @@ namespace BeMyArms.M7
             }
             else
             {
+                if (_viewmodel != null) _viewmodel.SetActive(_client.Body.Alive.Value);
                 UpdateShotFeedback(Time.deltaTime);
                 UpdateP2Camera(state);
-                // Presentation-only right-hand roll, applied after the viewmodel animator/IK have
-                // posed the bones this frame (re-applied from the fresh pose, so it never stacks).
-                ApplyViewmodelHandRoll();
             }
 
             // Frame-accurate: the look/aim above is sampled this frame, then Cinemachine applies it.
@@ -205,7 +206,7 @@ namespace BeMyArms.M7
         {
             bool paused = _pauseMenu != null && _pauseMenu.IsOpen;
             bool focused = Application.isFocused;
-            bool inMatch = _director != null && _director.CurrentPhase != M3Phase.Warmup && _client != null && _client.IsLocalOwnBody;
+            bool inMatch = _director != null && (_director.IsBuy || _director.IsLive) && _client != null && _client.IsLocalOwnBody && _client.Body.Alive.Value;
             bool ended = _director != null && (_director.CurrentPhase == M3Phase.MatchEnd || _director.MatchWinner.Value >= 0);
             bool roleP2 = _client != null && _client.LocalRoleIndex == 1;
             bool buyUi = roleP2 && BuyMenuOpen && _director != null && _director.IsBuy;
@@ -228,6 +229,7 @@ namespace BeMyArms.M7
             if (_camera != null) return;
             var go = new GameObject("M7_LocalCamera");
             _camera = go.AddComponent<Camera>();
+            go.AddComponent<AudioListener>();
             _camera.nearClipPlane = 0.03f;
             _camera.farClipPlane = 600f;
             _camera.fieldOfView = FieldOfView;
@@ -351,13 +353,13 @@ namespace BeMyArms.M7
             if (_p2Cam == null) return;
             // Aim/recoil rotation stays immediate; only the position inherited from the shared body
             // (translation + stance height) is eased, so mouse aim has no added latency.
-            float pitch = Mathf.Clamp(_client.LocalAimPitch, -80f, 80f) - _camRecoilPitch;
-            Quaternion rotation = Quaternion.Euler(pitch, _client.LocalAimYaw + _camRecoilYaw, 0f);
+            float pitch = Mathf.Clamp(_client.LocalAimPitch, -80f, 80f);
+            Quaternion rotation = Quaternion.Euler(pitch, _client.LocalAimYaw, 0f);
 
             // Stable logical eye: follows the smoothed shared-body position at the current stance
             // height and is completely independent of the animated chest/shoulder rig.
             float eyeHeight = state.EyeHeight > 0.01f ? state.EyeHeight : 1.45f;
-            Vector3 eyeTarget = _client.VisualPosition + Vector3.up * (eyeHeight + 0.13f);
+            Vector3 eyeTarget = _client.VisualPosition + Vector3.up * eyeHeight;
 
             float dt = Mathf.Max(1e-4f, Time.deltaTime);
             float k = 1f - Mathf.Exp(-dt / Mathf.Max(0.001f, P2BodyPositionSmoothing));
@@ -388,37 +390,7 @@ namespace BeMyArms.M7
             _viewmodel.transform.localScale = Vector3.one;
             _viewmodelWeapon = FindDeep(_viewmodel.transform, "ViewmodelWeapon");
             _viewmodelMuzzle = _viewmodelWeapon != null ? FindDeep(_viewmodelWeapon, "Muzzle") : null;
-            CacheViewmodelHand();
             SetLayerRecursively(_viewmodel, ViewModelLayer);
-        }
-
-        /// <summary>
-        /// Finds the viewmodel right hand and its own longitudinal (wrist-to-finger) axis in the
-        /// hand's local frame. The finger offset is a fixed local transform, so the axis is constant
-        /// and can be cached once.
-        /// </summary>
-        void CacheViewmodelHand()
-        {
-            _viewmodelHandR = FindDeep(_viewmodel.transform, "DEF-hand.R");
-            _viewmodelHandAxisLocal = Vector3.up;
-            if (_viewmodelHandR == null) return;
-            Transform finger = FindDeep(_viewmodelHandR, "DEF-f_middle.01.R") ?? FindDeep(_viewmodel.transform, "DEF-f_middle.01.R");
-            if (finger != null)
-            {
-                Vector3 local = _viewmodelHandR.InverseTransformPoint(finger.position);
-                if (local.sqrMagnitude > 1e-8f) _viewmodelHandAxisLocal = local.normalized;
-            }
-        }
-
-        /// <summary>
-        /// Presentation-only +roll of the viewmodel right hand about its own long axis. Applied on top
-        /// of the freshly animated/IK'd pose each frame, so it never accumulates frame-to-frame, and
-        /// only for the first-person viewmodel (the world body's hand is a separate object).
-        /// </summary>
-        void ApplyViewmodelHandRoll()
-        {
-            if (_viewmodelHandR == null || Mathf.Approximately(ViewmodelHandRoll, 0f)) return;
-            _viewmodelHandR.localRotation = _viewmodelHandR.localRotation * Quaternion.AngleAxis(ViewmodelHandRoll, _viewmodelHandAxisLocal);
         }
 
         void DestroyViewmodel()
@@ -427,7 +399,6 @@ namespace BeMyArms.M7
             _viewmodel = null;
             _viewmodelWeapon = null;
             _viewmodelMuzzle = null;
-            _viewmodelHandR = null;
         }
 
         void UpdateShotFeedback(float dt)
@@ -436,8 +407,6 @@ namespace BeMyArms.M7
             for (int i = 0; i < shots; i++)
             {
                 _viewmodelKickVelocity += 1.0f;
-                _camRecoilPitch += CameraRecoilPitch;
-                _camRecoilYaw += Random.Range(-CameraRecoilYawJitter, CameraRecoilYawJitter);
 
                 M7AudioService audio = M7AudioService.Instance;
                 if (audio != null) audio.Play(M7AudioId.RifleShot);
@@ -445,15 +414,9 @@ namespace BeMyArms.M7
                 if (M7VfxService.Instance != null && _viewmodelWeapon != null && Time.time >= _nextMuzzle)
                 {
                     _nextMuzzle = Time.time + 0.03f;
-                    Vector3 point = _viewmodelMuzzle != null ? _viewmodelMuzzle.position : _viewmodelWeapon.position + _viewmodelWeapon.forward * 0.3f;
-                    Quaternion rotation = _viewmodelMuzzle != null ? _viewmodelMuzzle.rotation : _viewmodelWeapon.rotation;
-                    M7VfxService.Instance.Spawn(M7VfxId.MuzzleFlash, point, rotation);
+                    M7VfxService.Instance.SpawnAttached(M7VfxId.MuzzleFlash, _viewmodelMuzzle != null ? _viewmodelMuzzle : _viewmodelWeapon);
                 }
             }
-
-            // Quick camera recovery.
-            _camRecoilPitch = Mathf.MoveTowards(_camRecoilPitch, 0f, dt * CameraRecoilRecovery);
-            _camRecoilYaw = Mathf.MoveTowards(_camRecoilYaw, 0f, dt * CameraRecoilRecovery);
 
             if (_viewmodel == null) return;
             // Critically-damped viewmodel kick.
@@ -462,8 +425,12 @@ namespace BeMyArms.M7
             _viewmodelKick += _viewmodelKickVelocity * dt;
             _viewmodelKick = Mathf.Clamp(_viewmodelKick, 0f, 0.08f);
             float k = _viewmodelKick / 0.08f;
-            _viewmodel.transform.localPosition = new Vector3(0.006f * k, 0.008f * k, -0.05f * k);
-            _viewmodel.transform.localRotation = Quaternion.Euler(-7f * k, 1.5f * k, 0f);
+            M2BodyState state=_client.ViewState;
+            bool moving=state.Grounded && state.PlanarSpeed>.1f;
+            float motion=moving ? Mathf.Min(1,state.PlanarSpeed/5f) : 0;
+            float bob=Mathf.Sin(Time.time*13f)*motion;
+            _viewmodel.transform.localPosition = new Vector3(0.006f * k + bob*.006f, 0.008f * k + Mathf.Abs(bob)*.007f, -0.05f * k);
+            _viewmodel.transform.localRotation = Quaternion.Euler(-7f * k, 1.5f * k, -bob*.6f);
         }
 
         // ---- Helpers ----
@@ -478,7 +445,7 @@ namespace BeMyArms.M7
                     ApplyLocalLayer(clients[i]);
                     return clients[i];
                 }
-            return _client;
+            return null;
         }
 
         void ApplyLocalLayer(M3DuelClient client)

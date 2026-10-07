@@ -51,8 +51,8 @@ namespace BeMyArms.M7
                 .Append($"-m7-arena {request.ArenaScene} ")
                 .Append($"-m4-mode {mode} -m4-matchmaker 0 ")
                 .Append($"-m3-bot-difficulty {(request.BotDifficulty == M3BotDifficulty.Hard ? "hard" : "easy")} ")
-                .Append($"-m3-required-players {request.RequiredHumans} -m3-start-delay 30 ")
-                .Append("-m3-exit-after 1800")
+                .Append($"-m3-required-players {request.RequiredHumans} -m3-start-delay 0 ")
+                .Append("-m3-practice 1 -m3-strict-slots 1 -m3-delay 0 -m3-loss 0 -m3-buy 3 ")
                 .ToString();
 
             _process = Process.Start(new ProcessStartInfo(exe, args) { UseShellExecute = false, CreateNoWindow = true });
@@ -118,12 +118,17 @@ namespace BeMyArms.M7
 
             // A fresh free port per match means an orphaned previous server can never make the new
             // client connect to an old match or fail to bind.
-            request.Port = PickFreePort();
+            if (!request.JoinExisting) request.Port = PickFreePort();
 
             Current = request;
             InMatch = true;
 
             M3Config.AutoStartClient = true;
+            M3Config.UseMatchmaker = false;
+            M3Config.PrivatePractice = M3Config.StrictSlots = true;
+            M3Config.ServerAddress = request.JoinExisting ? request.Address : "127.0.0.1";
+            M3Config.OneWayDelaySeconds = M3Config.LossPercent = 0f;
+            M3Config.BuySeconds = 3f;
             M3Config.PortOverride = request.Port;
             M3Config.ClientToken = "local-" + Guid.NewGuid().ToString("N").Substring(0, 8);
             M3Config.ClientTeam = request.Team;
@@ -139,11 +144,25 @@ namespace BeMyArms.M7
             // Bot-filled private matches are a practice/playtest surface: default to Easy.
             M3Config.BotDifficulty = request.BotDifficulty;
 
-            if (Allocator != null) Allocator.Allocate(request);
+            if (!request.JoinExisting && Allocator != null) Allocator.Allocate(request);
             SceneManager.LoadScene(request.ArenaScene);
         }
 
         public static void ReturnToMenu()
+        {
+            if (InMatch && Application.isPlaying && M3DuelDirector.Instance != null && NetworkManager.Singleton != null && NetworkManager.Singleton.IsConnectedClient)
+            {
+                InMatch = false;
+                M3LocalInput.Reset();
+                M3DuelDirector.Instance.LeavePracticeServerRpc();
+                var flow = new GameObject("M7_GracefulLeave").AddComponent<M7GracefulLeave>();
+                flow.StartCoroutine(flow.Leave());
+                return;
+            }
+            CompleteReturnToMenu();
+        }
+
+        internal static void CompleteReturnToMenu()
         {
             InMatch = false;
             Shutdown();
@@ -165,6 +184,18 @@ namespace BeMyArms.M7
             Application.quitting += OnApplicationQuitting;
         }
 
+        public static string ConnectionLabel => InMatch ? $"{M3Config.ServerAddress}:{Current.Port}" : "";
+
+        public static void LaunchLocalPartner()
+        {
+            if (!InMatch || Current.JoinExisting || Application.isEditor) return;
+            int role = M3DuelClient.LocalSlotIndex >= 0 ? M3DuelSlots.RoleOf(M3DuelClient.LocalSlotIndex) : Current.Role;
+            string exe = Process.GetCurrentProcess().MainModule.FileName;
+            Process.Start(new ProcessStartInfo(exe,
+                $"-m7-join 127.0.0.1 -m7-port {Current.Port} -m7-join-role {(role == 0 ? "p2" : "p1")}")
+                { UseShellExecute = false });
+        }
+
         static void OnApplicationQuitting()
         {
             // A normal quit (including Alt+F4 on Windows) must not leave an orphan private server.
@@ -184,8 +215,11 @@ namespace BeMyArms.M7
             M3DuelClient.SetLocalSlot(-1);
             M3DuelDirector.ResetStatics();
             M3DuelRoleService.ResetStatics();
-            M3LocalInput.GameplayActive = false;
-            M3LocalInput.CursorCaptured = false;
+            M3LocalInput.Reset();
+            M3Config.AutoStartClient = false;
+            M3Config.PortOverride = 0;
+            M3Config.ServerAddress = "127.0.0.1";
+            M3Config.PrivatePractice = M3Config.StrictSlots = false;
 
             NetworkManager[] managers = UnityEngine.Object.FindObjectsByType<NetworkManager>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             for (int i = 0; i < managers.Length; i++)
@@ -228,6 +262,17 @@ namespace BeMyArms.M7
             for (int i = 0; i < args.Length - 1; i++)
                 if (string.Equals(args[i], name, StringComparison.OrdinalIgnoreCase)) return args[i + 1];
             return null;
+        }
+    }
+
+    /// <summary>Give the reliable voluntary-leave RPC time to flush before shutting down transport.</summary>
+    public sealed class M7GracefulLeave : MonoBehaviour
+    {
+        public System.Collections.IEnumerator Leave()
+        {
+            yield return new WaitForSecondsRealtime(0.2f);
+            M7PrivateMatch.CompleteReturnToMenu();
+            Destroy(gameObject);
         }
     }
 }

@@ -5,7 +5,7 @@
 **Companion document:** `TECHNICAL_PLAN.md`
 **Current production project:** `C:\Users\stapi\GameDev\be-my-arms`
 **Engine:** Unity `6000.4.3f1`, URP
-**Last updated:** 2026-09-19
+**Last updated:** 2026-10-07
 
 > This roadmap owns implementation order, milestone status and acceptance criteria. Game design
 > belongs to `GAME_CONCEPT.md`, which defers sequencing to this document. Technical
@@ -48,6 +48,16 @@ document wins. If they conflict on **implementation order**, this roadmap wins.
 ---
 
 ## 2. Milestones
+
+### Current Duel vertical-slice passes
+
+| Pass | Status |
+|---|---|
+| **Pass 1 — controls / duo foundations** | Accepted control baseline: fixed-tick authority/prediction, independent P1 look, local P2 aim, Elastic Soft sector and dedicated duo practice. See `docs/PASS1_CONTROL_BASELINE.md`. |
+| **Pass 2 — character / locomotion / FPS presentation** | **Accepted and closed.** Human-approved smooth shared-rig foundation plus requested cleanup: uniform P1/P2 materials, removed standalone vault, earlier anatomically bounded P1 body follow, sharper kicks. Final Windows player and verification: `docs/PASS2_FOUNDATION_REDO.md`. |
+| **Pass 3 — truthful rifle combat** | **Not started; awaiting explicit authorization.** |
+| **Pass 4 — purposeful arena / bots** | Pending. |
+| **Pass 5 — presentation / onboarding / round rhythm** | Pending. |
 
 ### Status
 

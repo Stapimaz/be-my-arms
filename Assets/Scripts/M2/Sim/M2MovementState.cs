@@ -13,8 +13,8 @@ namespace BeMyArms.M2
         Fall,
         Dodge,
         Slide,
-        Vault,
-        KickLight,
+        // Value 7 was the retired vault action. Keep the remaining action IDs stable.
+        KickLight = 8,
         KickHeavy
     }
 }

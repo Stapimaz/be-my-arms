@@ -27,6 +27,7 @@ namespace BeMyArms.M3
         /// </summary>
         public static float InjectedLookYaw;
         public static float InjectedLookPitch;
+        public static float InjectedLookYawRate;
 
         /// <summary>
         /// Development-only held movement/fire injection, set by qa_inject_input. It flows through the
@@ -37,6 +38,14 @@ namespace BeMyArms.M3
         public static float InjectedMoveZ;
         public static bool InjectedFire;
         public static bool InjectedCrouch;
+
+        public static void Reset()
+        {
+            GameplayActive = CursorCaptured = false;
+            InjectedLookYaw = InjectedLookPitch = InjectedMoveX = InjectedMoveZ = 0f;
+            InjectedLookYawRate = 0f;
+            InjectedFire = InjectedCrouch = false;
+        }
 
         /// <summary>Read and clear the pending look injection.</summary>
         public static void ConsumeInjectedLook(out float yaw, out float pitch)

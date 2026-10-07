@@ -1,4 +1,5 @@
 using BeMyArms.M3;
+using BeMyArms.M2;
 using UnityEngine;
 using UnityEngine.UI;
 #if ENABLE_INPUT_SYSTEM
@@ -21,6 +22,9 @@ namespace BeMyArms.M7
         GameObject _postPanel;
         Text _postTitle;
         Text _buyHint;
+        Text _partner;
+        Text _controls;
+        Text _connection;
 
         M3DuelDirector _director;
         M7LocalPlayer _localPlayer;
@@ -84,6 +88,12 @@ namespace BeMyArms.M7
             M7Ui.Place(_buyHint.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -84f), new Vector2(900f, 40f));
 
             BuildPostPanel();
+            _partner = M7Ui.Label(_canvas.transform, "Partner", "", 24, TextAnchor.MiddleCenter);
+            M7Ui.Place(_partner.rectTransform, new Vector2(0.5f, 0.15f), Vector2.zero, new Vector2(1200f, 90f));
+            _controls = M7Ui.Label(_canvas.transform, "Controls", "", 20, TextAnchor.MiddleCenter);
+            M7Ui.Place(_controls.rectTransform, new Vector2(0.5f, 0.03f), Vector2.zero, new Vector2(1200f, 70f));
+            _connection = M7Ui.Label(_canvas.transform, "Connection", "", 24, TextAnchor.MiddleCenter);
+            M7Ui.Place(_connection.rectTransform, new Vector2(0.5f, 0.72f), Vector2.zero, new Vector2(1500f, 140f));
         }
 
         void BuildPostPanel()
@@ -107,14 +117,14 @@ namespace BeMyArms.M7
         {
             if (_canvas == null)
             {
-                if (!NetworkManagerIsClient()) return;
+                if (!NetworkManagerIsClient() && !M3Config.AutoStartClient) return;
                 Build();
             }
 
             if (_director == null) _director = M3DuelDirector.Instance;
-            if (_director == null) return;
-
             M3DuelBody own = FindOwnBody();
+            UpdateCoordination(own);
+            if (_director == null) { _postPanel.SetActive(false); return; }
             UpdateTop(own);
             UpdateVitals(own);
             UpdateWeapon(own);
@@ -133,12 +143,46 @@ namespace BeMyArms.M7
             _top.text = $"{_director.CurrentPhase.ToString().ToUpperInvariant()}   round {_director.RoundIndex.Value}   {score}{time}{zone}    you: {role}";
         }
 
+        void UpdateCoordination(M3DuelBody own)
+        {
+            var manager = Unity.Netcode.NetworkManager.Singleton;
+            if (manager == null || !manager.IsConnectedClient)
+            {
+                _connection.text = $"Connecting to {M7PrivateMatch.ConnectionLabel}...\n{manager?.DisconnectReason}\nESC to leave or open the local partner.";
+                _partner.text = _controls.text = "";
+                return;
+            }
+            _connection.text = _director == null || _director.CurrentPhase == M3Phase.Warmup
+                ? $"WAITING FOR YOUR PARTNER\nServer port {M7PrivateMatch.Current.Port} — join the other role on Team A.\nESC → Open local partner, or join from another PC."
+                : "";
+            if (own == null) return;
+            int role = M3DuelSlots.RoleOf(M3DuelClient.LocalSlotIndex);
+            var client = own.GetComponent<M3DuelClient>();
+            var state = own.State.Value;
+            float offset = role == 1 ? client.LocalAimOffset : M2BodySim.Normalize(state.AimYaw - state.BodyYaw);
+            string side = offset < 0f ? "LEFT" : "RIGHT";
+            string edge = Mathf.Abs(offset) >= own.SectorHalfDegrees - 1f ? $"  AIM LIMIT {side}" : "";
+            if (Mathf.Abs(offset) >= own.SectorHalfDegrees)
+                edge = $"  ELASTIC {side} +{Mathf.Abs(offset) - own.SectorHalfDegrees:0.0}°";
+            string weapon = own.Reloading.Value ? "RELOADING" : own.Ammo.Value == 0 ? "EMPTY — RELOAD" : own.Firing.Value ? "FIRING" : "READY";
+            string body = ((M2MovementState)state.MovementState).ToString().ToUpperInvariant();
+            string request = own.TurnRequest.Value == 0 ? "" : $"  PARTNER REQUESTS TURN {(own.TurnRequest.Value < 0 ? "LEFT" : "RIGHT")}";
+            _partner.text = role == 0
+                ? $"ARMS: {(own.P2Bot.Value ? "BOT" : "HUMAN")}  {weapon}   aim {offset:+0;-0;0}°{edge}{request}"
+                : $"BODY: {(own.P1Bot.Value ? "BOT" : "HUMAN")}  {body}   {state.PlanarSpeed:0.0} m/s\nELASTIC SECTOR  {offset:+0;-0;0}°{edge}";
+            _partner.color = edge.Length > 0 || request.Length > 0 ? new Color(1f, 0.76f, 0.3f) : Color.white;
+            _controls.text = role == 0
+                ? "WASD move · Shift sprint · Ctrl crouch · Space jump · Alt align body\nQ dodge · C slide · F / V kicks · ESC practice tools"
+                : "Mouse aim · LMB fire · R reload · Tab request body turn toward aim\nESC practice tools · Elastic stop ±70° + 15° overtravel";
+        }
+
         void UpdateVitals(M3DuelBody own)
         {
             if (own == null) { _vitals.text = ""; return; }
             string zone = own.OutsideZone.Value ? "   OUTSIDE ZONE" : "";
             string blind = own.BlindRemaining.Value > 0f ? "   FLASHED" : "";
-            _vitals.text = $"HP {own.State.Value.Health}   {(own.Alive.Value ? "alive" : "DOWN")}   kills {own.Kills.Value}{zone}{blind}";
+            string protection = _director.IsLive && own.ProtectionRemaining.Value > 0f ? $"   PROTECTED {own.ProtectionRemaining.Value:0.0}s" : "";
+            _vitals.text = $"HP {own.State.Value.Health}   {(own.Alive.Value ? "alive" : "DOWN")}   kills {own.Kills.Value}{zone}{blind}{protection}";
         }
 
         void UpdateWeapon(M3DuelBody own)

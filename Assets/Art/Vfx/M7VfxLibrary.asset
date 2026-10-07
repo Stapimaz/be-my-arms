@@ -15,7 +15,7 @@ MonoBehaviour:
   Effects:
   - Id: 0
     Prefab: {fileID: 1197985889336672141, guid: 7290b1eec54ffa94f92d68085b1511b6, type: 3}
-    Lifetime: 0.4
+    Lifetime: 0.29500002
     Scale: 1
   - Id: 1
     Prefab: {fileID: 7787545174023089223, guid: 6818e9dbdcc314f4bbcc31dddabc94c2, type: 3}
@@ -27,11 +27,11 @@ MonoBehaviour:
     Scale: 1
   - Id: 3
     Prefab: {fileID: 1455939107178360729, guid: 81187f504cef90f4dae01f0c62a1ba66, type: 3}
-    Lifetime: 0.8
+    Lifetime: 0.62
     Scale: 1
   - Id: 4
     Prefab: {fileID: 1850552937392288144, guid: 58f680f8211d9a6488071ece9f04dfca, type: 3}
-    Lifetime: 0.95
+    Lifetime: 0.7
     Scale: 1
   - Id: 5
     Prefab: {fileID: 8250271355881185162, guid: 2c9bdd384e1762c4fa3ace7112822d1e, type: 3}

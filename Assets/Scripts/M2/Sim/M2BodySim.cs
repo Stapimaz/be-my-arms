@@ -7,7 +7,7 @@ namespace BeMyArms.M2
     /// identically on the server, replayed by client prediction, and unit tested.
     ///
     /// Locomotion is 3D (feet position + vertical velocity + grounding) and supports the full M1
-    /// action set: walk, unlimited sprint, jump, directional dodge, slide, vault and light/heavy
+    /// action set: walk, unlimited sprint, jump, directional dodge, slide and light/heavy
     /// kicks. Arena collision (<see cref="Collision"/>) resolves bounds, walls, steps and ramps.
     ///
     /// Orientation matches M1: decoupled look with neck limit, smooth body follow, explicit align;
@@ -22,8 +22,11 @@ namespace BeMyArms.M2
         public float WalkSpeed = 4.5f;
         public float SprintSpeed = 7f;
         public float CrouchSpeed = 2.5f;
-        public float Gravity = -20f;
-        public float JumpSpeed = 7f;
+        public const float DefaultGravity = -30f;
+        public const float DefaultJumpSpeed = 7.5f;
+        public float Gravity = DefaultGravity;
+        public float JumpSpeed = DefaultJumpSpeed;
+        public float FallingGravityMultiplier = 1.35f;
 
         // Stance dimensions (metres): standing vs crouched hit profile and eye/view height.
         public float StandHeight = 1.8f;
@@ -40,10 +43,6 @@ namespace BeMyArms.M2
         public float SlideMinDuration = 0.35f;
         public float SlideMaxDuration = 1.1f;
 
-        public float VaultDuration = 0.45f;
-        public float VaultReachMeters = 1.4f;
-        public float VaultHeightMeters = 1.2f;
-
         public float LightKickDuration = 0.35f;
         public float LightKickCooldown = 0.5f;
         public float HeavyKickDuration = 0.7f;
@@ -52,11 +51,16 @@ namespace BeMyArms.M2
 
         public float EyeHeight = 1.5f;
 
-        public float NeckYawLimitDegrees = 80f;
-        public float BodyFollowThresholdDegrees = 50f;
-        public float BodyFollowSpeedDegreesPerSecond = 120f;
+        public const float DefaultNeckYawLimitDegrees = 45f;
+        public const float DefaultBodyFollowThresholdDegrees = 25f;
+        public const float DefaultBodyFollowSpeedDegreesPerSecond = 180f;
+        public float NeckYawLimitDegrees = DefaultNeckYawLimitDegrees;
+        public float BodyFollowThresholdDegrees = DefaultBodyFollowThresholdDegrees;
+        public float BodyFollowSpeedDegreesPerSecond = DefaultBodyFollowSpeedDegreesPerSecond;
         public float BodyAlignSpeedDegreesPerSecond = 540f;
         public float SectorHalfDegrees = 70f;
+        public float SectorOvertravelDegrees;
+        public float AimSectorHalfDegrees => SectorHalfDegrees + SectorOvertravelDegrees;
         public float MaxPitchDegrees = 80f;
         public int MaxHealth = 100;
 
@@ -64,12 +68,6 @@ namespace BeMyArms.M2
         public M2MovementCollision Collision;
 
         public M2BodyState State;
-
-        // Vault endpoints are only needed while a vault is in flight and are recomputed at vault
-        // start. The server is authoritative and never replays; a client's replay can resync from
-        // the replicated state on the next snapshot.
-        float _vaultStartX, _vaultStartY, _vaultStartZ;
-        float _vaultTargetX, _vaultTargetY, _vaultTargetZ;
 
         public void Initialize(float yaw, float posX = 0f, float posZ = 0f, float posY = 0f)
         {
@@ -90,10 +88,23 @@ namespace BeMyArms.M2
 
         public void ApplyP1(in M2P1Input input, float deltaTime)
         {
-            // Presentation signal defaults to stationary; Locomotion sets it while moving. Actions
-            // (dodge/slide/vault/kick) and death therefore read as stationary to the animator.
+            float x = State.PosX, z = State.PosZ;
+            StepP1(in input, deltaTime);
+            float dx = State.PosX - x, dz = State.PosZ - z;
+            float distance = (float)Math.Sqrt(dx * dx + dz * dz);
+            State.PlanarSpeed = distance / Math.Max(.0001f, deltaTime);
+            BodyForward(out float fx, out float fz);
+            State.MoveForward = distance > .00001f ? (dx * fx + dz * fz) / distance : 0f;
+            State.MoveRight = distance > .00001f ? (dx * fz - dz * fx) / distance : 0f;
+        }
+
+        void StepP1(in M2P1Input input, float deltaTime)
+        {
+            // ApplyP1 measures collision-resolved displacement after this step, including actions.
             State.PlanarSpeed = 0f;
             State.MoveForward = 0f;
+            State.MoveRight = 0f;
+            if (State.Health <= 0) return;
 
             // ---- Look (decoupled from BodyYaw) ----
             State.LookYaw = Normalize(State.LookYaw + input.LookYawDelta);
@@ -109,6 +120,8 @@ namespace BeMyArms.M2
                 State.BodyYaw = MoveTowardsAngle(State.BodyYaw, State.LookYaw, BodyAlignSpeedDegreesPerSecond * deltaTime);
             else if (Math.Abs(offset) > BodyFollowThresholdDegrees)
                 State.BodyYaw = MoveTowardsAngle(State.BodyYaw, State.LookYaw, BodyFollowSpeedDegreesPerSecond * deltaTime);
+            // Model C also applies when P1 turns without a new P2 packet.
+            State.AimYaw = ClampToSector(State.AimYaw, State.BodyYaw, AimSectorHalfDegrees);
 
             // ---- Timers ----
             if (State.ActionTimeLeft > 0f) State.ActionTimeLeft = Math.Max(0f, State.ActionTimeLeft - deltaTime);
@@ -117,6 +130,8 @@ namespace BeMyArms.M2
 
             M2MovementState action = (M2MovementState)State.MovementState;
 
+            UpdateStance(input.Crouch || (action == M2MovementState.Slide && State.ActionTimeLeft > 0f));
+
             // ---- Continue an action already in flight ----
             if (State.ActionTimeLeft > 0f)
             {
@@ -124,9 +139,6 @@ namespace BeMyArms.M2
                 {
                     case M2MovementState.Dodge:
                         ContinueDodge(deltaTime);
-                        return;
-                    case M2MovementState.Vault:
-                        ContinueVault();
                         return;
                     case M2MovementState.Slide:
                         if (ContinueSlide(deltaTime)) return;
@@ -144,7 +156,14 @@ namespace BeMyArms.M2
             // ---- Stance (crouch) ----
             // Standing back up requires headroom; while blocked by a low ceiling the body stays
             // crouched so the transition is physical rather than cosmetic.
-            if (input.Crouch)
+            UpdateStance(input.Crouch);
+
+            Locomotion(input, deltaTime);
+        }
+
+        void UpdateStance(bool crouch)
+        {
+            if (crouch)
             {
                 State.Crouching = true;
             }
@@ -155,13 +174,12 @@ namespace BeMyArms.M2
             State.HitHeight = State.Crouching ? CrouchHeight : StandHeight;
             State.EyeHeight = State.Crouching ? CrouchEyeHeight : StandEyeHeight;
 
-            Locomotion(input, deltaTime);
         }
 
         /// <summary>Applies P2's desired world aim, clamped to the sector around BodyYaw.</summary>
         public void ApplyP2(in M2P2Input input)
         {
-            State.AimYaw = ClampToSector(input.AimYaw, State.BodyYaw, SectorHalfDegrees);
+            State.AimYaw = ClampToSector(input.AimYaw, State.BodyYaw, AimSectorHalfDegrees);
             float pitch = input.AimPitch;
             if (pitch > MaxPitchDegrees) pitch = MaxPitchDegrees;
             else if (pitch < -MaxPitchDegrees) pitch = -MaxPitchDegrees;
@@ -171,10 +189,10 @@ namespace BeMyArms.M2
         public void AddRecoil(float pitchKickDegrees, float yawKickDegrees)
         {
             State.AimPitch = Clamp(State.AimPitch - pitchKickDegrees, -MaxPitchDegrees, MaxPitchDegrees);
-            State.AimYaw = ClampToSector(Normalize(State.AimYaw + yawKickDegrees), State.BodyYaw, SectorHalfDegrees);
+            State.AimYaw = ClampToSector(Normalize(State.AimYaw + yawKickDegrees), State.BodyYaw, AimSectorHalfDegrees);
         }
 
-        public bool SectorLegal(float aimYaw) => Math.Abs(Normalize(aimYaw - State.BodyYaw)) <= SectorHalfDegrees + 0.001f;
+        public bool SectorLegal(float aimYaw) => Math.Abs(Normalize(aimYaw - State.BodyYaw)) <= AimSectorHalfDegrees + 0.001f;
 
         // ---- Movement internals ----
 
@@ -194,23 +212,10 @@ namespace BeMyArms.M2
                 State.MovementState = (byte)M2MovementState.KickLight;
                 return true;
             }
-            if (input.Vault && State.Grounded && Collision != null)
-            {
-                BodyForward(out float fx, out float fz);
-                if (Collision.TryFindVault(State.PosX, State.PosY, State.PosZ, fx, fz,
-                        VaultReachMeters, VaultHeightMeters, out float tx, out float ty, out float tz))
-                {
-                    _vaultStartX = State.PosX; _vaultStartY = State.PosY; _vaultStartZ = State.PosZ;
-                    _vaultTargetX = tx; _vaultTargetY = ty; _vaultTargetZ = tz;
-                    State.ActionTimeLeft = VaultDuration;
-                    State.MovementState = (byte)M2MovementState.Vault;
-                    State.Grounded = false;
-                    return true;
-                }
-            }
             if (input.Slide && State.Grounded && State.VerticalVelocity <= 0f)
             {
-                BodyForward(out float fx, out float fz);
+                UpdateStance(true);
+                DirectionFromMove(in input, out float fx, out float fz);
                 State.ActionDirX = fx;
                 State.ActionDirZ = fz;
                 State.SlideSpeed = SlideEntrySpeed;
@@ -253,6 +258,7 @@ namespace BeMyArms.M2
             float wz = rz * mx + fz * mz;
 
             float speed = input.Sprint && !State.Crouching && length > 0.01f ? SprintSpeed : (State.Crouching ? CrouchSpeed : WalkSpeed);
+            float oldX = State.PosX, oldZ = State.PosZ;
             State.PosX += wx * speed * deltaTime;
             State.PosZ += wz * speed * deltaTime;
             Collision?.ResolveHorizontal(ref State);
@@ -261,11 +267,13 @@ namespace BeMyArms.M2
             // Locomotion presentation: project the ACTUAL world movement back into the BodyYaw basis
             // so the directional blend reflects motion relative to the fighter (LookYaw and BodyYaw
             // can differ). This is not the raw WASD vector.
-            State.PlanarSpeed = length > 0.01f ? length * speed : 0f;
-            if (length > 0.01f)
+            float actualX = State.PosX - oldX, actualZ = State.PosZ - oldZ;
+            float actualDistance = (float)Math.Sqrt(actualX * actualX + actualZ * actualZ);
+            State.PlanarSpeed = actualDistance / Math.Max(0.0001f, deltaTime);
+            if (actualDistance > 0.00001f)
             {
-                float inv = 1f / length;
-                float nwx = wx * inv, nwz = wz * inv;
+                float inv = 1f / actualDistance;
+                float nwx = actualX * inv, nwz = actualZ * inv;
                 BodyForward(out float bfx, out float bfz);
                 State.MoveForward = nwx * bfx + nwz * bfz;
                 State.MoveRight = nwx * bfz - nwz * bfx; // dot(n, right=(bfz,-bfx))
@@ -278,7 +286,7 @@ namespace BeMyArms.M2
 
             if (!State.Grounded) State.MovementState = (byte)M2MovementState.Fall;
             else if (length < 0.01f) State.MovementState = (byte)M2MovementState.Idle;
-            else State.MovementState = (byte)(input.Sprint ? M2MovementState.Sprint : M2MovementState.Walk);
+            else State.MovementState = (byte)(input.Sprint && !State.Crouching ? M2MovementState.Sprint : M2MovementState.Walk);
         }
 
         void ContinueDodge(float deltaTime)
@@ -307,17 +315,6 @@ namespace BeMyArms.M2
             return true;
         }
 
-        void ContinueVault()
-        {
-            State.MovementState = (byte)M2MovementState.Vault;
-            float t = 1f - Clamp(State.ActionTimeLeft / Math.Max(0.01f, VaultDuration), 0f, 1f);
-            State.PosX = _vaultStartX + (_vaultTargetX - _vaultStartX) * t;
-            State.PosY = _vaultStartY + (_vaultTargetY - _vaultStartY) * t;
-            State.PosZ = _vaultStartZ + (_vaultTargetZ - _vaultStartZ) * t;
-            State.VerticalVelocity = 0f;
-            State.Grounded = false;
-        }
-
         void ContinueKick(M2MovementState action, float deltaTime)
         {
             State.MovementState = (byte)action;
@@ -342,7 +339,7 @@ namespace BeMyArms.M2
                 }
             }
 
-            State.VerticalVelocity += Gravity * deltaTime;
+            State.VerticalVelocity += Gravity * (State.VerticalVelocity < 0f ? FallingGravityMultiplier : 1f) * deltaTime;
             State.PosY += State.VerticalVelocity * deltaTime;
 
             if (State.PosY <= ground && State.VerticalVelocity <= 0f)

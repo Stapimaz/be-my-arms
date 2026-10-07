@@ -36,14 +36,31 @@ namespace BeMyArms.M2.Tests
         public void LookInsideThreshold_DoesNotMoveBody_ButMovementUsesLookYaw()
         {
             M2BodySim sim = NewSim();
-            sim.ApplyP1(new M2P1Input { MoveX = 0f, MoveZ = 1f, LookYawDelta = 30f }, 0.1f);
+            sim.ApplyP1(new M2P1Input { MoveX = 0f, MoveZ = 1f, LookYawDelta = 20f }, 0.1f);
 
             Assert.AreEqual(0f, sim.State.BodyYaw, 1e-4f, "Looking inside the threshold must not turn the body.");
-            // WASD is camera/look-relative, so forward advances along the 30° look yaw rather than the
+            // WASD is camera/look-relative, so forward advances along the 20° look yaw rather than the
             // body's +Z facing: the movement direction must read as the look direction.
             Assert.Greater(sim.State.PosZ, 0f, "Forward movement still advances away from the origin.");
             float angle = (float)(System.Math.Atan2(sim.State.PosX, sim.State.PosZ) * 180.0 / System.Math.PI);
-            Assert.AreEqual(30f, angle, 1.5f, "Forward movement must follow LookYaw, not the body yaw.");
+            Assert.AreEqual(20f, angle, 1.5f, "Forward movement must follow LookYaw, not the body yaw.");
+        }
+
+        [Test]
+        public void LookTurnsBodyEarly_AndStaysBoundedDuringFastRepeatedTurnsAndReplay()
+        {
+            var sim=NewSim();var replay=NewSim();
+            sim.ApplyP1(new M2P1Input{LookYawDelta=30f},1f/60);
+            Assert.Greater(sim.State.BodyYaw,0,"body must already follow at thirty degrees");
+            replay.State=sim.State;
+            for(int i=0;i<120;i++)
+            {
+                var input=new M2P1Input{LookYawDelta=i<60 ? 60f : -60f};
+                sim.ApplyP1(input,1f/60);replay.ApplyP1(input,1f/60);
+                Assert.LessOrEqual(System.Math.Abs(M2BodySim.Normalize(sim.State.LookYaw-sim.State.BodyYaw)),45f);
+                Assert.AreEqual(sim.State.BodyYaw,replay.State.BodyYaw);
+                Assert.AreEqual(sim.State.LookYaw,replay.State.LookYaw);
+            }
         }
 
         [Test]

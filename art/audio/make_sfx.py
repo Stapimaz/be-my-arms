@@ -158,7 +158,10 @@ def pad(dur, freqs, cutoff=1400.0, wobble=0.3):
 
 def main():
     # Weapons.
-    write_wav('sfx_rifle_shot', gunshot(0.20, 190.0, 0.9, 0.8), 0.85)
+    # Dry transient, low pressure pulse, mechanical clack and a filtered short room tail.
+    shot=gunshot(.32,125,1.5,.65)
+    tail=lowpass(render(.32,lambda i,n: noise()*decay(max(0,i/SR-.018),.09)*(.22 if i/SR>.018 else 0)),2400)
+    write_wav('sfx_rifle_shot',[a+b for a,b in zip(shot,tail)],.9)
     write_wav('sfx_pistol_shot', gunshot(0.15, 260.0, 1.0, 0.6), 0.8)
     write_wav('sfx_shotgun_shot', gunshot(0.34, 120.0, 0.8, 1.0), 0.9)
     write_wav('sfx_knife_swing', fade(highpass(render(0.22, lambda i, n: noise() * decay(i / SR, 0.05) * (1.0 - i / n)), 2000.0), 0.004, 0.06), 0.5)
@@ -166,6 +169,15 @@ def main():
     # Handling / movement.
     write_wav('sfx_reload', [v for v in gain(fade(render(0.55, lambda i, n: noise() * decay((i / SR) % 0.18, 0.01)), 0.008, 0.05), 0.6)], 0.7)
     write_wav('sfx_footstep', fade(lowpass(render(0.12, lambda i, n: noise() * decay(i / SR, 0.03)), 1200.0), 0.002, 0.05), 0.5)
+    write_wav('sfx_magazine_out',impact(.13,370,.6),.5)
+    write_wav('sfx_magazine_in',impact(.17,190,.8),.7)
+    write_wav('sfx_bolt',fade(highpass(render(.20,lambda i,n: noise()*decay((i/SR)% .075,.012)),700),.001,.05),.65)
+    write_wav('sfx_jump',fade(highpass(render(.18,lambda i,n: noise()*math.sin(math.pi*i/n)*.5),500),.015,.04),.35)
+    write_wav('sfx_land',impact(.26,83,.65),.8)
+    write_wav('sfx_slide',fade(lowpass(render(.65,lambda i,n: noise()*decay(i/SR,.30)),2200),.04,.15),.55)
+    write_wav('sfx_vault',impact(.22,220,.45),.55)
+    write_wav('sfx_kick',fade(lowpass(render(.22,lambda i,n: noise()*math.sin(math.pi*i/n)**2),1800),.012,.06),.55)
+    write_wav('sfx_gear',fade(highpass(render(.10,lambda i,n: noise()*decay(i/SR,.015)),2400),.002,.03),.28)
 
     # Combat results.
     write_wav('sfx_hit_body', impact(0.12, 160.0, 0.5), 0.8)

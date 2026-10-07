@@ -36,6 +36,11 @@ namespace BeMyArms.M3
 
         void Start()
         {
+            if (Application.isBatchMode)
+            {
+                Application.runInBackground = true;
+                Application.targetFrameRate = 60;
+            }
             ParseArgs();
 
             // Private-match flow: a scene bootstrap with no CLI role connects as a client.
@@ -52,12 +57,16 @@ namespace BeMyArms.M3
             var transport = manager.GetComponent<UnityTransport>();
             if (transport != null)
             {
-                transport.SetConnectionData("127.0.0.1", effectivePort, "0.0.0.0");
+                transport.SetConnectionData(M3Config.ServerAddress, effectivePort, "0.0.0.0");
                 transport.DisconnectTimeoutMS = M3Config.DisconnectTimeoutMs;
             }
 
             manager.OnClientConnectedCallback += id => Debug.Log($"[M3-trace] t={Time.realtimeSinceStartup:0.000} CLIENT connected (id={id})");
-            manager.OnClientDisconnectCallback += id => Debug.Log($"[M3-trace] t={Time.realtimeSinceStartup:0.000} CLIENT disconnected (id={id}) reason='{manager.DisconnectReason}'");
+            manager.OnClientDisconnectCallback += id =>
+            {
+                Debug.Log($"[M3-trace] t={Time.realtimeSinceStartup:0.000} CLIENT disconnected (id={id}) reason='{manager.DisconnectReason}'");
+                if (Role == M3DuelRole.Client) { M3DuelClient.SetLocalSlot(-1); M3LocalInput.Reset(); }
+            };
             manager.OnServerStarted += OnServerStarted;
 
             manager.NetworkConfig.EnableSceneManagement = false;
@@ -124,13 +133,12 @@ namespace BeMyArms.M3
             }
 
             if (Role != M3DuelRole.Client || M3Config.ExitAfterSeconds > 0f) return;
-            if (!manager.IsConnectedClient)
+            if (!manager.IsConnectedClient && !manager.IsListening && !manager.ShutdownInProgress)
             {
                 _reconnectTimer += Time.deltaTime;
                 if (_reconnectTimer >= 2f)
                 {
                     _reconnectTimer = 0f;
-                    if (manager.IsListening) manager.Shutdown();
                     Debug.Log($"[M3-trace] t={Time.realtimeSinceStartup:0.000} CLIENT reconnect attempt (token '{M3Config.ClientToken}')");
                     manager.StartClient();
                 }
@@ -198,7 +206,12 @@ namespace BeMyArms.M3
                 else { M3Config.ClientRole = 0; M3Config.ClientPreference = 0; }
             }
 
-            M3Config.ClientToken = GetArg("-m3-token") ?? "";
+            string token = GetArg("-m3-token");
+            if (!string.IsNullOrEmpty(token)) M3Config.ClientToken = token;
+            string address = GetArg("-m3-address");
+            if (!string.IsNullOrEmpty(address)) M3Config.ServerAddress = address;
+            if (GetArg("-m3-practice") == "1") M3Config.PrivatePractice = true;
+            if (GetArg("-m3-strict-slots") == "1") M3Config.StrictSlots = true;
 
             if (float.TryParse(GetArg("-m3-delay"), out float delayMs)) M3Config.OneWayDelaySeconds = Mathf.Max(0f, delayMs) / 1000f;
             if (float.TryParse(GetArg("-m3-loss"), out float loss)) M3Config.LossPercent = Mathf.Clamp(loss, 0f, 100f);
