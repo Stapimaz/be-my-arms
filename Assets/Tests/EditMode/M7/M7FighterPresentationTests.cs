@@ -87,22 +87,52 @@ namespace BeMyArms.M7.Tests
             } finally {Object.DestroyImmediate(body);}
         }
 
-        [TestCase(false)] [TestCase(true)]
-        public void KickExtendsTheFootForwardWithAStraightenedKnee_ThenReturns(bool heavy)
+        [TestCase(false,0f)] [TestCase(true,0f)] [TestCase(false,90f)] [TestCase(true,-120f)] [TestCase(true,180f)]
+        public void KickExtendsTheFootForwardWithAStraightenedKnee_ThenReturns(bool heavy,float yaw)
         {
             var body=Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(M7PlayerBodyBuilder.BodyPrefabPath));
             try {
                 var driver=body.GetComponent<M7CharacterAnimator>();var clip=M7SmoothFighterBuilder.Clip("Idle_Loop");
+                // Runtime clients rotate Presentation, NOT the network root hosting this driver.
+                // Exercise the actual hierarchy discrepancy missed by the old zero-yaw fixture.
+                driver.P1Animator.transform.rotation=Quaternion.Euler(0,yaw,0);
+                var forward=driver.P1Animator.transform.forward;
                 var foot=M7RiflePose.Find(driver.P1Animator.transform,"foot_r");
                 var thigh=M7RiflePose.Find(driver.P1Animator.transform,"thigh_r");var shin=M7RiflePose.Find(driver.P1Animator.transform,"calf_r");
                 clip.SampleAnimation(driver.P1Animator.gameObject,0);var ready=foot.position;
                 driver.ApplyKickPose(.22f,heavy);var chamber=foot.position;
                 clip.SampleAnimation(driver.P1Animator.gameObject,0);driver.ApplyKickPose(.34f,heavy);
-                Assert.Greater(Vector3.Dot(foot.position-chamber,body.transform.forward),.4f,"kick must thrust forward, not just lift");
+                Assert.Greater(Vector3.Dot(foot.position-chamber,forward),.4f,"kick must thrust forward, not just lift");
+                Assert.Greater(Vector3.Dot(foot.position-thigh.position,forward),.75f,"sole extends almost a full leg ahead of the hip");
                 Assert.Greater(Vector3.Dot((shin.position-thigh.position).normalized,(foot.position-shin.position).normalized),.8f,"strike knee extends");
                 clip.SampleAnimation(driver.P1Animator.gameObject,0);driver.ApplyKickPose(1,heavy);
                 Assert.Less(Vector3.Distance(ready,foot.position),.001f);
             } finally {Object.DestroyImmediate(body);}
+        }
+
+        [Test]
+        public void FpsReadyWristsContinueAlongForearmsAndHandsAreInsideTheCameraFrame()
+        {
+            var go=Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(M7FighterBuilder.ArmsPath));
+            var camera=new GameObject("GripFrameCamera").AddComponent<Camera>();camera.fieldOfView=68;
+            try {
+                var pose=go.GetComponent<M7RiflePose>();M7SmoothFighterBuilder.Clip("Rifle_Hold_Loop").SampleAnimation(pose.Model.gameObject,0);
+                pose.Pose(false,0);
+                Assert.IsFalse(go.GetComponentInChildren<Animator>().enabled,"rifle hold must not inherit world breathing");
+                Assert.AreEqual(1,System.Array.FindAll(go.GetComponentsInChildren<SkinnedMeshRenderer>(),r=>r.enabled).Length);
+                foreach(var skin in go.GetComponentsInChildren<SkinnedMeshRenderer>())if(skin.enabled)
+                    foreach(var w in skin.sharedMesh.boneWeights)if(w.weight0>.5f)
+                        Assert.IsFalse(skin.bones[w.boneIndex0].name.EndsWith("_r"),"visible rifle hold must be the support hand");
+                foreach(string s in new[]{"l"}) {
+                    var elbow=M7RiflePose.Find(pose.Model,"lowerarm_"+s);var wrist=M7RiflePose.Find(pose.Model,"hand_"+s);
+                    var knuckle=M7RiflePose.Find(pose.Model,"middle_01_"+s);
+                    Assert.Less(Vector3.Angle(wrist.position-elbow.position,knuckle.position-wrist.position),40f,s+" anatomical wrist bend");
+                    var screen=camera.WorldToViewportPoint((wrist.position+knuckle.position)*.5f);
+                    Assert.That(screen.x,Is.InRange(.15f,.95f));Assert.That(screen.y,Is.InRange(.02f,.55f));Assert.Greater(screen.z,.05f);
+                    var ready=wrist.position;
+                    for(int i=0;i<120;i++) {pose.Pose(false,i/60f);Assert.Less(Vector3.Distance(ready,wrist.position),.00001f,"steady weapon-mounted hold");}
+                }
+            }finally{Object.DestroyImmediate(go);Object.DestroyImmediate(camera.gameObject);}
         }
 
         [Test]
@@ -151,6 +181,7 @@ namespace BeMyArms.M7.Tests
                 Assert.Less(pose.LeftGripError,.02f); Assert.Less(pose.RightGripError,.02f);
                 var magazine=M7RiflePose.Find(go.transform,"Magazine"); Vector3 ready=magazine.position;
                 pose.Pose(true,1);
+                Assert.AreEqual(2,System.Array.FindAll(go.GetComponentsInChildren<SkinnedMeshRenderer>(),r=>r.enabled).Length,"second hand enters during reload");
                 for(int i=0;i<44;i++)
                 {
                     M7FighterBuilder.Clip("Arms","Idle_Loop").SampleAnimation(animator.gameObject,0);
@@ -161,6 +192,7 @@ namespace BeMyArms.M7.Tests
                 pose.ResetPresentation(); pose.Pose(false,4);
                 Assert.IsTrue(magazine.gameObject.activeSelf);
                 Assert.Less(Vector3.Distance(ready,magazine.position),.001f);
+                Assert.AreEqual(1,System.Array.FindAll(go.GetComponentsInChildren<SkinnedMeshRenderer>(),r=>r.enabled).Length,"back to one support hand");
             }
             finally { Object.DestroyImmediate(go); }
         }

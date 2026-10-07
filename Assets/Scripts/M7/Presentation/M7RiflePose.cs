@@ -13,6 +13,8 @@ namespace BeMyArms.M7
         public Transform Weapon;
         public M3DuelBody Body;
         public bool FirstPerson;
+        public Vector3 FirstPersonSupportShoulderPosition = new Vector3(-.22f,-.30f,.24f);
+        public Renderer[] FirstPersonReloadOnlyRenderers = System.Array.Empty<Renderer>();
         [System.Serializable]
         public struct FingerRotation { public Transform Bone; public Quaternion Rotation; }
         public FingerRotation[] AuthoredFingers = System.Array.Empty<FingerRotation>();
@@ -71,6 +73,7 @@ namespace BeMyArms.M7
             if(Weapon!=null && _ready){ Weapon.localPosition=_weaponBase; Weapon.localRotation=_weaponRotation; }
             if(_magazine!=null){ _magazine.localPosition=_magBase; _magazine.gameObject.SetActive(true); }
             if(_bolt!=null) _bolt.localPosition=_boltBase;
+            if(FirstPerson)foreach(var r in FirstPersonReloadOnlyRenderers)if(r!=null)r.enabled=false;
         }
 
         /// <summary>Also used by the editor correctness fixture to inspect deterministic reload poses.</summary>
@@ -79,6 +82,7 @@ namespace BeMyArms.M7
             Initialize(); if(!_ready) return;
             if(reloading && !_reloading){ _reloadStarted=now; _reloadStage=0; }
             _reloading=reloading;
+            if(FirstPerson)foreach(var r in FirstPersonReloadOnlyRenderers)if(r!=null)r.enabled=reloading;
             float seconds=Body!=null ? M3Loadouts.Stats((M3WeaponId)Body.WeaponId.Value).ReloadSeconds : 2.2f;
             ReloadProgress=reloading ? Mathf.Clamp01((now-_reloadStarted)/Mathf.Max(.1f,seconds)) : 0;
             float t=ReloadProgress;
@@ -123,14 +127,17 @@ namespace BeMyArms.M7
                 if(_bolt!=null) _bolt.localPosition=_boltBase;
             }
             Transform reference=FirstPerson ? transform : Weapon.parent!=null ? Weapon.parent : transform;
-            Solve(_upperR,_lowerR,_handR,_gripR.position,_gripR.rotation,reference.TransformDirection(new Vector3(.6f,-.8f,-.2f)));
-            Solve(_upperL,_lowerL,_handL,left,leftRot,reference.TransformDirection(new Vector3(-.65f,-.8f,0)));
+            // Fixed camera-local shoulder plus saved weapon sockets: one stable support hand in
+            // rifle hold. An absolute position is repeatable even with the POV Animator disabled.
+            if(FirstPerson)_upperL.position=transform.TransformPoint(FirstPersonSupportShoulderPosition);
+            Solve(_upperR,_lowerR,_handR,_gripR.position,_gripR.rotation,reference.TransformDirection(FirstPerson ? new Vector3(.45f,-.65f,-.65f) : new Vector3(.6f,-.8f,-.2f)),FirstPerson);
+            Solve(_upperL,_lowerL,_handL,left,leftRot,reference.TransformDirection(FirstPerson ? new Vector3(-.65f,-.25f,-.5f) : new Vector3(-.65f,-.8f,0)),FirstPerson);
             foreach(var f in _fingers) f.bone.localRotation=f.rest*Quaternion.Euler(f.curl,0,0);
             foreach(var f in AuthoredFingers) if(f.Bone!=null) f.Bone.localRotation=f.Rotation;
             LeftGripError=Vector3.Distance(_handL.position,left); RightGripError=Vector3.Distance(_handR.position,_gripR.position);
         }
 
-        public static void Solve(Transform upper,Transform lower,Transform hand,Vector3 target,Quaternion rotation,Vector3 pole)
+        public static void Solve(Transform upper,Transform lower,Transform hand,Vector3 target,Quaternion rotation,Vector3 pole,bool solveForearmTwist=false)
         {
             Vector3 start=upper.position; float a=Vector3.Distance(start,lower.position), b=Vector3.Distance(lower.position,hand.position);
             Vector3 offset=target-start; float d=Mathf.Clamp(offset.magnitude,.01f,a+b-.001f); Vector3 n=offset.normalized;
@@ -140,6 +147,16 @@ namespace BeMyArms.M7
             Vector3 elbow=start+n*x+bend*Mathf.Sqrt(Mathf.Max(0,a*a-x*x));
             upper.rotation=Quaternion.FromToRotation(lower.position-start,elbow-start)*upper.rotation;
             lower.rotation=Quaternion.FromToRotation(hand.position-lower.position,target-lower.position)*lower.rotation;
+            if(solveForearmTwist)
+            {
+                // Solve pronation at the forearm, where it belongs. Leaving all roll correction
+                // to the hand collapses weighted wrist vertices even with a reachable grip target.
+                Vector3 axis=(hand.position-lower.position).normalized;
+                Quaternion delta=rotation*Quaternion.Inverse(hand.rotation);
+                Vector3 projected=Vector3.Project(new Vector3(delta.x,delta.y,delta.z),axis);
+                Quaternion twist=new Quaternion(projected.x,projected.y,projected.z,delta.w);
+                if(Quaternion.Dot(twist,twist)>.0001f)lower.rotation=twist.normalized*lower.rotation;
+            }
             hand.rotation=rotation;
         }
 

@@ -1,8 +1,9 @@
 # Pass 2 foundation redo — work record
 
-**Pass 2 accepted and closed (7 October 2026).** Human review accepted the rebuilt
-foundation and authorized closure after the focused cleanup below. Cleanup and executable
-checks are complete. Pass 3 has not started and requires separate authorization.
+**Pass 2 foundation accepted (7 October 2026).** Human review accepted the rebuilt
+foundation and authorized closure after the focused cleanup below. Subsequent solo-playtest
+fixes (rifle handling, bot turns, kick direction/extension and POV wrists) are tracked in
+`docs/PASS2_SOLO_CLEANUP.md`. Pass 3 has not started and requires separate authorization.
 
 ## Safety checkpoint
 

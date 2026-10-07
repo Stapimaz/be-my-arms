@@ -133,6 +133,8 @@ namespace BeMyArms.M3
         bool _pendingFire, _pendingReload;
         bool _fireArmed;
         uint _lastServerShots;
+        readonly M3RifleHandling _rifle = new M3RifleHandling();
+        int _unconfirmedRecoilShots;
 
         // Edge-triggered actions are latched every frame so a press between send ticks is not lost.
         M2P1Input _pendingP1;
@@ -281,11 +283,15 @@ namespace BeMyArms.M3
             int serverAmmo = _body.Ammo.Value;
             uint shots = _body.ShotsFired.Value;
             uint confirmed = shots >= _lastServerShots ? shots - _lastServerShots : 0;
+            int unpredicted = Mathf.Max(0, (int)confirmed - _unconfirmedRecoilShots);
+            _unconfirmedRecoilShots = Mathf.Max(0, _unconfirmedRecoilShots - (int)confirmed);
             _optimisticSpent = Mathf.Max(0, _optimisticSpent - (int)confirmed);
             _lastServerShots = shots;
             if (serverAmmo > _lastServerAmmo) _optimisticSpent = 0;
             _lastServerAmmo = serverAmmo;
             _localShotCooldown = Mathf.Max(0f, _localShotCooldown - dt);
+            // A delayed confirmation without an optimistic shot still receives actual aim recoil.
+            for (int i = 0; i < unpredicted; i++) ApplyRifleRecoil();
             if (!input.Fire && _localShotCooldown <= 0f) _optimisticSpent = 0;
 
             if (!M3LocalInput.GameplayActive || !_body.Alive.Value || _director == null || !_director.IsLive || _body.Reloading.Value || _body.BlindRemaining.Value > 0f || input.Reload) return;
@@ -296,6 +302,19 @@ namespace BeMyArms.M3
             _localShotCooldown = Mathf.Max(0.02f, stats.SecondsBetweenShots);
             _optimisticSpent++;
             _pendingLocalShots++;
+            _unconfirmedRecoilShots++;
+            ApplyRifleRecoil();
+        }
+
+        void ApplyRifleRecoil()
+        {
+            if ((M3WeaponId)_body.WeaponId.Value != M3WeaponId.Rifle) { _rifle.Reset(); return; }
+            M3RifleHandling.Recoil(_rifle.Shot(Time.timeAsDouble), out float up, out float right);
+            _manualAimPitch = Mathf.Clamp(_manualAimPitch - up, -MaxPitchDegrees, MaxPitchDegrees);
+            _manualAimYaw = M2BodySim.ClampToSector(_manualAimYaw + right, _body.State.Value.BodyYaw,
+                SectorHalfDegrees + M3SectorWall.OvertravelDegrees);
+            // This frame's submitted input remains the pre-kick shot aim. Next frame presents and
+            // submits the recoil-displaced aim; normal mouse deltas can actively counter it.
         }
 
         /// <summary>Number of locally detected rifle shots since the last call (presentation only).</summary>
@@ -344,6 +363,8 @@ namespace BeMyArms.M3
             _localShotCooldown = 0f; _optimisticSpent = _pendingLocalShots = 0;
             _lastServerAmmo = _body.Ammo.Value;
             _lastServerShots = _body.ShotsFired.Value;
+            _rifle.Reset();
+            _unconfirmedRecoilShots = 0;
             _hasVisual = false;
             LastMouseDelta = Vector2.zero;
         }
@@ -436,9 +457,7 @@ namespace BeMyArms.M3
                 float dx = target.State.Value.PosX - predicted.PosX;
                 float dz = target.State.Value.PosZ - predicted.PosZ;
                 float desired = Mathf.Atan2(dx, dz) * Mathf.Rad2Deg;
-                float delta = Mathf.Clamp(M2BodySim.Normalize(desired - predicted.LookYaw), -25f, 25f);
-                input.LookYawDelta = delta;
-                input.AlignBody = Mathf.Abs(delta) > 1f;
+                input = M3BotSteering.Turn(predicted.LookYaw, predicted.BodyYaw, desired, dt);
                 input.MoveZ = 0.4f;
                 input.MoveX = Mathf.Sin(_autoClock * 1.3f) * 0.5f;
             }

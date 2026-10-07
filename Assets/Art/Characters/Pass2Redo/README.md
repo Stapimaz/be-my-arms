@@ -34,5 +34,9 @@ finger poses, grip sockets, choreography and geometry remain project-authored de
 
 Full asset-research findings and the free-only decision are in `docs/PASS2_FOUNDATION_REDO.md`.
 
+POV grip cleanup uses dedicated saved wrist sockets, camera-local shoulder/elbow placement
+and an anatomical forearm-pronation solve. The full-body accepted grip layout is separate.
+Solo-playtest changes and executable checks: `docs/PASS2_SOLO_CLEANUP.md`.
+
 The final cleanup removes the standalone vault action. Climb source media retained from
 the earlier redo is archival and is not connected to the active controller or controls.

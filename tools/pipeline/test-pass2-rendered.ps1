@@ -61,21 +61,38 @@ try {
     $client=Start-Player 'render-client' "-screen-fullscreen 0 -screen-width 1280 -screen-height 720 -m7-join 127.0.0.1 -m7-port $port -m7-join-role p2 -m3-token pass2-render"
     $state=Await $client 'qa_player_state' {param($s) $s.MatchLive -and $s.OwnBodyResolved -and $s.ViewmodelCount -eq 1} 'rendered P2 assignment'
     $client.Process.Refresh(); [Pass2Window]::SetForegroundWindow($client.Process.MainWindowHandle) | Out-Null
-    # Isolate correctness capture from bot damage; keep the normal dedicated simulation/movement.
+    # Protect the fixture from deaths while retaining actual solo bot movement, aim and firing.
     $file=Join-Path $qa 'quiet-render-bots.cs'
-    [IO.File]::WriteAllText($file,'var t=System.Type.GetType("BeMyArms.M3.M3DuelBody, BeMyArms.M3"); foreach(var body in UnityEngine.Object.FindObjectsByType(t,UnityEngine.FindObjectsSortMode.None)) t.GetField("BotBurstOnSeconds").SetValue(body,0f); return true;')
+    [IO.File]::WriteAllText($file,'var t=System.Type.GetType("BeMyArms.M3.M3DuelBody, BeMyArms.M3"); foreach(var body in UnityEngine.Object.FindObjectsByType(t,UnityEngine.FindObjectsSortMode.None)) { t.GetField("SpawnGraceSeconds").SetValue(body,120f); t.GetField("_spawnGraceRemaining",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).SetValue(body,120f); } return true;')
     Qa $server 'eval_file' @($file) | Out-Null
     $state=Await $client 'qa_player_state' {param($s) $s.InputGameplayActive -and $s.ApplicationFocused} 'focused gameplay'
     Check ($state.DuplicateSummary -eq 'none') "Rendered P2 has one local camera/viewmodel/body owner ($($state.DuplicateSummary))"
     $p=Qa $client 'qa_presentation_state'
     Check ($p.Listeners -eq 1 -and $p.ViewmodelLayer -eq 9) 'One active audio listener and dedicated FPS render layer'
     Check ($p.ViewLeftGripError -lt .035 -and $p.ViewRightGripError -lt .035) 'Live FPS hands reach both authored grips'
+    Check ($p.VisibleViewArms -eq 1 -and !$p.ViewBreathingAnimator) 'Rifle ready POV shows one steady weapon-mounted support arm'
+    Qa $client 'qa_solo_probe' @('--reset','true') | Out-Null
+    Qa $server 'qa_solo_probe' @('--reset','true') | Out-Null
+    # Force a substantial enemy reacquisition through the real bot-P1 steering path.
+    # Protecting the fixture retains the bot's ordinary decision/turn code throughout.
+    $file=Join-Path $qa 'solo-retarget.cs'
+    [IO.File]::WriteAllText($file,'var t=System.Type.GetType("BeMyArms.M3.M3DuelBody, BeMyArms.M3"); var bodies=UnityEngine.Object.FindObjectsByType(t,UnityEngine.FindObjectsSortMode.None); var own=bodies.First(b=>(int)t.GetProperty("TeamIndex").GetValue(b)==0); var enemy=bodies.First(b=>(int)t.GetProperty("TeamIndex").GetValue(b)==1); var simField=t.GetField("_sim",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic); var ownSim=simField.GetValue(own); var stateField=ownSim.GetType().GetField("State"); var ownState=stateField.GetValue(ownSim); var st=ownState.GetType(); var angle=((float)st.GetField("BodyYaw").GetValue(ownState)+130)*System.Math.PI/180; var sim=simField.GetValue(enemy); var state=stateField.GetValue(sim); st.GetField("PosX").SetValue(state,(float)st.GetField("PosX").GetValue(ownState)+(float)System.Math.Sin(angle)*10); st.GetField("PosZ").SetValue(state,(float)st.GetField("PosZ").GetValue(ownState)+(float)System.Math.Cos(angle)*10); stateField.SetValue(sim,state); return true;')
+    Qa $server 'eval_file' @($file) | Out-Null
     Qa $client 'qa_capture_frame' @('--output',(Join-Path $qa 'runtime-p2.png')) | Out-Null
     $ammo=$state.Ammo
+    $pitch=$state.AimPitch
     Qa $client 'qa_inject_input' @('--fire','true') | Out-Null
     $state=Await $client 'qa_player_state' {param($s) $s.Ammo -lt $ammo -and $s.LocalShots -gt 0} 'live shot feedback'
     $p=Await $client 'qa_presentation_state' {param($s) $s.AudioVoicesPlaying -gt 0} 'shot audio voice'
     Check ($state.ShotsFired -gt 0 -and $p.AudioVoicesPlaying -gt 0) 'Local firing presents audio alongside confirmed ammunition use'
+    $state=Await $client 'qa_player_state' {param($s) $s.Ammo -le $ammo-12} 'sustained rifle spray'
+    Check ($state.AimPitch -lt $pitch-4) 'Uncontrolled sustained rifle fire moves actual P2 aim upward'
+    $ballistics=Qa $server 'qa_solo_probe'
+    Check ($ballistics.MaxBurst -ge 8 -and $ballistics.MaxSpread -gt .8 -and $ballistics.MaxShotDeviation -gt .4) 'Authoritative sustained fire widens the actual hit/impact rays'
+    $probe=Qa $client 'qa_solo_probe'
+    @{ClientProbe=$probe;ServerProbe=$ballistics;StartPitch=$pitch;SprayPitch=$state.AimPitch} | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $qa 'solo-handling-metrics.json') -Encoding utf8
+    Check ($probe.TurnSamples -gt 5 -and $probe.MaxBotTurnRate -gt 60 -and $probe.MaxBotTurnRate -le 90.5) 'Solo bot P1 reacquires a large direction change smoothly at the bounded rate'
+    Check ($probe.MaxWristBend -lt 40) 'Live ready FPS wrists continue naturally along their forearms'
     Qa $client 'qa_capture_frame' @('--output',(Join-Path $qa 'runtime-firing.png')) | Out-Null
     Qa $client 'qa_inject_input' | Out-Null
     # Queue the key on the normal dynamic input update. Pipeline's simulate_key forces
@@ -86,9 +103,12 @@ try {
     $p=Await $client 'qa_presentation_state' {param($s) $s.ReloadProgress -gt .02 -and $s.ReloadProgress -lt 1} 'reload choreography'
     Qa $client 'simulate_key' @('--key','R','--action','up') | Out-Null
     Check ($p.ViewLeftGripError -lt .04 -and $p.ViewRightGripError -lt .035) 'Live magazine reload keeps both hand targets reachable'
+    Check ($p.VisibleViewArms -eq 2) 'Reload brings the second rifle POV hand into view'
     Qa $client 'qa_capture_frame' @('--output',(Join-Path $qa 'runtime-reload.png')) | Out-Null
     $state=Await $client 'qa_player_state' {param($s) !$s.Reloading -and $s.Ammo -eq 30} 'completed reload'
     Check ($state.Ammo -eq 30) 'Reload returns to a ready full rifle'
+    $p=Qa $client 'qa_presentation_state'
+    Check ($p.VisibleViewArms -eq 1) 'Completed reload returns to the single-hand rifle hold'
     Qa $client 'qa_practice_action' @('--action','2') | Out-Null
     $state=Await $client 'qa_player_state' {param($s) $s.MatchLive -and $s.LocalRole -eq 0 -and $s.ViewmodelCount -eq 0} 'role exchange'
     $client.Process.Refresh(); [Pass2Window]::SetForegroundWindow($client.Process.MainWindowHandle) | Out-Null
@@ -107,6 +127,12 @@ try {
     $inactive=$inactive.result
     Check ($inactive.ActionTime -eq 0 -and $inactive.FeetY -eq 0 -and $inactive.Movement -eq 0) 'E has no standalone movement action'
     Qa $client 'simulate_key' @('--key','E','--action','up') | Out-Null
+    Qa $client 'qa_solo_probe' @('--reset','true') | Out-Null
+    Queue-Key $client 'V'
+    $probe=Await $client 'qa_solo_probe' {param($s) $s.StrikeSamples -gt 0} 'live P1 forward kick'
+    Check ($probe.MinKickReach -gt .75 -and $probe.MinKickAlignment -gt .99) 'Live kick visibly extends toward the captured P1 attack direction'
+    $probe | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $qa 'solo-kick-metrics.json') -Encoding utf8
+    Qa $client 'simulate_key' @('--key','V','--action','up') | Out-Null
     Qa $client 'qa_inject_input' @('--movex','1') | Out-Null
     $p=Await $client 'qa_presentation_state' {param($s) $s.MoveX -gt .25} 'rightward animation blend'
     Check ($p.MoveX -gt .25 -and $p.Listeners -eq 1) 'Live P1 strafe drives the directional blend after role exchange'

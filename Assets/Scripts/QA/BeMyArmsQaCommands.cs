@@ -223,6 +223,8 @@ namespace BeMyArms.QA
                 ViewLeftGripError = view != null ? view.LeftGripError : -1,
                 ViewRightGripError = view != null ? view.RightGripError : -1,
                 ReloadProgress = view != null ? view.ReloadProgress : -1,
+                VisibleViewArms = view != null ? view.GetComponentsInChildren<SkinnedMeshRenderer>().Count(r=>r.enabled) : 0,
+                ViewBreathingAnimator = view != null && view.GetComponentInChildren<Animator>().enabled,
                 Listeners = Object.FindObjectsByType<AudioListener>().Count(x => x.enabled),
                 AudioVoicesPlaying = Object.FindObjectsByType<AudioSource>().Count(x => x.isPlaying && !x.loop),
                 ViewmodelLayer = view != null ? view.gameObject.layer : -1,

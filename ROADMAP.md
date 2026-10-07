@@ -54,7 +54,7 @@ document wins. If they conflict on **implementation order**, this roadmap wins.
 | Pass | Status |
 |---|---|
 | **Pass 1 — controls / duo foundations** | Accepted control baseline: fixed-tick authority/prediction, independent P1 look, local P2 aim, Elastic Soft sector and dedicated duo practice. See `docs/PASS1_CONTROL_BASELINE.md`. |
-| **Pass 2 — character / locomotion / FPS presentation** | **Accepted and closed.** Human-approved smooth shared-rig foundation plus requested cleanup: uniform P1/P2 materials, removed standalone vault, earlier anatomically bounded P1 body follow, sharper kicks. Final Windows player and verification: `docs/PASS2_FOUNDATION_REDO.md`. |
+| **Pass 2 — character / locomotion / FPS presentation** | **Foundation accepted.** Human-approved smooth shared rig and initial cleanup: `docs/PASS2_FOUNDATION_REDO.md`. Subsequent focused solo-playtest fixes (rifle spray, smooth bot P1 turns, look-directed extended kicks and a simple single-hand rifle POV with reload-only second hand) are rebuilt/validated and ready for human review: `docs/PASS2_SOLO_CLEANUP.md`. |
 | **Pass 3 — truthful rifle combat** | **Not started; awaiting explicit authorization.** |
 | **Pass 4 — purposeful arena / bots** | Pending. |
 | **Pass 5 — presentation / onboarding / round rhythm** | Pending. |

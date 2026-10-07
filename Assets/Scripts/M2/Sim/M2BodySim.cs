@@ -200,6 +200,7 @@ namespace BeMyArms.M2
         {
             if (input.HeavyKick && State.KickCooldown <= 0f)
             {
+                LookForward(out State.ActionDirX, out State.ActionDirZ);
                 State.ActionTimeLeft = HeavyKickDuration;
                 State.KickCooldown = HeavyKickDuration + HeavyKickCooldown;
                 State.MovementState = (byte)M2MovementState.KickHeavy;
@@ -207,6 +208,7 @@ namespace BeMyArms.M2
             }
             if (input.LightKick && State.KickCooldown <= 0f)
             {
+                LookForward(out State.ActionDirX, out State.ActionDirZ);
                 State.ActionTimeLeft = LightKickDuration;
                 State.KickCooldown = LightKickDuration + LightKickCooldown;
                 State.MovementState = (byte)M2MovementState.KickLight;

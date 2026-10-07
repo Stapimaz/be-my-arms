@@ -100,6 +100,10 @@ namespace BeMyArms.M3
 
         M2BodySim _sim;
         M2WeaponState _weapon;
+        readonly M3RifleHandling _rifle = new M3RifleHandling();
+        public Vector3 LastShotDirection { get; private set; }
+        public float LastShotSpread { get; private set; }
+        public int RifleBurst => _rifle.Burst;
         M2LagCompensation[] _lag = Array.Empty<M2LagCompensation>();
         readonly M3P1CommandStream _p1Stream = new M3P1CommandStream();
         readonly M2DelayQueue<M2P2Input> _p2Queue = new M2DelayQueue<M2P2Input>();
@@ -451,8 +455,7 @@ namespace BeMyArms.M3
             float damage = kind == M2MovementState.KickHeavy ? HeavyKickDamage : LightKickDamage;
             float range = KickRangeMeters + 0.4f;
 
-            float rad = _sim.State.BodyYaw * Mathf.Deg2Rad;
-            float fx = Mathf.Sin(rad), fz = Mathf.Cos(rad);
+            float fx = _sim.State.ActionDirX, fz = _sim.State.ActionDirZ;
             float feet = _sim.State.PosY;
 
             M3DuelBody best = null;
@@ -514,7 +517,19 @@ namespace BeMyArms.M3
             // the (sector-legal) yaw and the pitch, and test it against the enemy's vertical extent.
             float eye = _sim.State.PosY + (_sim.State.EyeHeight > 0.01f ? _sim.State.EyeHeight : 1.45f);
             Vector3 origin = new Vector3(_sim.State.PosX, eye, _sim.State.PosZ);
-            Vector3 dir = Quaternion.Euler(input.AimPitch, input.AimYaw, 0f) * Vector3.forward;
+            float spreadYaw = 0, spreadPitch = 0;
+            LastShotSpread = 0;
+            if (_activeWeapon == M3WeaponId.Rifle)
+            {
+                LastShotSpread = M3RifleHandling.SpreadDegrees(_rifle.Shot(_serverTime));
+                M3RifleHandling.Spread(ShotsFired.Value, _controlEpoch ^ (uint)_botSeed,
+                    LastShotSpread, out spreadYaw, out spreadPitch);
+            }
+            // Validate the player's aim against the historical sector BEFORE ballistic spread.
+            // Both damage and wall impacts use this exact spread ray, including for bot P2.
+            Vector3 dir = Quaternion.Euler(input.AimPitch, input.AimYaw, 0f)
+                * Quaternion.Euler(spreadPitch, spreadYaw, 0f) * Vector3.forward;
+            LastShotDirection = dir;
 
             float wallDistance = float.MaxValue;
             bool wallBlocked = _sim.Collision != null &&
@@ -661,6 +676,7 @@ namespace BeMyArms.M3
             _weapon.SecondsBetweenShots = stats.SecondsBetweenShots;
             _weapon.ReloadSeconds = stats.ReloadSeconds;
             _weapon.Reset();
+            _rifle.Reset(); LastShotDirection = Vector3.zero; LastShotSpread = 0;
             WeaponId.Value = (byte)stats.Id;
             Magazine.Value = stats.Magazine;
             Ammo.Value = _weapon.Ammo;
@@ -730,17 +746,15 @@ namespace BeMyArms.M3
         {
             var input = new M2P1Input();
             // Idle through the reaction window so the player is not rushed at the start of live.
-            if (_botLiveTime < _botReaction) return input;
+            if (_botLiveTime < _botReaction) return M3BotSteering.Turn(_sim.State.LookYaw,_sim.State.BodyYaw,_sim.State.BodyYaw,dt);
 
             M3DuelBody target = NearestEnemy(out float distance);
-            if (target == null) { input.MoveZ = 0.5f; return input; }
+            if (target == null) { input=M3BotSteering.Turn(_sim.State.LookYaw,_sim.State.BodyYaw,_sim.State.BodyYaw,dt);input.MoveZ = 0.5f; return input; }
 
             float dx = target.State.Value.PosX - _sim.State.PosX;
             float dz = target.State.Value.PosZ - _sim.State.PosZ;
             float desired = Mathf.Atan2(dx, dz) * Mathf.Rad2Deg;
-            float delta = Mathf.Clamp(M2BodySim.Normalize(desired - _sim.State.LookYaw), -25f, 25f);
-            input.LookYawDelta = delta;
-            input.AlignBody = Mathf.Abs(delta) > 1.5f;
+            input = M3BotSteering.Turn(_sim.State.LookYaw, _sim.State.BodyYaw, desired, dt);
 
             // Simple wall avoidance: if advancing barely moves the body, strafe instead.
             float moved = Mathf.Sqrt((_sim.State.PosX - _lastBotX) * (_sim.State.PosX - _lastBotX) +
@@ -877,6 +891,7 @@ namespace BeMyArms.M3
             _controlEpoch++;
             _sim.State.ControlEpoch = _controlEpoch;
             _acceptedP2 = 0;
+            _rifle.Reset();
             LastAckedP1Sequence.Value = LastAckedP2Sequence.Value = 0;
             _heldP2 = default;
             _lastP2Time = -1;

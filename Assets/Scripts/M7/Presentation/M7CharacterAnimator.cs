@@ -51,7 +51,7 @@ namespace BeMyArms.M7
         byte _lastAction;
         uint _epoch = uint.MaxValue;
         float _stepDistance;
-        Transform _kickThigh, _kickShin;
+        Transform _kickThigh, _kickShin, _kickFoot;
         Transform _upperChest;
         Transform _head;
         Quaternion _headBasis;
@@ -84,8 +84,10 @@ namespace BeMyArms.M7
             bool alive = Body.Alive.Value && state.Health > 0;
             if (P1Animator != null)
             {
-                float yaw = state.MovementState==(byte)M2MovementState.Slide
-                    ? Mathf.Atan2(state.ActionDirX,state.ActionDirZ)*Mathf.Rad2Deg-state.BodyYaw : 0f;
+                bool directed = state.MovementState==(byte)M2MovementState.Slide
+                    || state.MovementState==(byte)M2MovementState.KickLight || state.MovementState==(byte)M2MovementState.KickHeavy;
+                float yaw = directed ? Mathf.Atan2(state.ActionDirX,state.ActionDirZ)*Mathf.Rad2Deg
+                    - P1Animator.transform.parent.eulerAngles.y : 0f;
                 // Only the cosmetic skeleton faces a fixed action trajectory. Root motion and
                 // this transform have no authority over the network body or firing sector.
                 P1Animator.transform.localRotation=Quaternion.Euler(0,yaw,0);
@@ -143,22 +145,28 @@ namespace BeMyArms.M7
                 Mathf.Clamp(M2BodySim.Normalize(relative.z),-15f,15f))*_headBasis;
         }
 
-        /// <summary>Short chamber, fast extension, then recovery. Rotate about body-right rather
-        /// than imported bone-local X, which can only roll the leg on this source skeleton.</summary>
+        /// <summary>Target a forward sole strike, with an explicit near-straight knee. Uses the
+        /// presented model basis, not the (unrotated on clients) authoritative network root.</summary>
         public void ApplyKickPose(float phase,bool heavy)
         {
             if(P1Animator==null)return;
             if(_kickThigh==null)_kickThigh=M7RiflePose.Find(P1Animator.transform,"thigh_r");
             if(_kickShin==null)_kickShin=M7RiflePose.Find(P1Animator.transform,"calf_r");
-            if(_kickThigh==null || _kickShin==null)return;
-            Vector2 chamber=new Vector2(50f,95f),strike=new Vector2(heavy ? 85f : 75f,5f);
-            Vector2 pose=phase<.22f ? Vector2.Lerp(Vector2.zero,chamber,Mathf.SmoothStep(0,1,phase/.22f))
-                : phase<.34f ? Vector2.Lerp(chamber,strike,Mathf.SmoothStep(0,1,(phase-.22f)/.12f))
-                : phase<.42f ? strike
-                : phase<.60f ? Vector2.Lerp(strike,chamber,Mathf.SmoothStep(0,1,(phase-.42f)/.18f))
-                : Vector2.Lerp(chamber,Vector2.zero,Mathf.SmoothStep(0,1,(phase-.60f)/.40f));
-            _kickThigh.rotation=Quaternion.AngleAxis(-pose.x,transform.right)*_kickThigh.rotation;
-            _kickShin.rotation=Quaternion.AngleAxis(pose.y,transform.right)*_kickShin.rotation;
+            if(_kickFoot==null)_kickFoot=M7RiflePose.Find(P1Animator.transform,"foot_r");
+            if(_kickThigh==null || _kickShin==null || _kickFoot==null || phase<=0 || phase>=1)return;
+            var basis=P1Animator.transform;
+            float length=Vector3.Distance(_kickThigh.position,_kickShin.position)+Vector3.Distance(_kickShin.position,_kickFoot.position);
+            Vector3 ready=_kickFoot.position;
+            Vector3 chamber=_kickThigh.position+basis.forward*.20f-basis.up*.34f;
+            Vector3 strike=_kickThigh.position+basis.forward*(length*.97f)-basis.up*.035f;
+            Vector3 target;float tilt;
+            if(phase<.20f){float t=Mathf.SmoothStep(0,1,phase/.20f);target=Vector3.Lerp(ready,chamber,t);tilt=40*t;}
+            else if(phase<.32f){float t=Mathf.SmoothStep(0,1,(phase-.20f)/.12f);target=Vector3.Lerp(chamber,strike,t);tilt=Mathf.Lerp(40,85,t);}
+            else if(phase<.52f){target=strike;tilt=85;}
+            else if(phase<.70f){float t=Mathf.SmoothStep(0,1,(phase-.52f)/.18f);target=Vector3.Lerp(strike,chamber,t);tilt=Mathf.Lerp(85,40,t);}
+            else{float t=Mathf.SmoothStep(0,1,(phase-.70f)/.30f);target=Vector3.Lerp(chamber,ready,t);tilt=40*(1-t);}
+            Quaternion sole=Quaternion.AngleAxis(-tilt,basis.right)*_kickFoot.rotation;
+            M7RiflePose.Solve(_kickThigh,_kickShin,_kickFoot,target,sole,basis.forward);
         }
 
         /// <summary>
