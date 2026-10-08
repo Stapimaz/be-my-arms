@@ -1,10 +1,10 @@
-using BeMyArms.M0;
+using BeMyArms.Core;
 using NUnit.Framework;
 
-namespace BeMyArms.M0.Tests
+namespace BeMyArms.Core.Tests
 {
     /// <summary>
-    /// Verifies the deterministic half of M0 acceptance criteria 3, 4 and 5:
+    /// Verifies the deterministic half of Core acceptance criteria 3, 4 and 5:
     /// world-stable aim inside the sector, boundary push, no phantom offset, and that the
     /// sector math can never move the body.
     /// </summary>

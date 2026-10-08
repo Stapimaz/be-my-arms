@@ -1,0 +1,50 @@
+using UnityEngine;
+
+namespace BeMyArms.Gameplay
+{
+    /// <summary>P1 role command: locomotion, body orientation and melee.</summary>
+    public struct P1Command
+    {
+        public Vector2 Move;
+        public float LookYawDelta;
+        public float LookPitchDelta;
+        public bool Sprint;
+        public bool Jump;
+        public bool Dodge;
+        public Vector2 DodgeDirection;
+        public bool Slide;
+        public bool Vault;
+        public bool LightKick;
+        public bool HeavyKick;
+        /// <summary>Explicit "align body to look" action. Binding is temporary/configurable.</summary>
+        public bool AlignBody;
+    }
+
+    /// <summary>P2 role command: aim, weapons and utility/hands (hands are Match+).</summary>
+    public struct P2Command
+    {
+        public float AimYawDelta;
+        public float AimPitchDelta;
+        public bool Fire;
+        public bool Reload;
+        public bool SwitchRequested;
+        public int SwitchWeapon;
+        public bool KnifeAttack;
+    }
+
+    public interface IP1CommandSource
+    {
+        P1Command Read(float deltaTime);
+    }
+
+    public interface IP2CommandSource
+    {
+        P2Command Read(float deltaTime);
+    }
+
+    public enum LocalInputMode
+    {
+        Device,
+        Scripted
+    }
+}

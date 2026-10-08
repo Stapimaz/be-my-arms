@@ -1,0 +1,19 @@
+{
+    "name": "BeMyArms.Diagnostics.NetworkingProbe.Editor",
+    "rootNamespace": "BeMyArms.Diagnostics.NetworkingProbe.EditorTools",
+    "references": [
+        "BeMyArms.Diagnostics.NetworkingProbe",
+        "Unity.Netcode.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

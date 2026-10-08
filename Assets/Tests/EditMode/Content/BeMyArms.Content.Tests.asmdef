@@ -1,0 +1,32 @@
+{
+    "name": "BeMyArms.Content.Tests",
+    "rootNamespace": "BeMyArms.Content.Tests",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "BeMyArms.Content",
+        "BeMyArms.Content.Editor",
+        "BeMyArms.Product",
+        "BeMyArms.Matchmaking",
+        "BeMyArms.Match",
+        "BeMyArms.Networking",
+        "BeMyArms.Gameplay",
+        "BeMyArms.Core",
+        "Unity.Netcode.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

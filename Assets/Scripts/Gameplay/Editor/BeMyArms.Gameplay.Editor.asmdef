@@ -1,0 +1,19 @@
+{
+    "name": "BeMyArms.Gameplay.Editor",
+    "rootNamespace": "BeMyArms.Gameplay.EditorTools",
+    "references": [
+        "BeMyArms.Gameplay",
+        "BeMyArms.Core"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

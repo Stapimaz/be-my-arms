@@ -1,0 +1,61 @@
+{
+  "OriginalGuids": 557,
+  "LostGuids": {},
+  "DependencyLosses": [],
+  "ReviewedLegacyReserialization": [
+    {
+      "Path": "Assets/Settings/PC_Renderer.asset",
+      "Guids": [
+        "0849e84e3d62649e8882e9d6f056a017",
+        "3302065f671a8450b82c9ddf07426f3a",
+        "36f118343fc974119bee3d09e2111500",
+        "4b7b083e6b6734e8bb2838b0b50a0bc8",
+        "56a77a3e8d64f47b6afe9e3c95cb57d5",
+        "c06cc21c692f94f5fb5206247191eeee",
+        "cb76dd40fa7654f9587f6a344f125c9a",
+        "e32226222ff144b24bf3a5a451de54bc"
+      ],
+      "Reason": "URP 17.4 no longer serializes SSAO shader/noise fields; resources come from GraphicsSettings."
+    }
+  ],
+  "DependencyAdditions": [
+    {
+      "Path": "Assets/Art/Environment/Prefabs/BMA_Env_Platform.prefab",
+      "Guids": [
+        "42272fa0df421494bbb1aed52fbd741a"
+      ]
+    },
+    {
+      "Path": "Assets/Art/Environment/Prefabs/BMA_Env_Wall.prefab",
+      "Guids": [
+        "42272fa0df421494bbb1aed52fbd741a"
+      ]
+    },
+    {
+      "Path": "Assets/Art/Environment/Prefabs/BMA_Env_Crate.prefab",
+      "Guids": [
+        "42272fa0df421494bbb1aed52fbd741a"
+      ]
+    },
+    {
+      "Path": "Assets/Art/Environment/Prefabs/BMA_Env_Pillar.prefab",
+      "Guids": [
+        "42272fa0df421494bbb1aed52fbd741a"
+      ]
+    }
+  ],
+  "NewReferenceErrors": [],
+  "RetainedPreExistingSerializationWarnings": [
+    "Assets/Settings/DefaultVolumeProfile.asset: unresolved GUID 0fd9ee276a1023e439cf7a9c393195fa",
+    "Assets/Settings/DefaultVolumeProfile.asset: unresolved GUID 5a00a63fdd6bd2a45ab1f2d869305ffd",
+    "Assets/Settings/DefaultVolumeProfile.asset: unresolved GUID 60f3b30c03e6ba64d9a27dc9dba8f28d",
+    "Assets/Settings/DefaultVolumeProfile.asset: unresolved GUID 74955a4b0b4243bc87231e8b59ed9140",
+    "Assets/Settings/PC_Renderer.asset: unresolved GUID 03cfc4915c15d504a9ed85ecc404e607",
+    "Assets/Settings/PC_Renderer.asset: unresolved GUID 24ec0e140fb444a44ab96ee80844e18e",
+    "Assets/Settings/PC_Renderer.asset: unresolved GUID 53a11f4ebaebf4049b3638ef78dc9664",
+    "Assets/Settings/PC_Renderer.asset: unresolved GUID 57d7c4c16e2765b47a4d2069b311bffe",
+    "Assets/Settings/PC_Renderer.asset: unresolved GUID 8f96cd657dc40064aa21efcc7e50a2e7",
+    "Assets/Settings/PC_Renderer.asset: unresolved GUID b9a23f869c4fd45f19c5ada54dd82176",
+    "Assets/Settings/PC_Renderer.asset: unresolved GUID e5c6678ed2aaa91408dd3df699057aae"
+  ]
+}

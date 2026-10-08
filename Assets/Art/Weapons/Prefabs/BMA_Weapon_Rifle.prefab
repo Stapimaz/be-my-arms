@@ -44,7 +44,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fdd453b719f3bf448ac5b97da07675ab, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: BeMyArms.M6::BeMyArms.M6.M6WeaponDescriptor
+  m_EditorClassIdentifier: BeMyArms.Content::BeMyArms.Content.WeaponDescriptor
   WeaponId: BMA_Weapon_Rifle
   Kind: 0
   MountSocket: WeaponAnchor

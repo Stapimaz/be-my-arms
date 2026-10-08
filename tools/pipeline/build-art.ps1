@@ -1,4 +1,4 @@
-# Regenerates the Be My Arms production art with the pinned Blender build.
+# Regenerates the original modular/kit art, NOT the accepted SharedRig character or POV.
 # Writes editable .blend sources to art/blender/blend and FBX exports to Assets/Art.
 $ErrorActionPreference = 'Stop'
 

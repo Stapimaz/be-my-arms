@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9092250668681104857}
-  - component: {fileID: 907091414613537554}
+  - component: {fileID: 2954053652628742641}
   m_Layer: 0
   m_Name: BMA_Env_Pillar
   m_TagString: Untagged
@@ -33,7 +33,7 @@ Transform:
   - {fileID: 812404414535597062}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &907091414613537554
+--- !u!114 &2954053652628742641
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -42,9 +42,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3684880725413988621}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 42272fa0df421494bbb1aed52fbd741a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: BeMyArms.M6::BeMyArms.M6.M6EnvironmentDescriptor
+  m_EditorClassIdentifier: BeMyArms.Content::BeMyArms.Content.EnvironmentDescriptor
   AssetId: BMA_Env_Pillar
   KitCategory: blockout
 --- !u!1001 &922258257692007405

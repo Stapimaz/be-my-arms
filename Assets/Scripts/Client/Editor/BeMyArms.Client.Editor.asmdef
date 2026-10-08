@@ -1,0 +1,29 @@
+{
+    "name": "BeMyArms.Client.Editor",
+    "rootNamespace": "BeMyArms.Client.EditorTools",
+    "references": [
+        "BeMyArms.Client",
+        "BeMyArms.Content",
+        "BeMyArms.Content.Editor",
+        "BeMyArms.Product",
+        "BeMyArms.Matchmaking",
+        "BeMyArms.Match",
+        "BeMyArms.Match.Editor",
+        "BeMyArms.Networking",
+        "BeMyArms.Core",
+        "Unity.Netcode.Runtime",
+        "Unity.Animation.Rigging",
+        "Unity.Cinemachine"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

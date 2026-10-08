@@ -1,0 +1,2853 @@
+{
+  "Moves": [
+    {
+      "From": "Assets/Scripts/M0",
+      "To": "Assets/Scripts/Core"
+    },
+    {
+      "From": "Assets/Scripts/M1",
+      "To": "Assets/Scripts/Gameplay"
+    },
+    {
+      "From": "Assets/Scripts/M2",
+      "To": "Assets/Scripts/Networking"
+    },
+    {
+      "From": "Assets/Scripts/M3",
+      "To": "Assets/Scripts/Match"
+    },
+    {
+      "From": "Assets/Scripts/M4",
+      "To": "Assets/Scripts/Matchmaking"
+    },
+    {
+      "From": "Assets/Scripts/M5",
+      "To": "Assets/Scripts/Product"
+    },
+    {
+      "From": "Assets/Scripts/M6",
+      "To": "Assets/Scripts/Content"
+    },
+    {
+      "From": "Assets/Scripts/M7",
+      "To": "Assets/Scripts/Client"
+    },
+    {
+      "From": "Assets/Scripts/M05",
+      "To": "Assets/Scripts/Diagnostics/NetcodeComparison"
+    },
+    {
+      "From": "Assets/Scripts/NetProbe",
+      "To": "Assets/Scripts/Diagnostics/NetworkingProbe"
+    },
+    {
+      "From": "Assets/Tests/EditMode/M1",
+      "To": "Assets/Tests/EditMode/Gameplay"
+    },
+    {
+      "From": "Assets/Tests/EditMode/M2",
+      "To": "Assets/Tests/EditMode/Networking"
+    },
+    {
+      "From": "Assets/Tests/EditMode/M3",
+      "To": "Assets/Tests/EditMode/Match"
+    },
+    {
+      "From": "Assets/Tests/EditMode/M4",
+      "To": "Assets/Tests/EditMode/Matchmaking"
+    },
+    {
+      "From": "Assets/Tests/EditMode/M5",
+      "To": "Assets/Tests/EditMode/Product"
+    },
+    {
+      "From": "Assets/Tests/EditMode/M6",
+      "To": "Assets/Tests/EditMode/Content"
+    },
+    {
+      "From": "Assets/Tests/EditMode/M7",
+      "To": "Assets/Tests/EditMode/Client"
+    },
+    {
+      "From": "Assets/Tests/PlayMode/M5",
+      "To": "Assets/Tests/PlayMode/Product"
+    },
+    {
+      "From": "Assets/Tests/PlayMode/M7",
+      "To": "Assets/Tests/PlayMode/Client"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Net",
+      "To": "Assets/Scripts/Networking/Samples/PredictionHarness"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Editor",
+      "To": "Assets/Scripts/Networking/Samples/PredictionHarness/Editor"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Sim",
+      "To": "Assets/Scripts/Networking/Simulation"
+    },
+    {
+      "From": "Assets/Scripts/Match/Net",
+      "To": "Assets/Scripts/Match/Networking"
+    },
+    {
+      "From": "Assets/Scripts/Match/Sim",
+      "To": "Assets/Scripts/Match/Rules"
+    },
+    {
+      "From": "Assets/Scripts/Matchmaking/Sim",
+      "To": "Assets/Scripts/Matchmaking/Rules"
+    },
+    {
+      "From": "Assets/Scripts/Product/Sim",
+      "To": "Assets/Scripts/Product/Services"
+    },
+    {
+      "From": "Assets/Scripts/Client/Sim",
+      "To": "Assets/Scripts/Client/Content"
+    },
+    {
+      "From": "Assets/Art/Characters/Pass2Redo",
+      "To": "Assets/Art/Characters/SharedRig"
+    },
+    {
+      "From": "Assets/Art/Characters/Pass2",
+      "To": "Assets/Art/Characters/Samples/SegmentRig"
+    },
+    {
+      "From": "Assets/Art/Characters/Quaternius",
+      "To": "Assets/Art/Characters/Samples/SkeletalStudies"
+    },
+    {
+      "From": "Assets/Scenes/M7MainMenu.unity",
+      "To": "Assets/Scenes/MainMenu.unity"
+    },
+    {
+      "From": "Assets/Scenes/M7DuelArena.unity",
+      "To": "Assets/Scenes/DuelArena.unity"
+    },
+    {
+      "From": "Assets/Scenes/M7TwoVsTwoArena.unity",
+      "To": "Assets/Scenes/TwoVsTwoArena.unity"
+    },
+    {
+      "From": "Assets/Scenes/M0SharedBody.unity",
+      "To": "Assets/Scenes/Samples/SharedControl.unity"
+    },
+    {
+      "From": "Assets/Scenes/M05Ngo.unity",
+      "To": "Assets/Scenes/Samples/NetcodeComparison.unity"
+    },
+    {
+      "From": "Assets/Scenes/M1VerticalSlice.unity",
+      "To": "Assets/Scenes/Samples/LocalCombat.unity"
+    },
+    {
+      "From": "Assets/Scenes/M2NetworkingSpike.unity",
+      "To": "Assets/Scenes/Samples/PredictionHarness.unity"
+    },
+    {
+      "From": "Assets/Scenes/M3Duel.unity",
+      "To": "Assets/Scenes/Samples/MatchHarness.unity"
+    },
+    {
+      "From": "Assets/Scenes/M6ProductionShowcase.unity",
+      "To": "Assets/Scenes/Samples/AssetShowcase.unity"
+    },
+    {
+      "From": "Assets/Scenes/NetProbe.unity",
+      "To": "Assets/Scenes/Samples/NetworkingProbe.unity"
+    },
+    {
+      "From": "Assets/Scenes/SampleScene.unity",
+      "To": "Assets/Scenes/Samples/URPTemplate.unity"
+    },
+    {
+      "From": "Assets/Art/Audio/M7AudioLibrary.asset",
+      "To": "Assets/Art/Audio/AudioLibrary.asset"
+    },
+    {
+      "From": "Assets/Art/Characters/M7PlayerBody.prefab",
+      "To": "Assets/Art/Characters/PlayerBody.prefab"
+    },
+    {
+      "From": "Assets/Art/Characters/M7PlayerDirector.prefab",
+      "To": "Assets/Art/Characters/PlayerDirector.prefab"
+    },
+    {
+      "From": "Assets/Art/Maps/M7DuelArena.asset",
+      "To": "Assets/Art/Maps/DuelArena.asset"
+    },
+    {
+      "From": "Assets/Art/Maps/M7TwoVsTwoArena.asset",
+      "To": "Assets/Art/Maps/TwoVsTwoArena.asset"
+    },
+    {
+      "From": "Assets/Art/Vfx/M7VfxLibrary.asset",
+      "To": "Assets/Art/Vfx/VfxLibrary.asset"
+    },
+    {
+      "From": "Assets/Art/Characters/SharedRig/Resources/M7_P2ArmsViewmodel.prefab",
+      "To": "Assets/Art/Characters/SharedRig/Resources/P2ArmsViewmodel.prefab"
+    },
+    {
+      "From": "Assets/Art/Characters/Samples/SkeletalStudies/Controllers/M7_P1_Locomotion.controller",
+      "To": "Assets/Art/Characters/Samples/SkeletalStudies/Controllers/P1_Locomotion.controller"
+    },
+    {
+      "From": "Assets/Art/Characters/Samples/SkeletalStudies/Controllers/M7_P2_ArmsAim.controller",
+      "To": "Assets/Art/Characters/Samples/SkeletalStudies/Controllers/P2_ArmsAim.controller"
+    },
+    {
+      "From": "Assets/Art/Characters/Samples/SkeletalStudies/Controllers/M7_P2_Locomotion.controller",
+      "To": "Assets/Art/Characters/Samples/SkeletalStudies/Controllers/P2_Locomotion.controller"
+    },
+    {
+      "From": "Assets/Art/Weapons/Prefabs/BMA_Weapon_Rifle_Pass2.prefab",
+      "To": "Assets/Art/Weapons/Prefabs/BMA_Weapon_Rifle_View.prefab"
+    },
+    {
+      "From": "Assets/Scripts/Core/BeMyArms.M0.asmdef",
+      "To": "Assets/Scripts/Core/BeMyArms.Core.asmdef"
+    },
+    {
+      "From": "Assets/Scripts/Gameplay/BeMyArms.M1.asmdef",
+      "To": "Assets/Scripts/Gameplay/BeMyArms.Gameplay.asmdef"
+    },
+    {
+      "From": "Assets/Scripts/Networking/BeMyArms.M2.asmdef",
+      "To": "Assets/Scripts/Networking/BeMyArms.Networking.asmdef"
+    },
+    {
+      "From": "Assets/Scripts/Match/BeMyArms.M3.asmdef",
+      "To": "Assets/Scripts/Match/BeMyArms.Match.asmdef"
+    },
+    {
+      "From": "Assets/Scripts/Matchmaking/BeMyArms.M4.asmdef",
+      "To": "Assets/Scripts/Matchmaking/BeMyArms.Matchmaking.asmdef"
+    },
+    {
+      "From": "Assets/Scripts/Product/BeMyArms.M5.asmdef",
+      "To": "Assets/Scripts/Product/BeMyArms.Product.asmdef"
+    },
+    {
+      "From": "Assets/Scripts/Content/BeMyArms.M6.asmdef",
+      "To": "Assets/Scripts/Content/BeMyArms.Content.asmdef"
+    },
+    {
+      "From": "Assets/Scripts/Client/BeMyArms.M7.asmdef",
+      "To": "Assets/Scripts/Client/BeMyArms.Client.asmdef"
+    },
+    {
+      "From": "Assets/Scripts/Diagnostics/NetworkingProbe/BeMyArms.NetProbe.asmdef",
+      "To": "Assets/Scripts/Diagnostics/NetworkingProbe/BeMyArms.Diagnostics.NetworkingProbe.asmdef"
+    },
+    {
+      "From": "Assets/Scripts/QA/SoloCleanupProbe.cs",
+      "To": "Assets/Scripts/QA/HandlingProbe.cs"
+    },
+    {
+      "From": "Assets/Scripts/Core/Data/M0Tuning.asset",
+      "To": "Assets/Scripts/Core/Data/SharedControlTuning.asset"
+    },
+    {
+      "From": "Assets/Scripts/Core/Data/M0Tuning.cs",
+      "To": "Assets/Scripts/Core/Data/SharedControlTuning.cs"
+    },
+    {
+      "From": "Assets/Scripts/Core/Editor/BeMyArms.M0.Editor.asmdef",
+      "To": "Assets/Scripts/Core/Editor/BeMyArms.Core.Editor.asmdef"
+    },
+    {
+      "From": "Assets/Scripts/Core/Editor/M0SceneBuilder.cs",
+      "To": "Assets/Scripts/Core/Editor/SharedControlSceneBuilder.cs"
+    },
+    {
+      "From": "Assets/Scripts/Core/Gameplay/M0BodyRoot.cs",
+      "To": "Assets/Scripts/Core/Gameplay/SharedControlSampleBody.cs"
+    },
+    {
+      "From": "Assets/Scripts/Core/Presentation/M0DebugHud.cs",
+      "To": "Assets/Scripts/Core/Presentation/SharedControlHud.cs"
+    },
+    {
+      "From": "Assets/Scripts/Core/Data/Materials/M0_Cover.mat",
+      "To": "Assets/Scripts/Core/Data/Materials/Core_Cover.mat"
+    },
+    {
+      "From": "Assets/Scripts/Core/Data/Materials/M0_DummyBody.mat",
+      "To": "Assets/Scripts/Core/Data/Materials/Core_DummyBody.mat"
+    },
+    {
+      "From": "Assets/Scripts/Core/Data/Materials/M0_DummyHead.mat",
+      "To": "Assets/Scripts/Core/Data/Materials/Core_DummyHead.mat"
+    },
+    {
+      "From": "Assets/Scripts/Core/Data/Materials/M0_Ground.mat",
+      "To": "Assets/Scripts/Core/Data/Materials/Core_Ground.mat"
+    },
+    {
+      "From": "Assets/Scripts/Core/Data/Materials/M0_P1Body.mat",
+      "To": "Assets/Scripts/Core/Data/Materials/Core_P1Body.mat"
+    },
+    {
+      "From": "Assets/Scripts/Core/Data/Materials/M0_P1Head.mat",
+      "To": "Assets/Scripts/Core/Data/Materials/Core_P1Head.mat"
+    },
+    {
+      "From": "Assets/Scripts/Core/Data/Materials/M0_P2Arm.mat",
+      "To": "Assets/Scripts/Core/Data/Materials/Core_P2Arm.mat"
+    },
+    {
+      "From": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/BeMyArms.M05.Ngo.asmdef",
+      "To": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/BeMyArms.Diagnostics.NetcodeComparison.asmdef"
+    },
+    {
+      "From": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/Editor/BeMyArms.M05.Ngo.Editor.asmdef",
+      "To": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/Editor/BeMyArms.Diagnostics.NetcodeComparison.Editor.asmdef"
+    },
+    {
+      "From": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/Editor/M05NgoSceneBuilder.cs",
+      "To": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/Editor/NetcodeComparisonSceneBuilder.cs"
+    },
+    {
+      "From": "Assets/Scripts/Gameplay/Data/M1Tuning.asset",
+      "To": "Assets/Scripts/Gameplay/Data/LocalCombatTuning.asset"
+    },
+    {
+      "From": "Assets/Scripts/Gameplay/Data/M1Tuning.cs",
+      "To": "Assets/Scripts/Gameplay/Data/LocalCombatTuning.cs"
+    },
+    {
+      "From": "Assets/Scripts/Gameplay/Editor/BeMyArms.M1.Editor.asmdef",
+      "To": "Assets/Scripts/Gameplay/Editor/BeMyArms.Gameplay.Editor.asmdef"
+    },
+    {
+      "From": "Assets/Scripts/Gameplay/Editor/M1SceneBuilder.cs",
+      "To": "Assets/Scripts/Gameplay/Editor/LocalCombatSceneBuilder.cs"
+    },
+    {
+      "From": "Assets/Scripts/Gameplay/Gameplay/M1BodyRoot.cs",
+      "To": "Assets/Scripts/Gameplay/Gameplay/LocalCombatBody.cs"
+    },
+    {
+      "From": "Assets/Scripts/Gameplay/Input/M1Commands.cs",
+      "To": "Assets/Scripts/Gameplay/Input/LocalCombatCommands.cs"
+    },
+    {
+      "From": "Assets/Scripts/Gameplay/Input/M1P1DeviceInputSource.cs",
+      "To": "Assets/Scripts/Gameplay/Input/LocalP1DeviceInputSource.cs"
+    },
+    {
+      "From": "Assets/Scripts/Gameplay/Input/M1P2DeviceInputSource.cs",
+      "To": "Assets/Scripts/Gameplay/Input/LocalP2DeviceInputSource.cs"
+    },
+    {
+      "From": "Assets/Scripts/Gameplay/Input/M1ScriptedInputSource.cs",
+      "To": "Assets/Scripts/Gameplay/Input/LocalScriptedInputSource.cs"
+    },
+    {
+      "From": "Assets/Scripts/Gameplay/Presentation/M1Hud.cs",
+      "To": "Assets/Scripts/Gameplay/Presentation/LocalCombatHud.cs"
+    },
+    {
+      "From": "Assets/Scripts/Gameplay/Presentation/M1P1Camera.cs",
+      "To": "Assets/Scripts/Gameplay/Presentation/LocalP1Camera.cs"
+    },
+    {
+      "From": "Assets/Scripts/Gameplay/Presentation/M1P2Camera.cs",
+      "To": "Assets/Scripts/Gameplay/Presentation/LocalP2Camera.cs"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Samples/PredictionHarness/Editor/BeMyArms.M2.Editor.asmdef",
+      "To": "Assets/Scripts/Networking/Samples/PredictionHarness/Editor/BeMyArms.Networking.Editor.asmdef"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Samples/PredictionHarness/Editor/M2Build.cs",
+      "To": "Assets/Scripts/Networking/Samples/PredictionHarness/Editor/PredictionHarnessBuild.cs"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Samples/PredictionHarness/Editor/M2SceneBuilder.cs",
+      "To": "Assets/Scripts/Networking/Samples/PredictionHarness/Editor/PredictionHarnessSceneBuilder.cs"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Samples/PredictionHarness/M2Body.prefab",
+      "To": "Assets/Scripts/Networking/Samples/PredictionHarness/Body.prefab"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Samples/PredictionHarness/M2Bootstrap.cs",
+      "To": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessBootstrap.cs"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Samples/PredictionHarness/M2ClientPredictor.cs",
+      "To": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessClient.cs"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Samples/PredictionHarness/M2Config.cs",
+      "To": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessConfig.cs"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Samples/PredictionHarness/M2NetworkBody.cs",
+      "To": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessBody.cs"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Samples/PredictionHarness/M2RoleService.cs",
+      "To": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessRoleService.cs"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Simulation/M2BodySim.cs",
+      "To": "Assets/Scripts/Networking/Simulation/BodySim.cs"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Simulation/M2Commands.cs",
+      "To": "Assets/Scripts/Networking/Simulation/Commands.cs"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Simulation/M2DelayQueue.cs",
+      "To": "Assets/Scripts/Networking/Simulation/DelayQueue.cs"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Simulation/M2LagCompensation.cs",
+      "To": "Assets/Scripts/Networking/Simulation/LagCompensation.cs"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Simulation/M2MovementCollision.cs",
+      "To": "Assets/Scripts/Networking/Simulation/MovementCollision.cs"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Simulation/M2MovementState.cs",
+      "To": "Assets/Scripts/Networking/Simulation/BodyMovementState.cs"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Simulation/M2Reconciler.cs",
+      "To": "Assets/Scripts/Networking/Simulation/Reconciler.cs"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Simulation/M2RoleRegistry.cs",
+      "To": "Assets/Scripts/Networking/Simulation/BodyRoleRegistry.cs"
+    },
+    {
+      "From": "Assets/Scripts/Networking/Simulation/M2WeaponState.cs",
+      "To": "Assets/Scripts/Networking/Simulation/WeaponState.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Editor/BeMyArms.M3.Editor.asmdef",
+      "To": "Assets/Scripts/Match/Editor/BeMyArms.Match.Editor.asmdef"
+    },
+    {
+      "From": "Assets/Scripts/Match/Editor/M3DuelBuild.cs",
+      "To": "Assets/Scripts/Match/Editor/MatchSampleBuild.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Editor/M3DuelSceneBuilder.cs",
+      "To": "Assets/Scripts/Match/Editor/MatchSampleSceneBuilder.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Networking/M3Config.cs",
+      "To": "Assets/Scripts/Match/Networking/MatchConfig.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Networking/M3DuelBody.cs",
+      "To": "Assets/Scripts/Match/Networking/NetworkBody.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Networking/M3DuelBody.prefab",
+      "To": "Assets/Scripts/Match/Networking/NetworkBody.prefab"
+    },
+    {
+      "From": "Assets/Scripts/Match/Networking/M3DuelBootstrap.cs",
+      "To": "Assets/Scripts/Match/Networking/MatchBootstrap.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Networking/M3DuelClient.cs",
+      "To": "Assets/Scripts/Match/Networking/NetworkBodyClient.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Networking/M3DuelDirector.cs",
+      "To": "Assets/Scripts/Match/Networking/MatchDirector.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Networking/M3DuelDirector.prefab",
+      "To": "Assets/Scripts/Match/Networking/MatchDirector.prefab"
+    },
+    {
+      "From": "Assets/Scripts/Match/Networking/M3DuelHud.cs",
+      "To": "Assets/Scripts/Match/Networking/MatchDebugHud.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Networking/M3DuelRoleService.cs",
+      "To": "Assets/Scripts/Match/Networking/MatchRoleService.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Networking/M3LocalInput.cs",
+      "To": "Assets/Scripts/Match/Networking/LocalInput.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Networking/M3MapSpawns.cs",
+      "To": "Assets/Scripts/Match/Networking/MapSpawns.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Networking/M3ZoneVisual.cs",
+      "To": "Assets/Scripts/Match/Networking/ZoneVisual.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/M3AimHistory.cs",
+      "To": "Assets/Scripts/Match/Rules/AimHistory.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/M3BotAim.cs",
+      "To": "Assets/Scripts/Match/Rules/BotAim.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/M3BotDifficulty.cs",
+      "To": "Assets/Scripts/Match/Rules/BotDifficulty.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/M3BotEngage.cs",
+      "To": "Assets/Scripts/Match/Rules/BotEngage.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/M3BotSteering.cs",
+      "To": "Assets/Scripts/Match/Rules/BotSteering.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/M3BuyPhase.cs",
+      "To": "Assets/Scripts/Match/Rules/BuyPhase.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/M3ClosingZone.cs",
+      "To": "Assets/Scripts/Match/Rules/ClosingZone.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/M3CombatEvents.cs",
+      "To": "Assets/Scripts/Match/Rules/CombatEvents.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/M3DuelRoster.cs",
+      "To": "Assets/Scripts/Match/Rules/MatchRoster.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/M3InputStream.cs",
+      "To": "Assets/Scripts/Match/Rules/InputStream.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/M3Loadouts.cs",
+      "To": "Assets/Scripts/Match/Rules/Loadouts.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/M3MatchState.cs",
+      "To": "Assets/Scripts/Match/Rules/MatchState.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/M3P1CommandStream.cs",
+      "To": "Assets/Scripts/Match/Rules/P1CommandStream.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/M3RifleHandling.cs",
+      "To": "Assets/Scripts/Match/Rules/RifleHandling.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/M3RoleQueue.cs",
+      "To": "Assets/Scripts/Match/Rules/RoleQueue.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/M3SectorWall.cs",
+      "To": "Assets/Scripts/Match/Rules/SectorWall.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/M3Telemetry.cs",
+      "To": "Assets/Scripts/Match/Rules/Telemetry.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/M3UtilitySystem.cs",
+      "To": "Assets/Scripts/Match/Rules/UtilitySystem.cs"
+    },
+    {
+      "From": "Assets/Scripts/Matchmaking/Rules/M4Allocation.cs",
+      "To": "Assets/Scripts/Matchmaking/Rules/Allocation.cs"
+    },
+    {
+      "From": "Assets/Scripts/Matchmaking/Rules/M4BodyMmr.cs",
+      "To": "Assets/Scripts/Matchmaking/Rules/BodyMmr.cs"
+    },
+    {
+      "From": "Assets/Scripts/Matchmaking/Rules/M4MatchBridge.cs",
+      "To": "Assets/Scripts/Matchmaking/Rules/MatchmakingBridge.cs"
+    },
+    {
+      "From": "Assets/Scripts/Matchmaking/Rules/M4MatchHost.cs",
+      "To": "Assets/Scripts/Matchmaking/Rules/MatchmakingHost.cs"
+    },
+    {
+      "From": "Assets/Scripts/Matchmaking/Rules/M4Matchmaker.cs",
+      "To": "Assets/Scripts/Matchmaking/Rules/Matchmaker.cs"
+    },
+    {
+      "From": "Assets/Scripts/Matchmaking/Rules/M4Rating.cs",
+      "To": "Assets/Scripts/Matchmaking/Rules/RoleRating.cs"
+    },
+    {
+      "From": "Assets/Scripts/Product/Rig/M5GameplayRigStats.cs",
+      "To": "Assets/Scripts/Product/Rig/GameplayRigStats.cs"
+    },
+    {
+      "From": "Assets/Scripts/Product/Rig/M5MountAssembler.cs",
+      "To": "Assets/Scripts/Product/Rig/MountAssembler.cs"
+    },
+    {
+      "From": "Assets/Scripts/Product/Rig/M5MountDemo.cs",
+      "To": "Assets/Scripts/Product/Rig/MountDemo.cs"
+    },
+    {
+      "From": "Assets/Scripts/Product/Rig/M5PlaceholderRigFactory.cs",
+      "To": "Assets/Scripts/Product/Rig/PlaceholderRigFactory.cs"
+    },
+    {
+      "From": "Assets/Scripts/Product/Rig/M5RigAnimation.cs",
+      "To": "Assets/Scripts/Product/Rig/RigAnimation.cs"
+    },
+    {
+      "From": "Assets/Scripts/Product/Rig/M5RigValidator.cs",
+      "To": "Assets/Scripts/Product/Rig/RigValidator.cs"
+    },
+    {
+      "From": "Assets/Scripts/Product/Rig/M5SkinDescriptor.cs",
+      "To": "Assets/Scripts/Product/Rig/SkinDescriptor.cs"
+    },
+    {
+      "From": "Assets/Scripts/Product/Services/M5Account.cs",
+      "To": "Assets/Scripts/Product/Services/Account.cs"
+    },
+    {
+      "From": "Assets/Scripts/Product/Services/M5Cosmetics.cs",
+      "To": "Assets/Scripts/Product/Services/Cosmetics.cs"
+    },
+    {
+      "From": "Assets/Scripts/Product/Services/M5Moderation.cs",
+      "To": "Assets/Scripts/Product/Services/Moderation.cs"
+    },
+    {
+      "From": "Assets/Scripts/Product/Services/M5Ranked.cs",
+      "To": "Assets/Scripts/Product/Services/Ranked.cs"
+    },
+    {
+      "From": "Assets/Scripts/Product/Services/M5RigContract.cs",
+      "To": "Assets/Scripts/Product/Services/RigContract.cs"
+    },
+    {
+      "From": "Assets/Scripts/Product/Services/M5Social.cs",
+      "To": "Assets/Scripts/Product/Services/Social.cs"
+    },
+    {
+      "From": "Assets/Scripts/Content/Data/M6AssetConventions.cs",
+      "To": "Assets/Scripts/Content/Data/AssetConventions.cs"
+    },
+    {
+      "From": "Assets/Scripts/Content/Data/M6Descriptors.cs",
+      "To": "Assets/Scripts/Content/Data/WeaponDescriptor.cs"
+    },
+    {
+      "From": "Assets/Scripts/Content/Data/M6RigLayout.cs",
+      "To": "Assets/Scripts/Content/Data/RigLayout.cs"
+    },
+    {
+      "From": "Assets/Scripts/Content/Editor/BeMyArms.M6.Editor.asmdef",
+      "To": "Assets/Scripts/Content/Editor/BeMyArms.Content.Editor.asmdef"
+    },
+    {
+      "From": "Assets/Scripts/Content/Editor/M6AssetImportSettings.cs",
+      "To": "Assets/Scripts/Content/Editor/AssetImportSettings.cs"
+    },
+    {
+      "From": "Assets/Scripts/Content/Editor/M6AssetValidator.cs",
+      "To": "Assets/Scripts/Content/Editor/AssetValidator.cs"
+    },
+    {
+      "From": "Assets/Scripts/Content/Editor/M6MaterialPalette.cs",
+      "To": "Assets/Scripts/Content/Editor/MaterialPalette.cs"
+    },
+    {
+      "From": "Assets/Scripts/Content/Editor/M6PipelineCommands.cs",
+      "To": "Assets/Scripts/Content/Editor/AssetPipeline.cs"
+    },
+    {
+      "From": "Assets/Scripts/Content/Editor/M6PrefabBuilders.cs",
+      "To": "Assets/Scripts/Content/Editor/AssetPrefabBuilders.cs"
+    },
+    {
+      "From": "Assets/Scripts/Content/Editor/M6ShowcaseSceneBuilder.cs",
+      "To": "Assets/Scripts/Content/Editor/ShowcaseSceneBuilder.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/App/M7AppBootstrap.cs",
+      "To": "Assets/Scripts/Client/App/AppBootstrap.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/App/M7MatchRequest.cs",
+      "To": "Assets/Scripts/Client/App/MatchRequest.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/App/M7PrivateMatch.cs",
+      "To": "Assets/Scripts/Client/App/PrivateMatch.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/App/M7ServerWatchdog.cs",
+      "To": "Assets/Scripts/Client/App/ServerWatchdog.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Audio/M7Audio.cs",
+      "To": "Assets/Scripts/Client/Audio/Audio.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Audio/M7AudioLibrary.cs",
+      "To": "Assets/Scripts/Client/Audio/AudioLibrary.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Audio/M7AudioService.cs",
+      "To": "Assets/Scripts/Client/Audio/AudioService.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Editor/BeMyArms.M7.Editor.asmdef",
+      "To": "Assets/Scripts/Client/Editor/BeMyArms.Client.Editor.asmdef"
+    },
+    {
+      "From": "Assets/Scripts/Client/Editor/M7ArenaBuild.cs",
+      "To": "Assets/Scripts/Client/Editor/ArenaBuild.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Editor/M7ArenaSceneBuilder.cs",
+      "To": "Assets/Scripts/Client/Editor/ArenaSceneBuilder.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Editor/M7AudioImportSettings.cs",
+      "To": "Assets/Scripts/Client/Editor/AudioImportSettings.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Editor/M7AudioLibraryBuilder.cs",
+      "To": "Assets/Scripts/Client/Editor/AudioLibraryBuilder.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Editor/M7CharacterBodyBuilder.cs",
+      "To": "Assets/Scripts/Client/Editor/CharacterBodyBuilder.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Editor/M7ContentValidator.cs",
+      "To": "Assets/Scripts/Client/Editor/ContentValidator.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Editor/M7FighterBuilder.cs",
+      "To": "Assets/Scripts/Client/Editor/FighterBuilder.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Editor/M7GameBuild.cs",
+      "To": "Assets/Scripts/Client/Editor/GameBuild.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Editor/M7MapPrefabBuilder.cs",
+      "To": "Assets/Scripts/Client/Editor/MapPrefabBuilder.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Editor/M7MapValidator.cs",
+      "To": "Assets/Scripts/Client/Editor/MapValidator.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Editor/M7MenuSceneBuilder.cs",
+      "To": "Assets/Scripts/Client/Editor/MenuSceneBuilder.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Editor/M7PipelineCommands.cs",
+      "To": "Assets/Scripts/Client/Editor/ContentPipeline.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Editor/M7PlayerBodyBuilder.cs",
+      "To": "Assets/Scripts/Client/Editor/PlayerBodyBuilder.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Editor/M7SmoothFighterBuilder.cs",
+      "To": "Assets/Scripts/Client/Editor/SmoothFighterBuilder.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Editor/M7VfxLibraryBuilder.cs",
+      "To": "Assets/Scripts/Client/Editor/VfxLibraryBuilder.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Editor/M7VfxPrefabBuilder.cs",
+      "To": "Assets/Scripts/Client/Editor/VfxPrefabBuilder.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Editor/M7WeaponBuilder.cs",
+      "To": "Assets/Scripts/Client/Editor/WeaponBuilder.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Maps/M7MapDefinition.cs",
+      "To": "Assets/Scripts/Client/Maps/MapDefinition.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Maps/M7MapSceneLink.cs",
+      "To": "Assets/Scripts/Client/Maps/MapSceneLink.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Presentation/M7CharacterAnimator.cs",
+      "To": "Assets/Scripts/Client/Presentation/CharacterAnimator.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Presentation/M7LocalPlayer.cs",
+      "To": "Assets/Scripts/Client/Presentation/LocalPlayer.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Presentation/M7RiflePose.cs",
+      "To": "Assets/Scripts/Client/Presentation/RiflePose.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Content/M7ContentManifest.cs",
+      "To": "Assets/Scripts/Client/Content/ContentManifest.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/UI/M7CombatFeedback.cs",
+      "To": "Assets/Scripts/Client/UI/CombatFeedback.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/UI/M7MatchHudController.cs",
+      "To": "Assets/Scripts/Client/UI/MatchHudController.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/UI/M7MenuController.cs",
+      "To": "Assets/Scripts/Client/UI/MenuController.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/UI/M7PauseMenu.cs",
+      "To": "Assets/Scripts/Client/UI/PauseMenu.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/UI/M7Settings.cs",
+      "To": "Assets/Scripts/Client/UI/Settings.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/UI/M7Ui.cs",
+      "To": "Assets/Scripts/Client/UI/Ui.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Vfx/M7Vfx.cs",
+      "To": "Assets/Scripts/Client/Vfx/Vfx.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Vfx/M7VfxLibrary.cs",
+      "To": "Assets/Scripts/Client/Vfx/VfxLibrary.cs"
+    },
+    {
+      "From": "Assets/Scripts/Client/Vfx/M7VfxService.cs",
+      "To": "Assets/Scripts/Client/Vfx/VfxService.cs"
+    },
+    {
+      "From": "Assets/Scripts/Diagnostics/NetworkingProbe/Editor/BeMyArms.NetProbe.Editor.asmdef",
+      "To": "Assets/Scripts/Diagnostics/NetworkingProbe/Editor/BeMyArms.Diagnostics.NetworkingProbe.Editor.asmdef"
+    },
+    {
+      "From": "Assets/Tests/EditMode/BeMyArms.M0.Tests.asmdef",
+      "To": "Assets/Tests/EditMode/BeMyArms.Core.Tests.asmdef"
+    },
+    {
+      "From": "Assets/Tests/EditMode/M0SceneWiringTests.cs",
+      "To": "Assets/Tests/EditMode/SharedControlSceneWiringTests.cs"
+    },
+    {
+      "From": "Assets/Tests/PlayMode/BeMyArms.M0.PlayModeTests.asmdef",
+      "To": "Assets/Tests/PlayMode/BeMyArms.Core.PlayModeTests.asmdef"
+    },
+    {
+      "From": "Assets/Tests/PlayMode/M0PlayModeSmokeTests.cs",
+      "To": "Assets/Tests/PlayMode/SharedControlSmokeTests.cs"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Gameplay/BeMyArms.M1.Tests.asmdef",
+      "To": "Assets/Tests/EditMode/Gameplay/BeMyArms.Gameplay.Tests.asmdef"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Gameplay/M1LookModelTests.cs",
+      "To": "Assets/Tests/EditMode/Gameplay/LookModelTests.cs"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Gameplay/M1SimulationTests.cs",
+      "To": "Assets/Tests/EditMode/Gameplay/SimulationTests.cs"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Networking/BeMyArms.M2.Tests.asmdef",
+      "To": "Assets/Tests/EditMode/Networking/BeMyArms.Networking.Tests.asmdef"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Networking/M2MovementTests.cs",
+      "To": "Assets/Tests/EditMode/Networking/MovementTests.cs"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Networking/M2RoleRegistryTests.cs",
+      "To": "Assets/Tests/EditMode/Networking/RoleRegistryTests.cs"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Networking/M2SimulationTests.cs",
+      "To": "Assets/Tests/EditMode/Networking/SimulationTests.cs"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Networking/M2ValidationTests.cs",
+      "To": "Assets/Tests/EditMode/Networking/ValidationTests.cs"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Match/BeMyArms.M3.Tests.asmdef",
+      "To": "Assets/Tests/EditMode/Match/BeMyArms.Match.Tests.asmdef"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Match/M3BotAccuracyTests.cs",
+      "To": "Assets/Tests/EditMode/Match/BotAccuracyTests.cs"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Match/M3BotEngageTests.cs",
+      "To": "Assets/Tests/EditMode/Match/BotEngageTests.cs"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Match/M3ControlBaselineTests.cs",
+      "To": "Assets/Tests/EditMode/Match/ControlBaselineTests.cs"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Match/M3DuelTests.cs",
+      "To": "Assets/Tests/EditMode/Match/DuelTests.cs"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Match/M3MatchTests.cs",
+      "To": "Assets/Tests/EditMode/Match/MatchTests.cs"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Match/M3SoloHandlingTests.cs",
+      "To": "Assets/Tests/EditMode/Match/SoloHandlingTests.cs"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Matchmaking/BeMyArms.M4.Tests.asmdef",
+      "To": "Assets/Tests/EditMode/Matchmaking/BeMyArms.Matchmaking.Tests.asmdef"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Matchmaking/M4MatchmakingTests.cs",
+      "To": "Assets/Tests/EditMode/Matchmaking/MatchmakingTests.cs"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Product/BeMyArms.M5.Tests.asmdef",
+      "To": "Assets/Tests/EditMode/Product/BeMyArms.Product.Tests.asmdef"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Product/M5ProductSystemsTests.cs",
+      "To": "Assets/Tests/EditMode/Product/ProductSystemsTests.cs"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Product/M5RigContractTests.cs",
+      "To": "Assets/Tests/EditMode/Product/RigContractTests.cs"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Content/BeMyArms.M6.Tests.asmdef",
+      "To": "Assets/Tests/EditMode/Content/BeMyArms.Content.Tests.asmdef"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Content/M6PipelineTests.cs",
+      "To": "Assets/Tests/EditMode/Content/PipelineTests.cs"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Client/BeMyArms.M7.Tests.asmdef",
+      "To": "Assets/Tests/EditMode/Client/BeMyArms.Client.Tests.asmdef"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Client/M7ContentTests.cs",
+      "To": "Assets/Tests/EditMode/Client/ContentTests.cs"
+    },
+    {
+      "From": "Assets/Tests/EditMode/Client/M7FighterPresentationTests.cs",
+      "To": "Assets/Tests/EditMode/Client/FighterPresentationTests.cs"
+    },
+    {
+      "From": "Assets/Tests/PlayMode/Product/BeMyArms.M5.PlayModeTests.asmdef",
+      "To": "Assets/Tests/PlayMode/Product/BeMyArms.Product.PlayModeTests.asmdef"
+    },
+    {
+      "From": "Assets/Tests/PlayMode/Product/M5MountRuntimeTests.cs",
+      "To": "Assets/Tests/PlayMode/Product/MountRuntimeTests.cs"
+    },
+    {
+      "From": "Assets/Tests/PlayMode/Client/BeMyArms.M7.PlayModeTests.asmdef",
+      "To": "Assets/Tests/PlayMode/Client/BeMyArms.Client.PlayModeTests.asmdef"
+    },
+    {
+      "From": "Assets/Tests/PlayMode/Client/M7MenuRuntimeTests.cs",
+      "To": "Assets/Tests/PlayMode/Client/MenuRuntimeTests.cs"
+    },
+    {
+      "From": "Assets/Tests/PlayMode/Client/M7RuntimeTests.cs",
+      "To": "Assets/Tests/PlayMode/Client/RuntimeTests.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/AimHistory.cs",
+      "To": "Assets/Scripts/Match/Combat/AimHistory.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/BotAim.cs",
+      "To": "Assets/Scripts/Match/Bots/BotAim.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/BotDifficulty.cs",
+      "To": "Assets/Scripts/Match/Bots/BotDifficulty.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/BotEngage.cs",
+      "To": "Assets/Scripts/Match/Bots/BotEngage.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/BotSteering.cs",
+      "To": "Assets/Scripts/Match/Bots/BotSteering.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/CombatEvents.cs",
+      "To": "Assets/Scripts/Match/Combat/CombatEvents.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/MatchRoster.cs",
+      "To": "Assets/Scripts/Match/Sessions/MatchRoster.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/InputStream.cs",
+      "To": "Assets/Scripts/Match/Sessions/InputStream.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/Loadouts.cs",
+      "To": "Assets/Scripts/Match/Combat/Loadouts.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/P1CommandStream.cs",
+      "To": "Assets/Scripts/Match/Sessions/P1CommandStream.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/RifleHandling.cs",
+      "To": "Assets/Scripts/Match/Combat/RifleHandling.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/RoleQueue.cs",
+      "To": "Assets/Scripts/Match/Sessions/RoleQueue.cs"
+    },
+    {
+      "From": "Assets/Scripts/Match/Rules/UtilitySystem.cs",
+      "To": "Assets/Scripts/Match/Combat/UtilitySystem.cs"
+    }
+  ],
+  "Rewrites": [
+    {
+      "Path": "Assets/Scripts/Diagnostics/NetworkingProbe/NetProbeBootstrap.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Diagnostics/NetworkingProbe/NetProbeBootstrap.cs"
+    },
+    {
+      "Path": "Assets/Scripts/QA/BeMyArmsQaCommands.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/QA/BeMyArmsQaCommands.cs"
+    },
+    {
+      "Path": "Assets/Scripts/QA/HandlingProbe.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/QA/HandlingProbe.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Core/Combat/Damageable.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/Combat/Damageable.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Core/Combat/HitboxRegion.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/Combat/HitboxRegion.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Core/Combat/HitscanWeapon.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/Combat/HitscanWeapon.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Core/Combat/SharedBodyHealth.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/Combat/SharedBodyHealth.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Core/Data/SharedControlTuning.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/Data/SharedControlTuning.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Core/Editor/SharedControlSceneBuilder.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/Editor/SharedControlSceneBuilder.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Core/Gameplay/DummyTarget.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/Gameplay/DummyTarget.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Core/Gameplay/SharedControlSampleBody.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/Gameplay/SharedControlSampleBody.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Core/Input/P1DeviceInputSource.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/Input/P1DeviceInputSource.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Core/Input/P2GamepadInputSource.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/Input/P2GamepadInputSource.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Core/Input/P2ScriptedInputSource.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/Input/P2ScriptedInputSource.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Core/Input/RoleInput.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/Input/RoleInput.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Core/Presentation/SharedControlHud.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/Presentation/SharedControlHud.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Core/Presentation/P1ThirdPersonCamera.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/Presentation/P1ThirdPersonCamera.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Core/Presentation/P2FirstPersonCamera.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/Presentation/P2FirstPersonCamera.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Core/Sim/AimSector.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/Sim/AimSector.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Core/Sim/P2AimController.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/Sim/P2AimController.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Core/Sim/SharedBodyController.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/Sim/SharedBodyController.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/NgoBakeoffBody.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/NgoBakeoffBody.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/NgoBakeoffBootstrap.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/NgoBakeoffBootstrap.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/NgoBakeoffInputDriver.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/NgoBakeoffInputDriver.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/Editor/NetcodeComparisonSceneBuilder.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/Editor/NetcodeComparisonSceneBuilder.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Gameplay/Combat/AccuracyModel.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Gameplay/Combat/AccuracyModel.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Gameplay/Combat/WeaponController.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Gameplay/Combat/WeaponController.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Gameplay/Data/LocalCombatTuning.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Gameplay/Data/LocalCombatTuning.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Gameplay/Editor/LocalCombatSceneBuilder.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Gameplay/Editor/LocalCombatSceneBuilder.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Gameplay/Gameplay/LocalCombatBody.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Gameplay/Gameplay/LocalCombatBody.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Gameplay/Input/LocalCombatCommands.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Gameplay/Input/LocalCombatCommands.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Gameplay/Input/LocalP1DeviceInputSource.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Gameplay/Input/LocalP1DeviceInputSource.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Gameplay/Input/LocalP2DeviceInputSource.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Gameplay/Input/LocalP2DeviceInputSource.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Gameplay/Input/LocalScriptedInputSource.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Gameplay/Input/LocalScriptedInputSource.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Gameplay/Presentation/LocalCombatHud.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Gameplay/Presentation/LocalCombatHud.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Gameplay/Presentation/LocalP1Camera.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Gameplay/Presentation/LocalP1Camera.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Gameplay/Presentation/LocalP2Camera.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Gameplay/Presentation/LocalP2Camera.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Gameplay/Sim/MovementState.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Gameplay/Sim/MovementState.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Gameplay/Sim/P1LookController.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Gameplay/Sim/P1LookController.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Gameplay/Sim/P1Motor.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Gameplay/Sim/P1Motor.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Gameplay/Sim/P2AimRig.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Gameplay/Sim/P2AimRig.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Networking/Samples/PredictionHarness/Editor/PredictionHarnessBuild.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Networking/Samples/PredictionHarness/Editor/PredictionHarnessBuild.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Networking/Samples/PredictionHarness/Editor/PredictionHarnessSceneBuilder.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Networking/Samples/PredictionHarness/Editor/PredictionHarnessSceneBuilder.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessBootstrap.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessBootstrap.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessClient.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessClient.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessConfig.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessConfig.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessBody.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessBody.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessRoleService.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessRoleService.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Networking/Simulation/BodySim.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Networking/Simulation/BodySim.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Networking/Simulation/Commands.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Networking/Simulation/Commands.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Networking/Simulation/DelayQueue.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Networking/Simulation/DelayQueue.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Networking/Simulation/LagCompensation.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Networking/Simulation/LagCompensation.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Networking/Simulation/MovementCollision.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Networking/Simulation/MovementCollision.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Networking/Simulation/BodyMovementState.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Networking/Simulation/BodyMovementState.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Networking/Simulation/Reconciler.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Networking/Simulation/Reconciler.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Networking/Simulation/BodyRoleRegistry.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Networking/Simulation/BodyRoleRegistry.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Networking/Simulation/WeaponState.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Networking/Simulation/WeaponState.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Editor/MatchSampleBuild.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Editor/MatchSampleBuild.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Editor/MatchSampleSceneBuilder.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Editor/MatchSampleSceneBuilder.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Networking/MatchConfig.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Networking/MatchConfig.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Networking/NetworkBody.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Networking/NetworkBody.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Networking/MatchBootstrap.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Networking/MatchBootstrap.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Networking/NetworkBodyClient.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Networking/NetworkBodyClient.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Networking/MatchDirector.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Networking/MatchDirector.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Networking/MatchDebugHud.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Networking/MatchDebugHud.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Networking/MatchRoleService.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Networking/MatchRoleService.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Networking/LocalInput.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Networking/LocalInput.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Networking/MapSpawns.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Networking/MapSpawns.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Networking/ZoneVisual.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Networking/ZoneVisual.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Combat/AimHistory.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Combat/AimHistory.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Bots/BotAim.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Bots/BotAim.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Bots/BotDifficulty.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Bots/BotDifficulty.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Bots/BotEngage.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Bots/BotEngage.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Bots/BotSteering.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Bots/BotSteering.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Rules/BuyPhase.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Rules/BuyPhase.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Rules/ClosingZone.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Rules/ClosingZone.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Combat/CombatEvents.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Combat/CombatEvents.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Sessions/MatchRoster.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Sessions/MatchRoster.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Sessions/InputStream.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Sessions/InputStream.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Combat/Loadouts.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Combat/Loadouts.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Rules/MatchState.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Rules/MatchState.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Sessions/P1CommandStream.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Sessions/P1CommandStream.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Combat/RifleHandling.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Combat/RifleHandling.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Sessions/RoleQueue.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Sessions/RoleQueue.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Rules/SectorWall.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Rules/SectorWall.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Rules/Telemetry.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Rules/Telemetry.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Combat/UtilitySystem.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Combat/UtilitySystem.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Matchmaking/Rules/Allocation.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Matchmaking/Rules/Allocation.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Matchmaking/Rules/BodyMmr.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Matchmaking/Rules/BodyMmr.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Matchmaking/Rules/MatchmakingBridge.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Matchmaking/Rules/MatchmakingBridge.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Matchmaking/Rules/MatchmakingHost.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Matchmaking/Rules/MatchmakingHost.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Matchmaking/Rules/Matchmaker.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Matchmaking/Rules/Matchmaker.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Matchmaking/Rules/RoleRating.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Matchmaking/Rules/RoleRating.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Product/Rig/GameplayRigStats.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Product/Rig/GameplayRigStats.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Product/Rig/MountAssembler.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Product/Rig/MountAssembler.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Product/Rig/MountDemo.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Product/Rig/MountDemo.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Product/Rig/PlaceholderRigFactory.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Product/Rig/PlaceholderRigFactory.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Product/Rig/RigAnimation.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Product/Rig/RigAnimation.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Product/Rig/RigValidator.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Product/Rig/RigValidator.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Product/Rig/SkinDescriptor.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Product/Rig/SkinDescriptor.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Product/Services/Account.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Product/Services/Account.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Product/Services/Cosmetics.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Product/Services/Cosmetics.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Product/Services/Moderation.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Product/Services/Moderation.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Product/Services/Ranked.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Product/Services/Ranked.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Product/Services/RigContract.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Product/Services/RigContract.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Product/Services/Social.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Product/Services/Social.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Content/Data/AssetConventions.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Content/Data/AssetConventions.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Content/Data/WeaponDescriptor.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Content/Data/WeaponDescriptor.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Content/Data/RigLayout.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Content/Data/RigLayout.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Content/Editor/AssetImportSettings.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Content/Editor/AssetImportSettings.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Content/Editor/AssetValidator.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Content/Editor/AssetValidator.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Content/Editor/MaterialPalette.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Content/Editor/MaterialPalette.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Content/Editor/AssetPipeline.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Content/Editor/AssetPipeline.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Content/Editor/AssetPrefabBuilders.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Content/Editor/AssetPrefabBuilders.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Content/Editor/ShowcaseSceneBuilder.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Content/Editor/ShowcaseSceneBuilder.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/App/AppBootstrap.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/App/AppBootstrap.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/App/MatchRequest.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/App/MatchRequest.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/App/PrivateMatch.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/App/PrivateMatch.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/App/ServerWatchdog.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/App/ServerWatchdog.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Audio/Audio.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Audio/Audio.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Audio/AudioLibrary.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Audio/AudioLibrary.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Audio/AudioService.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Audio/AudioService.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Editor/ArenaBuild.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Editor/ArenaBuild.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Editor/ArenaSceneBuilder.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Editor/ArenaSceneBuilder.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Editor/AudioImportSettings.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Editor/AudioImportSettings.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Editor/AudioLibraryBuilder.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Editor/AudioLibraryBuilder.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Editor/CharacterBodyBuilder.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Editor/CharacterBodyBuilder.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Editor/ContentValidator.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Editor/ContentValidator.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Editor/FighterBuilder.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Editor/FighterBuilder.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Editor/GameBuild.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Editor/GameBuild.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Editor/MapPrefabBuilder.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Editor/MapPrefabBuilder.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Editor/MapValidator.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Editor/MapValidator.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Editor/MenuSceneBuilder.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Editor/MenuSceneBuilder.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Editor/ContentPipeline.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Editor/ContentPipeline.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Editor/PlayerBodyBuilder.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Editor/PlayerBodyBuilder.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Editor/SmoothFighterBuilder.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Editor/SmoothFighterBuilder.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Editor/VfxLibraryBuilder.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Editor/VfxLibraryBuilder.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Editor/VfxPrefabBuilder.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Editor/VfxPrefabBuilder.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Editor/WeaponBuilder.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Editor/WeaponBuilder.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Maps/MapDefinition.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Maps/MapDefinition.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Maps/MapSceneLink.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Maps/MapSceneLink.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Presentation/CharacterAnimator.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Presentation/CharacterAnimator.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Presentation/LocalPlayer.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Presentation/LocalPlayer.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Presentation/RiflePose.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Presentation/RiflePose.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Content/ContentManifest.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Content/ContentManifest.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/UI/CombatFeedback.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/UI/CombatFeedback.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/UI/MatchHudController.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/UI/MatchHudController.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/UI/MenuController.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/UI/MenuController.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/UI/PauseMenu.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/UI/PauseMenu.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/UI/Settings.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/UI/Settings.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/UI/Ui.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/UI/Ui.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Vfx/Vfx.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Vfx/Vfx.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Vfx/VfxLibrary.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Vfx/VfxLibrary.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Vfx/VfxService.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Vfx/VfxService.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Diagnostics/NetworkingProbe/Editor/NetProbeBuild.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Diagnostics/NetworkingProbe/Editor/NetProbeBuild.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/AimSectorTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/AimSectorTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/SharedControlSceneWiringTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/SharedControlSceneWiringTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/PlayMode/SharedControlSmokeTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/PlayMode/SharedControlSmokeTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Gameplay/LookModelTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Gameplay/LookModelTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Gameplay/SimulationTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Gameplay/SimulationTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Networking/MovementTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Networking/MovementTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Networking/RoleRegistryTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Networking/RoleRegistryTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Networking/SimulationTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Networking/SimulationTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Networking/ValidationTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Networking/ValidationTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Match/BotAccuracyTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Match/BotAccuracyTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Match/BotEngageTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Match/BotEngageTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Match/ControlBaselineTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Match/ControlBaselineTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Match/DuelTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Match/DuelTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Match/MatchTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Match/MatchTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Match/SoloHandlingTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Match/SoloHandlingTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Matchmaking/MatchmakingTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Matchmaking/MatchmakingTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Product/ProductSystemsTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Product/ProductSystemsTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Product/RigContractTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Product/RigContractTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Content/PipelineTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Content/PipelineTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Client/ContentTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Client/ContentTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Client/FighterPresentationTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Client/FighterPresentationTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/PlayMode/Product/MountRuntimeTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/PlayMode/Product/MountRuntimeTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/PlayMode/Client/MenuRuntimeTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/PlayMode/Client/MenuRuntimeTests.cs"
+    },
+    {
+      "Path": "Assets/Tests/PlayMode/Client/RuntimeTests.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/PlayMode/Client/RuntimeTests.cs"
+    },
+    {
+      "Path": "Assets/TutorialInfo/Scripts/Readme.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/TutorialInfo/Scripts/Readme.cs"
+    },
+    {
+      "Path": "Assets/TutorialInfo/Scripts/Editor/ReadmeEditor.cs",
+      "Source": "Builds/Normalization/rewrites/Assets/TutorialInfo/Scripts/Editor/ReadmeEditor.cs"
+    },
+    {
+      "Path": "Assets/Scripts/Core/BeMyArms.Core.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/BeMyArms.Core.asmdef"
+    },
+    {
+      "Path": "Assets/Scripts/Gameplay/BeMyArms.Gameplay.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Gameplay/BeMyArms.Gameplay.asmdef"
+    },
+    {
+      "Path": "Assets/Scripts/Networking/BeMyArms.Networking.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Networking/BeMyArms.Networking.asmdef"
+    },
+    {
+      "Path": "Assets/Scripts/Match/BeMyArms.Match.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/BeMyArms.Match.asmdef"
+    },
+    {
+      "Path": "Assets/Scripts/Matchmaking/BeMyArms.Matchmaking.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Matchmaking/BeMyArms.Matchmaking.asmdef"
+    },
+    {
+      "Path": "Assets/Scripts/Product/BeMyArms.Product.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Product/BeMyArms.Product.asmdef"
+    },
+    {
+      "Path": "Assets/Scripts/Content/BeMyArms.Content.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Content/BeMyArms.Content.asmdef"
+    },
+    {
+      "Path": "Assets/Scripts/Client/BeMyArms.Client.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/BeMyArms.Client.asmdef"
+    },
+    {
+      "Path": "Assets/Scripts/Diagnostics/NetworkingProbe/BeMyArms.Diagnostics.NetworkingProbe.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Diagnostics/NetworkingProbe/BeMyArms.Diagnostics.NetworkingProbe.asmdef"
+    },
+    {
+      "Path": "Assets/Scripts/QA/BeMyArms.QA.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/QA/BeMyArms.QA.asmdef"
+    },
+    {
+      "Path": "Assets/Scripts/Core/Editor/BeMyArms.Core.Editor.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Core/Editor/BeMyArms.Core.Editor.asmdef"
+    },
+    {
+      "Path": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/BeMyArms.Diagnostics.NetcodeComparison.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/BeMyArms.Diagnostics.NetcodeComparison.asmdef"
+    },
+    {
+      "Path": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/Editor/BeMyArms.Diagnostics.NetcodeComparison.Editor.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/Editor/BeMyArms.Diagnostics.NetcodeComparison.Editor.asmdef"
+    },
+    {
+      "Path": "Assets/Scripts/Gameplay/Editor/BeMyArms.Gameplay.Editor.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Gameplay/Editor/BeMyArms.Gameplay.Editor.asmdef"
+    },
+    {
+      "Path": "Assets/Scripts/Networking/Samples/PredictionHarness/Editor/BeMyArms.Networking.Editor.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Networking/Samples/PredictionHarness/Editor/BeMyArms.Networking.Editor.asmdef"
+    },
+    {
+      "Path": "Assets/Scripts/Match/Editor/BeMyArms.Match.Editor.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Match/Editor/BeMyArms.Match.Editor.asmdef"
+    },
+    {
+      "Path": "Assets/Scripts/Content/Editor/BeMyArms.Content.Editor.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Content/Editor/BeMyArms.Content.Editor.asmdef"
+    },
+    {
+      "Path": "Assets/Scripts/Client/Editor/BeMyArms.Client.Editor.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Client/Editor/BeMyArms.Client.Editor.asmdef"
+    },
+    {
+      "Path": "Assets/Scripts/Diagnostics/NetworkingProbe/Editor/BeMyArms.Diagnostics.NetworkingProbe.Editor.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Scripts/Diagnostics/NetworkingProbe/Editor/BeMyArms.Diagnostics.NetworkingProbe.Editor.asmdef"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/BeMyArms.Core.Tests.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/BeMyArms.Core.Tests.asmdef"
+    },
+    {
+      "Path": "Assets/Tests/PlayMode/BeMyArms.Core.PlayModeTests.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/PlayMode/BeMyArms.Core.PlayModeTests.asmdef"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Gameplay/BeMyArms.Gameplay.Tests.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Gameplay/BeMyArms.Gameplay.Tests.asmdef"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Networking/BeMyArms.Networking.Tests.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Networking/BeMyArms.Networking.Tests.asmdef"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Match/BeMyArms.Match.Tests.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Match/BeMyArms.Match.Tests.asmdef"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Matchmaking/BeMyArms.Matchmaking.Tests.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Matchmaking/BeMyArms.Matchmaking.Tests.asmdef"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Product/BeMyArms.Product.Tests.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Product/BeMyArms.Product.Tests.asmdef"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Content/BeMyArms.Content.Tests.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Content/BeMyArms.Content.Tests.asmdef"
+    },
+    {
+      "Path": "Assets/Tests/EditMode/Client/BeMyArms.Client.Tests.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/EditMode/Client/BeMyArms.Client.Tests.asmdef"
+    },
+    {
+      "Path": "Assets/Tests/PlayMode/Product/BeMyArms.Product.PlayModeTests.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/PlayMode/Product/BeMyArms.Product.PlayModeTests.asmdef"
+    },
+    {
+      "Path": "Assets/Tests/PlayMode/Client/BeMyArms.Client.PlayModeTests.asmdef",
+      "Source": "Builds/Normalization/rewrites/Assets/Tests/PlayMode/Client/BeMyArms.Client.PlayModeTests.asmdef"
+    }
+  ],
+  "Paths": {
+    "Assets/Scenes/M05Ngo.unity": "Assets/Scenes/Samples/NetcodeComparison.unity",
+    "Assets/Scenes/M0SharedBody.unity": "Assets/Scenes/Samples/SharedControl.unity",
+    "Assets/Scenes/M1VerticalSlice.unity": "Assets/Scenes/Samples/LocalCombat.unity",
+    "Assets/Scenes/M2NetworkingSpike.unity": "Assets/Scenes/Samples/PredictionHarness.unity",
+    "Assets/Scenes/M3Duel.unity": "Assets/Scenes/Samples/MatchHarness.unity",
+    "Assets/Scenes/M6ProductionShowcase.unity": "Assets/Scenes/Samples/AssetShowcase.unity",
+    "Assets/Scenes/M7DuelArena.unity": "Assets/Scenes/DuelArena.unity",
+    "Assets/Scenes/M7MainMenu.unity": "Assets/Scenes/MainMenu.unity",
+    "Assets/Scenes/M7TwoVsTwoArena.unity": "Assets/Scenes/TwoVsTwoArena.unity",
+    "Assets/Scenes/NetProbe.unity": "Assets/Scenes/Samples/NetworkingProbe.unity",
+    "Assets/Scenes/SampleScene.unity": "Assets/Scenes/Samples/URPTemplate.unity",
+    "Assets/Art/Audio/M7AudioLibrary.asset": "Assets/Art/Audio/AudioLibrary.asset",
+    "Assets/Art/Characters/M7PlayerBody.prefab": "Assets/Art/Characters/PlayerBody.prefab",
+    "Assets/Art/Characters/M7PlayerDirector.prefab": "Assets/Art/Characters/PlayerDirector.prefab",
+    "Assets/Art/Maps/M7DuelArena.asset": "Assets/Art/Maps/DuelArena.asset",
+    "Assets/Art/Maps/M7TwoVsTwoArena.asset": "Assets/Art/Maps/TwoVsTwoArena.asset",
+    "Assets/Art/Vfx/M7VfxLibrary.asset": "Assets/Art/Vfx/VfxLibrary.asset",
+    "Assets/Art/Characters/Pass2/Fighter_P1.prefab": "Assets/Art/Characters/Samples/SegmentRig/Fighter_P1.prefab",
+    "Assets/Art/Characters/Pass2/Fighter_P2.prefab": "Assets/Art/Characters/Samples/SegmentRig/Fighter_P2.prefab",
+    "Assets/Art/Characters/Pass2/Legacy_ArmsViewmodel.prefab": "Assets/Art/Characters/Samples/SegmentRig/Legacy_ArmsViewmodel.prefab",
+    "Assets/Art/Characters/Pass2/README.md": "Assets/Art/Characters/Samples/SegmentRig/README.md",
+    "Assets/Art/Characters/Pass2Redo/Fighter_P1.prefab": "Assets/Art/Characters/SharedRig/Fighter_P1.prefab",
+    "Assets/Art/Characters/Pass2Redo/Fighter_P2.prefab": "Assets/Art/Characters/SharedRig/Fighter_P2.prefab",
+    "Assets/Art/Characters/Pass2Redo/README.md": "Assets/Art/Characters/SharedRig/README.md",
+    "Assets/Art/Characters/Pass2/Controllers/Arms.controller": "Assets/Art/Characters/Samples/SegmentRig/Controllers/Arms.controller",
+    "Assets/Art/Characters/Pass2/Controllers/P1.controller": "Assets/Art/Characters/Samples/SegmentRig/Controllers/P1.controller",
+    "Assets/Art/Characters/Pass2/Controllers/P2.controller": "Assets/Art/Characters/Samples/SegmentRig/Controllers/P2.controller",
+    "Assets/Art/Characters/Pass2/Materials/Fighter_Armor.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Fighter_Armor.mat",
+    "Assets/Art/Characters/Pass2/Materials/Fighter_Grip.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Fighter_Grip.mat",
+    "Assets/Art/Characters/Pass2/Materials/Fighter_Lens.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Fighter_Lens.mat",
+    "Assets/Art/Characters/Pass2/Materials/Fighter_Skin.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Fighter_Skin.mat",
+    "Assets/Art/Characters/Pass2/Materials/Fighter_Team.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Fighter_Team.mat",
+    "Assets/Art/Characters/Pass2/Materials/Fighter_Undersuit.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Fighter_Undersuit.mat",
+    "Assets/Art/Characters/Pass2/Materials/Rifle_Accent.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Rifle_Accent.mat",
+    "Assets/Art/Characters/Pass2/Materials/Rifle_Grip.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Rifle_Grip.mat",
+    "Assets/Art/Characters/Pass2/Materials/Rifle_Receiver.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Rifle_Receiver.mat",
+    "Assets/Art/Characters/Pass2/Materials/Rifle_Steel.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Rifle_Steel.mat",
+    "Assets/Art/Characters/Pass2/Models/Fighter_Arms.fbx": "Assets/Art/Characters/Samples/SegmentRig/Models/Fighter_Arms.fbx",
+    "Assets/Art/Characters/Pass2/Models/Fighter_P1.fbx": "Assets/Art/Characters/Samples/SegmentRig/Models/Fighter_P1.fbx",
+    "Assets/Art/Characters/Pass2/Models/Fighter_P2.fbx": "Assets/Art/Characters/Samples/SegmentRig/Models/Fighter_P2.fbx",
+    "Assets/Art/Characters/Pass2/Models/Rifle.fbx": "Assets/Art/Characters/Samples/SegmentRig/Models/Rifle.fbx",
+    "Assets/Art/Characters/Pass2Redo/Animations/Rig_Medium_CombatRanged.fbx": "Assets/Art/Characters/SharedRig/Animations/Rig_Medium_CombatRanged.fbx",
+    "Assets/Art/Characters/Pass2Redo/Animations/Rig_Medium_MovementAdvanced.fbx": "Assets/Art/Characters/SharedRig/Animations/Rig_Medium_MovementAdvanced.fbx",
+    "Assets/Art/Characters/Pass2Redo/Animations/Rig_Medium_MovementBasic.fbx": "Assets/Art/Characters/SharedRig/Animations/Rig_Medium_MovementBasic.fbx",
+    "Assets/Art/Characters/Pass2Redo/Animations/UAL1_Standard.fbx": "Assets/Art/Characters/SharedRig/Animations/UAL1_Standard.fbx",
+    "Assets/Art/Characters/Pass2Redo/Animations/UAL2_Standard.fbx": "Assets/Art/Characters/SharedRig/Animations/UAL2_Standard.fbx",
+    "Assets/Art/Characters/Pass2Redo/Baked/ClimbUp_1m.anim": "Assets/Art/Characters/SharedRig/Baked/ClimbUp_1m.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Crouch_B_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Crouch_B_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Crouch_F_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Crouch_F_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Crouch_Idle_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Crouch_Idle_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Crouch_L_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Crouch_L_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Crouch_R_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Crouch_R_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Death01.anim": "Assets/Art/Characters/SharedRig/Baked/Death01.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Idle_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Idle_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Jog_B_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Jog_B_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Jog_F_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Jog_F_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Jog_L_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Jog_L_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Jog_R_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Jog_R_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Jump_Land.anim": "Assets/Art/Characters/SharedRig/Baked/Jump_Land.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Jump_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Jump_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Rifle_Hold_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Rifle_Hold_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Slide_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Slide_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Sprint_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Sprint_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Controllers/Arms.controller": "Assets/Art/Characters/SharedRig/Controllers/Arms.controller",
+    "Assets/Art/Characters/Pass2Redo/Controllers/Shared.controller": "Assets/Art/Characters/SharedRig/Controllers/Shared.controller",
+    "Assets/Art/Characters/Pass2Redo/Materials/Fighter_Hair.mat": "Assets/Art/Characters/SharedRig/Materials/Fighter_Hair.mat",
+    "Assets/Art/Characters/Pass2Redo/Materials/Fighter_P1Suit.mat": "Assets/Art/Characters/SharedRig/Materials/Fighter_P1Suit.mat",
+    "Assets/Art/Characters/Pass2Redo/Materials/Fighter_P2Suit.mat": "Assets/Art/Characters/SharedRig/Materials/Fighter_P2Suit.mat",
+    "Assets/Art/Characters/Pass2Redo/Materials/Fighter_Skin.mat": "Assets/Art/Characters/SharedRig/Materials/Fighter_Skin.mat",
+    "Assets/Art/Characters/Pass2Redo/Materials/Fighter_Soles.mat": "Assets/Art/Characters/SharedRig/Materials/Fighter_Soles.mat",
+    "Assets/Art/Characters/Pass2Redo/Materials/Fighter_Team.mat": "Assets/Art/Characters/SharedRig/Materials/Fighter_Team.mat",
+    "Assets/Art/Characters/Pass2Redo/Materials/MI_Eyes.mat": "Assets/Art/Characters/SharedRig/Materials/MI_Eyes.mat",
+    "Assets/Art/Characters/Pass2Redo/Materials/MI_Hair_1.mat": "Assets/Art/Characters/SharedRig/Materials/MI_Hair_1.mat",
+    "Assets/Art/Characters/Pass2Redo/Models/Fighter_Arms.fbx": "Assets/Art/Characters/SharedRig/Models/Fighter_Arms.fbx",
+    "Assets/Art/Characters/Pass2Redo/Models/Fighter_Shared.fbx": "Assets/Art/Characters/SharedRig/Models/Fighter_Shared.fbx",
+    "Assets/Art/Characters/Pass2Redo/Resources/M7_P2ArmsViewmodel.prefab": "Assets/Art/Characters/SharedRig/Resources/P2ArmsViewmodel.prefab",
+    "Assets/Art/Characters/Quaternius/Controllers/M7_P1_Locomotion.controller": "Assets/Art/Characters/Samples/SkeletalStudies/Controllers/P1_Locomotion.controller",
+    "Assets/Art/Characters/Quaternius/Controllers/M7_P2_ArmsAim.controller": "Assets/Art/Characters/Samples/SkeletalStudies/Controllers/P2_ArmsAim.controller",
+    "Assets/Art/Characters/Quaternius/Controllers/M7_P2_Locomotion.controller": "Assets/Art/Characters/Samples/SkeletalStudies/Controllers/P2_Locomotion.controller",
+    "Assets/Art/Characters/Quaternius/Materials/BMA_Clay_Body.mat": "Assets/Art/Characters/Samples/SkeletalStudies/Materials/BMA_Clay_Body.mat",
+    "Assets/Art/Characters/Quaternius/Materials/BMA_Clay_Joint.mat": "Assets/Art/Characters/Samples/SkeletalStudies/Materials/BMA_Clay_Joint.mat",
+    "Assets/Art/Characters/Quaternius/Prefabs/BMA_P1_Clay.prefab": "Assets/Art/Characters/Samples/SkeletalStudies/Prefabs/BMA_P1_Clay.prefab",
+    "Assets/Art/Characters/Quaternius/Prefabs/BMA_P2_Arms.prefab": "Assets/Art/Characters/Samples/SkeletalStudies/Prefabs/BMA_P2_Arms.prefab",
+    "Assets/Art/Characters/Quaternius/Prefabs/BMA_P2_Clay.prefab": "Assets/Art/Characters/Samples/SkeletalStudies/Prefabs/BMA_P2_Clay.prefab",
+    "Assets/Art/Characters/Quaternius/Prefabs/Legacy_P2Arms.prefab": "Assets/Art/Characters/Samples/SkeletalStudies/Prefabs/Legacy_P2Arms.prefab",
+    "Assets/Art/Weapons/Prefabs/BMA_Weapon_Rifle_Pass2.prefab": "Assets/Art/Weapons/Prefabs/BMA_Weapon_Rifle_View.prefab",
+    "Assets/Scripts/M0/BeMyArms.M0.asmdef": "Assets/Scripts/Core/BeMyArms.Core.asmdef",
+    "Assets/Scripts/M1/BeMyArms.M1.asmdef": "Assets/Scripts/Gameplay/BeMyArms.Gameplay.asmdef",
+    "Assets/Scripts/M2/BeMyArms.M2.asmdef": "Assets/Scripts/Networking/BeMyArms.Networking.asmdef",
+    "Assets/Scripts/M3/BeMyArms.M3.asmdef": "Assets/Scripts/Match/BeMyArms.Match.asmdef",
+    "Assets/Scripts/M4/BeMyArms.M4.asmdef": "Assets/Scripts/Matchmaking/BeMyArms.Matchmaking.asmdef",
+    "Assets/Scripts/M5/BeMyArms.M5.asmdef": "Assets/Scripts/Product/BeMyArms.Product.asmdef",
+    "Assets/Scripts/M6/BeMyArms.M6.asmdef": "Assets/Scripts/Content/BeMyArms.Content.asmdef",
+    "Assets/Scripts/M7/BeMyArms.M7.asmdef": "Assets/Scripts/Client/BeMyArms.Client.asmdef",
+    "Assets/Scripts/NetProbe/BeMyArms.NetProbe.asmdef": "Assets/Scripts/Diagnostics/NetworkingProbe/BeMyArms.Diagnostics.NetworkingProbe.asmdef",
+    "Assets/Scripts/NetProbe/NetProbeBootstrap.cs": "Assets/Scripts/Diagnostics/NetworkingProbe/NetProbeBootstrap.cs",
+    "Assets/Scripts/QA/SoloCleanupProbe.cs": "Assets/Scripts/QA/HandlingProbe.cs",
+    "Assets/Scripts/M0/Combat/Damageable.cs": "Assets/Scripts/Core/Combat/Damageable.cs",
+    "Assets/Scripts/M0/Combat/HitboxRegion.cs": "Assets/Scripts/Core/Combat/HitboxRegion.cs",
+    "Assets/Scripts/M0/Combat/HitscanWeapon.cs": "Assets/Scripts/Core/Combat/HitscanWeapon.cs",
+    "Assets/Scripts/M0/Combat/SharedBodyHealth.cs": "Assets/Scripts/Core/Combat/SharedBodyHealth.cs",
+    "Assets/Scripts/M0/Data/M0Tuning.asset": "Assets/Scripts/Core/Data/SharedControlTuning.asset",
+    "Assets/Scripts/M0/Data/M0Tuning.cs": "Assets/Scripts/Core/Data/SharedControlTuning.cs",
+    "Assets/Scripts/M0/Editor/BeMyArms.M0.Editor.asmdef": "Assets/Scripts/Core/Editor/BeMyArms.Core.Editor.asmdef",
+    "Assets/Scripts/M0/Editor/M0SceneBuilder.cs": "Assets/Scripts/Core/Editor/SharedControlSceneBuilder.cs",
+    "Assets/Scripts/M0/Gameplay/DummyTarget.cs": "Assets/Scripts/Core/Gameplay/DummyTarget.cs",
+    "Assets/Scripts/M0/Gameplay/M0BodyRoot.cs": "Assets/Scripts/Core/Gameplay/SharedControlSampleBody.cs",
+    "Assets/Scripts/M0/Input/P1DeviceInputSource.cs": "Assets/Scripts/Core/Input/P1DeviceInputSource.cs",
+    "Assets/Scripts/M0/Input/P2GamepadInputSource.cs": "Assets/Scripts/Core/Input/P2GamepadInputSource.cs",
+    "Assets/Scripts/M0/Input/P2ScriptedInputSource.cs": "Assets/Scripts/Core/Input/P2ScriptedInputSource.cs",
+    "Assets/Scripts/M0/Input/RoleInput.cs": "Assets/Scripts/Core/Input/RoleInput.cs",
+    "Assets/Scripts/M0/Presentation/M0DebugHud.cs": "Assets/Scripts/Core/Presentation/SharedControlHud.cs",
+    "Assets/Scripts/M0/Presentation/P1ThirdPersonCamera.cs": "Assets/Scripts/Core/Presentation/P1ThirdPersonCamera.cs",
+    "Assets/Scripts/M0/Presentation/P2FirstPersonCamera.cs": "Assets/Scripts/Core/Presentation/P2FirstPersonCamera.cs",
+    "Assets/Scripts/M0/Sim/AimSector.cs": "Assets/Scripts/Core/Sim/AimSector.cs",
+    "Assets/Scripts/M0/Sim/P2AimController.cs": "Assets/Scripts/Core/Sim/P2AimController.cs",
+    "Assets/Scripts/M0/Sim/SharedBodyController.cs": "Assets/Scripts/Core/Sim/SharedBodyController.cs",
+    "Assets/Scripts/M0/Data/Materials/M0_Cover.mat": "Assets/Scripts/Core/Data/Materials/Core_Cover.mat",
+    "Assets/Scripts/M0/Data/Materials/M0_DummyBody.mat": "Assets/Scripts/Core/Data/Materials/Core_DummyBody.mat",
+    "Assets/Scripts/M0/Data/Materials/M0_DummyHead.mat": "Assets/Scripts/Core/Data/Materials/Core_DummyHead.mat",
+    "Assets/Scripts/M0/Data/Materials/M0_Ground.mat": "Assets/Scripts/Core/Data/Materials/Core_Ground.mat",
+    "Assets/Scripts/M0/Data/Materials/M0_P1Body.mat": "Assets/Scripts/Core/Data/Materials/Core_P1Body.mat",
+    "Assets/Scripts/M0/Data/Materials/M0_P1Head.mat": "Assets/Scripts/Core/Data/Materials/Core_P1Head.mat",
+    "Assets/Scripts/M0/Data/Materials/M0_P2Arm.mat": "Assets/Scripts/Core/Data/Materials/Core_P2Arm.mat",
+    "Assets/Scripts/M05/Ngo/BeMyArms.M05.Ngo.asmdef": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/BeMyArms.Diagnostics.NetcodeComparison.asmdef",
+    "Assets/Scripts/M05/Ngo/NgoBakeoffBody.cs": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/NgoBakeoffBody.cs",
+    "Assets/Scripts/M05/Ngo/NgoBakeoffBody.prefab": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/NgoBakeoffBody.prefab",
+    "Assets/Scripts/M05/Ngo/NgoBakeoffBootstrap.cs": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/NgoBakeoffBootstrap.cs",
+    "Assets/Scripts/M05/Ngo/NgoBakeoffInputDriver.cs": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/NgoBakeoffInputDriver.cs",
+    "Assets/Scripts/M05/Ngo/Editor/BeMyArms.M05.Ngo.Editor.asmdef": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/Editor/BeMyArms.Diagnostics.NetcodeComparison.Editor.asmdef",
+    "Assets/Scripts/M05/Ngo/Editor/M05NgoSceneBuilder.cs": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/Editor/NetcodeComparisonSceneBuilder.cs",
+    "Assets/Scripts/M1/Combat/AccuracyModel.cs": "Assets/Scripts/Gameplay/Combat/AccuracyModel.cs",
+    "Assets/Scripts/M1/Combat/WeaponController.cs": "Assets/Scripts/Gameplay/Combat/WeaponController.cs",
+    "Assets/Scripts/M1/Data/M1Tuning.asset": "Assets/Scripts/Gameplay/Data/LocalCombatTuning.asset",
+    "Assets/Scripts/M1/Data/M1Tuning.cs": "Assets/Scripts/Gameplay/Data/LocalCombatTuning.cs",
+    "Assets/Scripts/M1/Editor/BeMyArms.M1.Editor.asmdef": "Assets/Scripts/Gameplay/Editor/BeMyArms.Gameplay.Editor.asmdef",
+    "Assets/Scripts/M1/Editor/M1SceneBuilder.cs": "Assets/Scripts/Gameplay/Editor/LocalCombatSceneBuilder.cs",
+    "Assets/Scripts/M1/Gameplay/M1BodyRoot.cs": "Assets/Scripts/Gameplay/Gameplay/LocalCombatBody.cs",
+    "Assets/Scripts/M1/Input/M1Commands.cs": "Assets/Scripts/Gameplay/Input/LocalCombatCommands.cs",
+    "Assets/Scripts/M1/Input/M1P1DeviceInputSource.cs": "Assets/Scripts/Gameplay/Input/LocalP1DeviceInputSource.cs",
+    "Assets/Scripts/M1/Input/M1P2DeviceInputSource.cs": "Assets/Scripts/Gameplay/Input/LocalP2DeviceInputSource.cs",
+    "Assets/Scripts/M1/Input/M1ScriptedInputSource.cs": "Assets/Scripts/Gameplay/Input/LocalScriptedInputSource.cs",
+    "Assets/Scripts/M1/Presentation/M1Hud.cs": "Assets/Scripts/Gameplay/Presentation/LocalCombatHud.cs",
+    "Assets/Scripts/M1/Presentation/M1P1Camera.cs": "Assets/Scripts/Gameplay/Presentation/LocalP1Camera.cs",
+    "Assets/Scripts/M1/Presentation/M1P2Camera.cs": "Assets/Scripts/Gameplay/Presentation/LocalP2Camera.cs",
+    "Assets/Scripts/M1/Sim/MovementState.cs": "Assets/Scripts/Gameplay/Sim/MovementState.cs",
+    "Assets/Scripts/M1/Sim/P1LookController.cs": "Assets/Scripts/Gameplay/Sim/P1LookController.cs",
+    "Assets/Scripts/M1/Sim/P1Motor.cs": "Assets/Scripts/Gameplay/Sim/P1Motor.cs",
+    "Assets/Scripts/M1/Sim/P2AimRig.cs": "Assets/Scripts/Gameplay/Sim/P2AimRig.cs",
+    "Assets/Scripts/M2/Editor/BeMyArms.M2.Editor.asmdef": "Assets/Scripts/Networking/Samples/PredictionHarness/Editor/BeMyArms.Networking.Editor.asmdef",
+    "Assets/Scripts/M2/Editor/M2Build.cs": "Assets/Scripts/Networking/Samples/PredictionHarness/Editor/PredictionHarnessBuild.cs",
+    "Assets/Scripts/M2/Editor/M2SceneBuilder.cs": "Assets/Scripts/Networking/Samples/PredictionHarness/Editor/PredictionHarnessSceneBuilder.cs",
+    "Assets/Scripts/M2/Net/M2Body.prefab": "Assets/Scripts/Networking/Samples/PredictionHarness/Body.prefab",
+    "Assets/Scripts/M2/Net/M2Bootstrap.cs": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessBootstrap.cs",
+    "Assets/Scripts/M2/Net/M2ClientPredictor.cs": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessClient.cs",
+    "Assets/Scripts/M2/Net/M2Config.cs": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessConfig.cs",
+    "Assets/Scripts/M2/Net/M2NetworkBody.cs": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessBody.cs",
+    "Assets/Scripts/M2/Net/M2RoleService.cs": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessRoleService.cs",
+    "Assets/Scripts/M2/Sim/M2BodySim.cs": "Assets/Scripts/Networking/Simulation/BodySim.cs",
+    "Assets/Scripts/M2/Sim/M2Commands.cs": "Assets/Scripts/Networking/Simulation/Commands.cs",
+    "Assets/Scripts/M2/Sim/M2DelayQueue.cs": "Assets/Scripts/Networking/Simulation/DelayQueue.cs",
+    "Assets/Scripts/M2/Sim/M2LagCompensation.cs": "Assets/Scripts/Networking/Simulation/LagCompensation.cs",
+    "Assets/Scripts/M2/Sim/M2MovementCollision.cs": "Assets/Scripts/Networking/Simulation/MovementCollision.cs",
+    "Assets/Scripts/M2/Sim/M2MovementState.cs": "Assets/Scripts/Networking/Simulation/BodyMovementState.cs",
+    "Assets/Scripts/M2/Sim/M2Reconciler.cs": "Assets/Scripts/Networking/Simulation/Reconciler.cs",
+    "Assets/Scripts/M2/Sim/M2RoleRegistry.cs": "Assets/Scripts/Networking/Simulation/BodyRoleRegistry.cs",
+    "Assets/Scripts/M2/Sim/M2WeaponState.cs": "Assets/Scripts/Networking/Simulation/WeaponState.cs",
+    "Assets/Scripts/M3/Editor/BeMyArms.M3.Editor.asmdef": "Assets/Scripts/Match/Editor/BeMyArms.Match.Editor.asmdef",
+    "Assets/Scripts/M3/Editor/M3DuelBuild.cs": "Assets/Scripts/Match/Editor/MatchSampleBuild.cs",
+    "Assets/Scripts/M3/Editor/M3DuelSceneBuilder.cs": "Assets/Scripts/Match/Editor/MatchSampleSceneBuilder.cs",
+    "Assets/Scripts/M3/Net/M3Config.cs": "Assets/Scripts/Match/Networking/MatchConfig.cs",
+    "Assets/Scripts/M3/Net/M3DuelBody.cs": "Assets/Scripts/Match/Networking/NetworkBody.cs",
+    "Assets/Scripts/M3/Net/M3DuelBody.prefab": "Assets/Scripts/Match/Networking/NetworkBody.prefab",
+    "Assets/Scripts/M3/Net/M3DuelBootstrap.cs": "Assets/Scripts/Match/Networking/MatchBootstrap.cs",
+    "Assets/Scripts/M3/Net/M3DuelClient.cs": "Assets/Scripts/Match/Networking/NetworkBodyClient.cs",
+    "Assets/Scripts/M3/Net/M3DuelDirector.cs": "Assets/Scripts/Match/Networking/MatchDirector.cs",
+    "Assets/Scripts/M3/Net/M3DuelDirector.prefab": "Assets/Scripts/Match/Networking/MatchDirector.prefab",
+    "Assets/Scripts/M3/Net/M3DuelHud.cs": "Assets/Scripts/Match/Networking/MatchDebugHud.cs",
+    "Assets/Scripts/M3/Net/M3DuelRoleService.cs": "Assets/Scripts/Match/Networking/MatchRoleService.cs",
+    "Assets/Scripts/M3/Net/M3LocalInput.cs": "Assets/Scripts/Match/Networking/LocalInput.cs",
+    "Assets/Scripts/M3/Net/M3MapSpawns.cs": "Assets/Scripts/Match/Networking/MapSpawns.cs",
+    "Assets/Scripts/M3/Net/M3ZoneVisual.cs": "Assets/Scripts/Match/Networking/ZoneVisual.cs",
+    "Assets/Scripts/M3/Sim/M3AimHistory.cs": "Assets/Scripts/Match/Combat/AimHistory.cs",
+    "Assets/Scripts/M3/Sim/M3BotAim.cs": "Assets/Scripts/Match/Bots/BotAim.cs",
+    "Assets/Scripts/M3/Sim/M3BotDifficulty.cs": "Assets/Scripts/Match/Bots/BotDifficulty.cs",
+    "Assets/Scripts/M3/Sim/M3BotEngage.cs": "Assets/Scripts/Match/Bots/BotEngage.cs",
+    "Assets/Scripts/M3/Sim/M3BotSteering.cs": "Assets/Scripts/Match/Bots/BotSteering.cs",
+    "Assets/Scripts/M3/Sim/M3BuyPhase.cs": "Assets/Scripts/Match/Rules/BuyPhase.cs",
+    "Assets/Scripts/M3/Sim/M3ClosingZone.cs": "Assets/Scripts/Match/Rules/ClosingZone.cs",
+    "Assets/Scripts/M3/Sim/M3CombatEvents.cs": "Assets/Scripts/Match/Combat/CombatEvents.cs",
+    "Assets/Scripts/M3/Sim/M3DuelRoster.cs": "Assets/Scripts/Match/Sessions/MatchRoster.cs",
+    "Assets/Scripts/M3/Sim/M3InputStream.cs": "Assets/Scripts/Match/Sessions/InputStream.cs",
+    "Assets/Scripts/M3/Sim/M3Loadouts.cs": "Assets/Scripts/Match/Combat/Loadouts.cs",
+    "Assets/Scripts/M3/Sim/M3MatchState.cs": "Assets/Scripts/Match/Rules/MatchState.cs",
+    "Assets/Scripts/M3/Sim/M3P1CommandStream.cs": "Assets/Scripts/Match/Sessions/P1CommandStream.cs",
+    "Assets/Scripts/M3/Sim/M3RifleHandling.cs": "Assets/Scripts/Match/Combat/RifleHandling.cs",
+    "Assets/Scripts/M3/Sim/M3RoleQueue.cs": "Assets/Scripts/Match/Sessions/RoleQueue.cs",
+    "Assets/Scripts/M3/Sim/M3SectorWall.cs": "Assets/Scripts/Match/Rules/SectorWall.cs",
+    "Assets/Scripts/M3/Sim/M3Telemetry.cs": "Assets/Scripts/Match/Rules/Telemetry.cs",
+    "Assets/Scripts/M3/Sim/M3UtilitySystem.cs": "Assets/Scripts/Match/Combat/UtilitySystem.cs",
+    "Assets/Scripts/M4/Sim/M4Allocation.cs": "Assets/Scripts/Matchmaking/Rules/Allocation.cs",
+    "Assets/Scripts/M4/Sim/M4BodyMmr.cs": "Assets/Scripts/Matchmaking/Rules/BodyMmr.cs",
+    "Assets/Scripts/M4/Sim/M4MatchBridge.cs": "Assets/Scripts/Matchmaking/Rules/MatchmakingBridge.cs",
+    "Assets/Scripts/M4/Sim/M4MatchHost.cs": "Assets/Scripts/Matchmaking/Rules/MatchmakingHost.cs",
+    "Assets/Scripts/M4/Sim/M4Matchmaker.cs": "Assets/Scripts/Matchmaking/Rules/Matchmaker.cs",
+    "Assets/Scripts/M4/Sim/M4Rating.cs": "Assets/Scripts/Matchmaking/Rules/RoleRating.cs",
+    "Assets/Scripts/M5/Rig/M5GameplayRigStats.cs": "Assets/Scripts/Product/Rig/GameplayRigStats.cs",
+    "Assets/Scripts/M5/Rig/M5MountAssembler.cs": "Assets/Scripts/Product/Rig/MountAssembler.cs",
+    "Assets/Scripts/M5/Rig/M5MountDemo.cs": "Assets/Scripts/Product/Rig/MountDemo.cs",
+    "Assets/Scripts/M5/Rig/M5PlaceholderRigFactory.cs": "Assets/Scripts/Product/Rig/PlaceholderRigFactory.cs",
+    "Assets/Scripts/M5/Rig/M5RigAnimation.cs": "Assets/Scripts/Product/Rig/RigAnimation.cs",
+    "Assets/Scripts/M5/Rig/M5RigValidator.cs": "Assets/Scripts/Product/Rig/RigValidator.cs",
+    "Assets/Scripts/M5/Rig/M5SkinDescriptor.cs": "Assets/Scripts/Product/Rig/SkinDescriptor.cs",
+    "Assets/Scripts/M5/Sim/M5Account.cs": "Assets/Scripts/Product/Services/Account.cs",
+    "Assets/Scripts/M5/Sim/M5Cosmetics.cs": "Assets/Scripts/Product/Services/Cosmetics.cs",
+    "Assets/Scripts/M5/Sim/M5Moderation.cs": "Assets/Scripts/Product/Services/Moderation.cs",
+    "Assets/Scripts/M5/Sim/M5Ranked.cs": "Assets/Scripts/Product/Services/Ranked.cs",
+    "Assets/Scripts/M5/Sim/M5RigContract.cs": "Assets/Scripts/Product/Services/RigContract.cs",
+    "Assets/Scripts/M5/Sim/M5Social.cs": "Assets/Scripts/Product/Services/Social.cs",
+    "Assets/Scripts/M6/Data/M6AssetConventions.cs": "Assets/Scripts/Content/Data/AssetConventions.cs",
+    "Assets/Scripts/M6/Data/M6Descriptors.cs": "Assets/Scripts/Content/Data/WeaponDescriptor.cs",
+    "Assets/Scripts/M6/Data/M6RigLayout.cs": "Assets/Scripts/Content/Data/RigLayout.cs",
+    "Assets/Scripts/M6/Editor/BeMyArms.M6.Editor.asmdef": "Assets/Scripts/Content/Editor/BeMyArms.Content.Editor.asmdef",
+    "Assets/Scripts/M6/Editor/M6AssetImportSettings.cs": "Assets/Scripts/Content/Editor/AssetImportSettings.cs",
+    "Assets/Scripts/M6/Editor/M6AssetValidator.cs": "Assets/Scripts/Content/Editor/AssetValidator.cs",
+    "Assets/Scripts/M6/Editor/M6MaterialPalette.cs": "Assets/Scripts/Content/Editor/MaterialPalette.cs",
+    "Assets/Scripts/M6/Editor/M6PipelineCommands.cs": "Assets/Scripts/Content/Editor/AssetPipeline.cs",
+    "Assets/Scripts/M6/Editor/M6PrefabBuilders.cs": "Assets/Scripts/Content/Editor/AssetPrefabBuilders.cs",
+    "Assets/Scripts/M6/Editor/M6ShowcaseSceneBuilder.cs": "Assets/Scripts/Content/Editor/ShowcaseSceneBuilder.cs",
+    "Assets/Scripts/M7/App/M7AppBootstrap.cs": "Assets/Scripts/Client/App/AppBootstrap.cs",
+    "Assets/Scripts/M7/App/M7MatchRequest.cs": "Assets/Scripts/Client/App/MatchRequest.cs",
+    "Assets/Scripts/M7/App/M7PrivateMatch.cs": "Assets/Scripts/Client/App/PrivateMatch.cs",
+    "Assets/Scripts/M7/App/M7ServerWatchdog.cs": "Assets/Scripts/Client/App/ServerWatchdog.cs",
+    "Assets/Scripts/M7/Audio/M7Audio.cs": "Assets/Scripts/Client/Audio/Audio.cs",
+    "Assets/Scripts/M7/Audio/M7AudioLibrary.cs": "Assets/Scripts/Client/Audio/AudioLibrary.cs",
+    "Assets/Scripts/M7/Audio/M7AudioService.cs": "Assets/Scripts/Client/Audio/AudioService.cs",
+    "Assets/Scripts/M7/Editor/BeMyArms.M7.Editor.asmdef": "Assets/Scripts/Client/Editor/BeMyArms.Client.Editor.asmdef",
+    "Assets/Scripts/M7/Editor/M7ArenaBuild.cs": "Assets/Scripts/Client/Editor/ArenaBuild.cs",
+    "Assets/Scripts/M7/Editor/M7ArenaSceneBuilder.cs": "Assets/Scripts/Client/Editor/ArenaSceneBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7AudioImportSettings.cs": "Assets/Scripts/Client/Editor/AudioImportSettings.cs",
+    "Assets/Scripts/M7/Editor/M7AudioLibraryBuilder.cs": "Assets/Scripts/Client/Editor/AudioLibraryBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7CharacterBodyBuilder.cs": "Assets/Scripts/Client/Editor/CharacterBodyBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7ContentValidator.cs": "Assets/Scripts/Client/Editor/ContentValidator.cs",
+    "Assets/Scripts/M7/Editor/M7FighterBuilder.cs": "Assets/Scripts/Client/Editor/FighterBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7GameBuild.cs": "Assets/Scripts/Client/Editor/GameBuild.cs",
+    "Assets/Scripts/M7/Editor/M7MapPrefabBuilder.cs": "Assets/Scripts/Client/Editor/MapPrefabBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7MapValidator.cs": "Assets/Scripts/Client/Editor/MapValidator.cs",
+    "Assets/Scripts/M7/Editor/M7MenuSceneBuilder.cs": "Assets/Scripts/Client/Editor/MenuSceneBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7PipelineCommands.cs": "Assets/Scripts/Client/Editor/ContentPipeline.cs",
+    "Assets/Scripts/M7/Editor/M7PlayerBodyBuilder.cs": "Assets/Scripts/Client/Editor/PlayerBodyBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7SmoothFighterBuilder.cs": "Assets/Scripts/Client/Editor/SmoothFighterBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7VfxLibraryBuilder.cs": "Assets/Scripts/Client/Editor/VfxLibraryBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7VfxPrefabBuilder.cs": "Assets/Scripts/Client/Editor/VfxPrefabBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7WeaponBuilder.cs": "Assets/Scripts/Client/Editor/WeaponBuilder.cs",
+    "Assets/Scripts/M7/Maps/M7MapDefinition.cs": "Assets/Scripts/Client/Maps/MapDefinition.cs",
+    "Assets/Scripts/M7/Maps/M7MapSceneLink.cs": "Assets/Scripts/Client/Maps/MapSceneLink.cs",
+    "Assets/Scripts/M7/Presentation/M7CharacterAnimator.cs": "Assets/Scripts/Client/Presentation/CharacterAnimator.cs",
+    "Assets/Scripts/M7/Presentation/M7LocalPlayer.cs": "Assets/Scripts/Client/Presentation/LocalPlayer.cs",
+    "Assets/Scripts/M7/Presentation/M7RiflePose.cs": "Assets/Scripts/Client/Presentation/RiflePose.cs",
+    "Assets/Scripts/M7/Sim/M7ContentManifest.cs": "Assets/Scripts/Client/Content/ContentManifest.cs",
+    "Assets/Scripts/M7/UI/M7CombatFeedback.cs": "Assets/Scripts/Client/UI/CombatFeedback.cs",
+    "Assets/Scripts/M7/UI/M7MatchHudController.cs": "Assets/Scripts/Client/UI/MatchHudController.cs",
+    "Assets/Scripts/M7/UI/M7MenuController.cs": "Assets/Scripts/Client/UI/MenuController.cs",
+    "Assets/Scripts/M7/UI/M7PauseMenu.cs": "Assets/Scripts/Client/UI/PauseMenu.cs",
+    "Assets/Scripts/M7/UI/M7Settings.cs": "Assets/Scripts/Client/UI/Settings.cs",
+    "Assets/Scripts/M7/UI/M7Ui.cs": "Assets/Scripts/Client/UI/Ui.cs",
+    "Assets/Scripts/M7/Vfx/M7Vfx.cs": "Assets/Scripts/Client/Vfx/Vfx.cs",
+    "Assets/Scripts/M7/Vfx/M7VfxLibrary.cs": "Assets/Scripts/Client/Vfx/VfxLibrary.cs",
+    "Assets/Scripts/M7/Vfx/M7VfxService.cs": "Assets/Scripts/Client/Vfx/VfxService.cs",
+    "Assets/Scripts/NetProbe/Editor/BeMyArms.NetProbe.Editor.asmdef": "Assets/Scripts/Diagnostics/NetworkingProbe/Editor/BeMyArms.Diagnostics.NetworkingProbe.Editor.asmdef",
+    "Assets/Scripts/NetProbe/Editor/NetProbeBuild.cs": "Assets/Scripts/Diagnostics/NetworkingProbe/Editor/NetProbeBuild.cs",
+    "Assets/Tests/EditMode/BeMyArms.M0.Tests.asmdef": "Assets/Tests/EditMode/BeMyArms.Core.Tests.asmdef",
+    "Assets/Tests/EditMode/M0SceneWiringTests.cs": "Assets/Tests/EditMode/SharedControlSceneWiringTests.cs",
+    "Assets/Tests/PlayMode/BeMyArms.M0.PlayModeTests.asmdef": "Assets/Tests/PlayMode/BeMyArms.Core.PlayModeTests.asmdef",
+    "Assets/Tests/PlayMode/M0PlayModeSmokeTests.cs": "Assets/Tests/PlayMode/SharedControlSmokeTests.cs",
+    "Assets/Tests/EditMode/M1/BeMyArms.M1.Tests.asmdef": "Assets/Tests/EditMode/Gameplay/BeMyArms.Gameplay.Tests.asmdef",
+    "Assets/Tests/EditMode/M1/M1LookModelTests.cs": "Assets/Tests/EditMode/Gameplay/LookModelTests.cs",
+    "Assets/Tests/EditMode/M1/M1SimulationTests.cs": "Assets/Tests/EditMode/Gameplay/SimulationTests.cs",
+    "Assets/Tests/EditMode/M2/BeMyArms.M2.Tests.asmdef": "Assets/Tests/EditMode/Networking/BeMyArms.Networking.Tests.asmdef",
+    "Assets/Tests/EditMode/M2/M2MovementTests.cs": "Assets/Tests/EditMode/Networking/MovementTests.cs",
+    "Assets/Tests/EditMode/M2/M2RoleRegistryTests.cs": "Assets/Tests/EditMode/Networking/RoleRegistryTests.cs",
+    "Assets/Tests/EditMode/M2/M2SimulationTests.cs": "Assets/Tests/EditMode/Networking/SimulationTests.cs",
+    "Assets/Tests/EditMode/M2/M2ValidationTests.cs": "Assets/Tests/EditMode/Networking/ValidationTests.cs",
+    "Assets/Tests/EditMode/M3/BeMyArms.M3.Tests.asmdef": "Assets/Tests/EditMode/Match/BeMyArms.Match.Tests.asmdef",
+    "Assets/Tests/EditMode/M3/M3BotAccuracyTests.cs": "Assets/Tests/EditMode/Match/BotAccuracyTests.cs",
+    "Assets/Tests/EditMode/M3/M3BotEngageTests.cs": "Assets/Tests/EditMode/Match/BotEngageTests.cs",
+    "Assets/Tests/EditMode/M3/M3ControlBaselineTests.cs": "Assets/Tests/EditMode/Match/ControlBaselineTests.cs",
+    "Assets/Tests/EditMode/M3/M3DuelTests.cs": "Assets/Tests/EditMode/Match/DuelTests.cs",
+    "Assets/Tests/EditMode/M3/M3MatchTests.cs": "Assets/Tests/EditMode/Match/MatchTests.cs",
+    "Assets/Tests/EditMode/M3/M3SoloHandlingTests.cs": "Assets/Tests/EditMode/Match/SoloHandlingTests.cs",
+    "Assets/Tests/EditMode/M4/BeMyArms.M4.Tests.asmdef": "Assets/Tests/EditMode/Matchmaking/BeMyArms.Matchmaking.Tests.asmdef",
+    "Assets/Tests/EditMode/M4/M4MatchmakingTests.cs": "Assets/Tests/EditMode/Matchmaking/MatchmakingTests.cs",
+    "Assets/Tests/EditMode/M5/BeMyArms.M5.Tests.asmdef": "Assets/Tests/EditMode/Product/BeMyArms.Product.Tests.asmdef",
+    "Assets/Tests/EditMode/M5/M5ProductSystemsTests.cs": "Assets/Tests/EditMode/Product/ProductSystemsTests.cs",
+    "Assets/Tests/EditMode/M5/M5RigContractTests.cs": "Assets/Tests/EditMode/Product/RigContractTests.cs",
+    "Assets/Tests/EditMode/M6/BeMyArms.M6.Tests.asmdef": "Assets/Tests/EditMode/Content/BeMyArms.Content.Tests.asmdef",
+    "Assets/Tests/EditMode/M6/M6PipelineTests.cs": "Assets/Tests/EditMode/Content/PipelineTests.cs",
+    "Assets/Tests/EditMode/M7/BeMyArms.M7.Tests.asmdef": "Assets/Tests/EditMode/Client/BeMyArms.Client.Tests.asmdef",
+    "Assets/Tests/EditMode/M7/M7ContentTests.cs": "Assets/Tests/EditMode/Client/ContentTests.cs",
+    "Assets/Tests/EditMode/M7/M7FighterPresentationTests.cs": "Assets/Tests/EditMode/Client/FighterPresentationTests.cs",
+    "Assets/Tests/PlayMode/M5/BeMyArms.M5.PlayModeTests.asmdef": "Assets/Tests/PlayMode/Product/BeMyArms.Product.PlayModeTests.asmdef",
+    "Assets/Tests/PlayMode/M5/M5MountRuntimeTests.cs": "Assets/Tests/PlayMode/Product/MountRuntimeTests.cs",
+    "Assets/Tests/PlayMode/M7/BeMyArms.M7.PlayModeTests.asmdef": "Assets/Tests/PlayMode/Client/BeMyArms.Client.PlayModeTests.asmdef",
+    "Assets/Tests/PlayMode/M7/M7MenuRuntimeTests.cs": "Assets/Tests/PlayMode/Client/MenuRuntimeTests.cs",
+    "Assets/Tests/PlayMode/M7/M7RuntimeTests.cs": "Assets/Tests/PlayMode/Client/RuntimeTests.cs"
+  },
+  "Strings": {
+    "Assets/Scenes/M05Ngo.unity": "Assets/Scenes/Samples/NetcodeComparison.unity",
+    "Assets/Scenes/M0SharedBody.unity": "Assets/Scenes/Samples/SharedControl.unity",
+    "Assets/Scenes/M1VerticalSlice.unity": "Assets/Scenes/Samples/LocalCombat.unity",
+    "Assets/Scenes/M2NetworkingSpike.unity": "Assets/Scenes/Samples/PredictionHarness.unity",
+    "Assets/Scenes/M3Duel.unity": "Assets/Scenes/Samples/MatchHarness.unity",
+    "Assets/Scenes/M6ProductionShowcase.unity": "Assets/Scenes/Samples/AssetShowcase.unity",
+    "Assets/Scenes/M7DuelArena.unity": "Assets/Scenes/DuelArena.unity",
+    "Assets/Scenes/M7MainMenu.unity": "Assets/Scenes/MainMenu.unity",
+    "Assets/Scenes/M7TwoVsTwoArena.unity": "Assets/Scenes/TwoVsTwoArena.unity",
+    "Assets/Scenes/NetProbe.unity": "Assets/Scenes/Samples/NetworkingProbe.unity",
+    "Assets/Scenes/SampleScene.unity": "Assets/Scenes/Samples/URPTemplate.unity",
+    "Assets/Art/Audio/M7AudioLibrary.asset": "Assets/Art/Audio/AudioLibrary.asset",
+    "Assets/Art/Characters/M7PlayerBody.prefab": "Assets/Art/Characters/PlayerBody.prefab",
+    "Assets/Art/Characters/M7PlayerDirector.prefab": "Assets/Art/Characters/PlayerDirector.prefab",
+    "Assets/Art/Maps/M7DuelArena.asset": "Assets/Art/Maps/DuelArena.asset",
+    "Assets/Art/Maps/M7TwoVsTwoArena.asset": "Assets/Art/Maps/TwoVsTwoArena.asset",
+    "Assets/Art/Vfx/M7VfxLibrary.asset": "Assets/Art/Vfx/VfxLibrary.asset",
+    "Assets/Art/Characters/Pass2/Fighter_P1.prefab": "Assets/Art/Characters/Samples/SegmentRig/Fighter_P1.prefab",
+    "Assets/Art/Characters/Pass2/Fighter_P2.prefab": "Assets/Art/Characters/Samples/SegmentRig/Fighter_P2.prefab",
+    "Assets/Art/Characters/Pass2/Legacy_ArmsViewmodel.prefab": "Assets/Art/Characters/Samples/SegmentRig/Legacy_ArmsViewmodel.prefab",
+    "Assets/Art/Characters/Pass2/README.md": "Assets/Art/Characters/Samples/SegmentRig/README.md",
+    "Assets/Art/Characters/Pass2Redo/Fighter_P1.prefab": "Assets/Art/Characters/SharedRig/Fighter_P1.prefab",
+    "Assets/Art/Characters/Pass2Redo/Fighter_P2.prefab": "Assets/Art/Characters/SharedRig/Fighter_P2.prefab",
+    "Assets/Art/Characters/Pass2Redo/README.md": "Assets/Art/Characters/SharedRig/README.md",
+    "Assets/Art/Characters/Pass2/Controllers/Arms.controller": "Assets/Art/Characters/Samples/SegmentRig/Controllers/Arms.controller",
+    "Assets/Art/Characters/Pass2/Controllers/P1.controller": "Assets/Art/Characters/Samples/SegmentRig/Controllers/P1.controller",
+    "Assets/Art/Characters/Pass2/Controllers/P2.controller": "Assets/Art/Characters/Samples/SegmentRig/Controllers/P2.controller",
+    "Assets/Art/Characters/Pass2/Materials/Fighter_Armor.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Fighter_Armor.mat",
+    "Assets/Art/Characters/Pass2/Materials/Fighter_Grip.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Fighter_Grip.mat",
+    "Assets/Art/Characters/Pass2/Materials/Fighter_Lens.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Fighter_Lens.mat",
+    "Assets/Art/Characters/Pass2/Materials/Fighter_Skin.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Fighter_Skin.mat",
+    "Assets/Art/Characters/Pass2/Materials/Fighter_Team.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Fighter_Team.mat",
+    "Assets/Art/Characters/Pass2/Materials/Fighter_Undersuit.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Fighter_Undersuit.mat",
+    "Assets/Art/Characters/Pass2/Materials/Rifle_Accent.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Rifle_Accent.mat",
+    "Assets/Art/Characters/Pass2/Materials/Rifle_Grip.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Rifle_Grip.mat",
+    "Assets/Art/Characters/Pass2/Materials/Rifle_Receiver.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Rifle_Receiver.mat",
+    "Assets/Art/Characters/Pass2/Materials/Rifle_Steel.mat": "Assets/Art/Characters/Samples/SegmentRig/Materials/Rifle_Steel.mat",
+    "Assets/Art/Characters/Pass2/Models/Fighter_Arms.fbx": "Assets/Art/Characters/Samples/SegmentRig/Models/Fighter_Arms.fbx",
+    "Assets/Art/Characters/Pass2/Models/Fighter_P1.fbx": "Assets/Art/Characters/Samples/SegmentRig/Models/Fighter_P1.fbx",
+    "Assets/Art/Characters/Pass2/Models/Fighter_P2.fbx": "Assets/Art/Characters/Samples/SegmentRig/Models/Fighter_P2.fbx",
+    "Assets/Art/Characters/Pass2/Models/Rifle.fbx": "Assets/Art/Characters/Samples/SegmentRig/Models/Rifle.fbx",
+    "Assets/Art/Characters/Pass2Redo/Animations/Rig_Medium_CombatRanged.fbx": "Assets/Art/Characters/SharedRig/Animations/Rig_Medium_CombatRanged.fbx",
+    "Assets/Art/Characters/Pass2Redo/Animations/Rig_Medium_MovementAdvanced.fbx": "Assets/Art/Characters/SharedRig/Animations/Rig_Medium_MovementAdvanced.fbx",
+    "Assets/Art/Characters/Pass2Redo/Animations/Rig_Medium_MovementBasic.fbx": "Assets/Art/Characters/SharedRig/Animations/Rig_Medium_MovementBasic.fbx",
+    "Assets/Art/Characters/Pass2Redo/Animations/UAL1_Standard.fbx": "Assets/Art/Characters/SharedRig/Animations/UAL1_Standard.fbx",
+    "Assets/Art/Characters/Pass2Redo/Animations/UAL2_Standard.fbx": "Assets/Art/Characters/SharedRig/Animations/UAL2_Standard.fbx",
+    "Assets/Art/Characters/Pass2Redo/Baked/ClimbUp_1m.anim": "Assets/Art/Characters/SharedRig/Baked/ClimbUp_1m.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Crouch_B_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Crouch_B_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Crouch_F_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Crouch_F_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Crouch_Idle_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Crouch_Idle_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Crouch_L_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Crouch_L_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Crouch_R_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Crouch_R_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Death01.anim": "Assets/Art/Characters/SharedRig/Baked/Death01.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Idle_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Idle_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Jog_B_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Jog_B_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Jog_F_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Jog_F_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Jog_L_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Jog_L_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Jog_R_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Jog_R_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Jump_Land.anim": "Assets/Art/Characters/SharedRig/Baked/Jump_Land.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Jump_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Jump_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Rifle_Hold_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Rifle_Hold_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Slide_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Slide_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Baked/Sprint_Loop.anim": "Assets/Art/Characters/SharedRig/Baked/Sprint_Loop.anim",
+    "Assets/Art/Characters/Pass2Redo/Controllers/Arms.controller": "Assets/Art/Characters/SharedRig/Controllers/Arms.controller",
+    "Assets/Art/Characters/Pass2Redo/Controllers/Shared.controller": "Assets/Art/Characters/SharedRig/Controllers/Shared.controller",
+    "Assets/Art/Characters/Pass2Redo/Materials/Fighter_Hair.mat": "Assets/Art/Characters/SharedRig/Materials/Fighter_Hair.mat",
+    "Assets/Art/Characters/Pass2Redo/Materials/Fighter_P1Suit.mat": "Assets/Art/Characters/SharedRig/Materials/Fighter_P1Suit.mat",
+    "Assets/Art/Characters/Pass2Redo/Materials/Fighter_P2Suit.mat": "Assets/Art/Characters/SharedRig/Materials/Fighter_P2Suit.mat",
+    "Assets/Art/Characters/Pass2Redo/Materials/Fighter_Skin.mat": "Assets/Art/Characters/SharedRig/Materials/Fighter_Skin.mat",
+    "Assets/Art/Characters/Pass2Redo/Materials/Fighter_Soles.mat": "Assets/Art/Characters/SharedRig/Materials/Fighter_Soles.mat",
+    "Assets/Art/Characters/Pass2Redo/Materials/Fighter_Team.mat": "Assets/Art/Characters/SharedRig/Materials/Fighter_Team.mat",
+    "Assets/Art/Characters/Pass2Redo/Materials/MI_Eyes.mat": "Assets/Art/Characters/SharedRig/Materials/MI_Eyes.mat",
+    "Assets/Art/Characters/Pass2Redo/Materials/MI_Hair_1.mat": "Assets/Art/Characters/SharedRig/Materials/MI_Hair_1.mat",
+    "Assets/Art/Characters/Pass2Redo/Models/Fighter_Arms.fbx": "Assets/Art/Characters/SharedRig/Models/Fighter_Arms.fbx",
+    "Assets/Art/Characters/Pass2Redo/Models/Fighter_Shared.fbx": "Assets/Art/Characters/SharedRig/Models/Fighter_Shared.fbx",
+    "Assets/Art/Characters/Pass2Redo/Resources/M7_P2ArmsViewmodel.prefab": "Assets/Art/Characters/SharedRig/Resources/P2ArmsViewmodel.prefab",
+    "Assets/Art/Characters/Quaternius/Controllers/M7_P1_Locomotion.controller": "Assets/Art/Characters/Samples/SkeletalStudies/Controllers/P1_Locomotion.controller",
+    "Assets/Art/Characters/Quaternius/Controllers/M7_P2_ArmsAim.controller": "Assets/Art/Characters/Samples/SkeletalStudies/Controllers/P2_ArmsAim.controller",
+    "Assets/Art/Characters/Quaternius/Controllers/M7_P2_Locomotion.controller": "Assets/Art/Characters/Samples/SkeletalStudies/Controllers/P2_Locomotion.controller",
+    "Assets/Art/Characters/Quaternius/Materials/BMA_Clay_Body.mat": "Assets/Art/Characters/Samples/SkeletalStudies/Materials/BMA_Clay_Body.mat",
+    "Assets/Art/Characters/Quaternius/Materials/BMA_Clay_Joint.mat": "Assets/Art/Characters/Samples/SkeletalStudies/Materials/BMA_Clay_Joint.mat",
+    "Assets/Art/Characters/Quaternius/Prefabs/BMA_P1_Clay.prefab": "Assets/Art/Characters/Samples/SkeletalStudies/Prefabs/BMA_P1_Clay.prefab",
+    "Assets/Art/Characters/Quaternius/Prefabs/BMA_P2_Arms.prefab": "Assets/Art/Characters/Samples/SkeletalStudies/Prefabs/BMA_P2_Arms.prefab",
+    "Assets/Art/Characters/Quaternius/Prefabs/BMA_P2_Clay.prefab": "Assets/Art/Characters/Samples/SkeletalStudies/Prefabs/BMA_P2_Clay.prefab",
+    "Assets/Art/Characters/Quaternius/Prefabs/Legacy_P2Arms.prefab": "Assets/Art/Characters/Samples/SkeletalStudies/Prefabs/Legacy_P2Arms.prefab",
+    "Assets/Art/Weapons/Prefabs/BMA_Weapon_Rifle_Pass2.prefab": "Assets/Art/Weapons/Prefabs/BMA_Weapon_Rifle_View.prefab",
+    "Assets/Scripts/M0/BeMyArms.M0.asmdef": "Assets/Scripts/Core/BeMyArms.Core.asmdef",
+    "Assets/Scripts/M1/BeMyArms.M1.asmdef": "Assets/Scripts/Gameplay/BeMyArms.Gameplay.asmdef",
+    "Assets/Scripts/M2/BeMyArms.M2.asmdef": "Assets/Scripts/Networking/BeMyArms.Networking.asmdef",
+    "Assets/Scripts/M3/BeMyArms.M3.asmdef": "Assets/Scripts/Match/BeMyArms.Match.asmdef",
+    "Assets/Scripts/M4/BeMyArms.M4.asmdef": "Assets/Scripts/Matchmaking/BeMyArms.Matchmaking.asmdef",
+    "Assets/Scripts/M5/BeMyArms.M5.asmdef": "Assets/Scripts/Product/BeMyArms.Product.asmdef",
+    "Assets/Scripts/M6/BeMyArms.M6.asmdef": "Assets/Scripts/Content/BeMyArms.Content.asmdef",
+    "Assets/Scripts/M7/BeMyArms.M7.asmdef": "Assets/Scripts/Client/BeMyArms.Client.asmdef",
+    "Assets/Scripts/NetProbe/BeMyArms.NetProbe.asmdef": "Assets/Scripts/Diagnostics/NetworkingProbe/BeMyArms.Diagnostics.NetworkingProbe.asmdef",
+    "Assets/Scripts/NetProbe/NetProbeBootstrap.cs": "Assets/Scripts/Diagnostics/NetworkingProbe/NetProbeBootstrap.cs",
+    "Assets/Scripts/QA/SoloCleanupProbe.cs": "Assets/Scripts/QA/HandlingProbe.cs",
+    "Assets/Scripts/M0/Combat/Damageable.cs": "Assets/Scripts/Core/Combat/Damageable.cs",
+    "Assets/Scripts/M0/Combat/HitboxRegion.cs": "Assets/Scripts/Core/Combat/HitboxRegion.cs",
+    "Assets/Scripts/M0/Combat/HitscanWeapon.cs": "Assets/Scripts/Core/Combat/HitscanWeapon.cs",
+    "Assets/Scripts/M0/Combat/SharedBodyHealth.cs": "Assets/Scripts/Core/Combat/SharedBodyHealth.cs",
+    "Assets/Scripts/M0/Data/M0Tuning.asset": "Assets/Scripts/Core/Data/SharedControlTuning.asset",
+    "Assets/Scripts/M0/Data/M0Tuning.cs": "Assets/Scripts/Core/Data/SharedControlTuning.cs",
+    "Assets/Scripts/M0/Editor/BeMyArms.M0.Editor.asmdef": "Assets/Scripts/Core/Editor/BeMyArms.Core.Editor.asmdef",
+    "Assets/Scripts/M0/Editor/M0SceneBuilder.cs": "Assets/Scripts/Core/Editor/SharedControlSceneBuilder.cs",
+    "Assets/Scripts/M0/Gameplay/DummyTarget.cs": "Assets/Scripts/Core/Gameplay/DummyTarget.cs",
+    "Assets/Scripts/M0/Gameplay/M0BodyRoot.cs": "Assets/Scripts/Core/Gameplay/SharedControlSampleBody.cs",
+    "Assets/Scripts/M0/Input/P1DeviceInputSource.cs": "Assets/Scripts/Core/Input/P1DeviceInputSource.cs",
+    "Assets/Scripts/M0/Input/P2GamepadInputSource.cs": "Assets/Scripts/Core/Input/P2GamepadInputSource.cs",
+    "Assets/Scripts/M0/Input/P2ScriptedInputSource.cs": "Assets/Scripts/Core/Input/P2ScriptedInputSource.cs",
+    "Assets/Scripts/M0/Input/RoleInput.cs": "Assets/Scripts/Core/Input/RoleInput.cs",
+    "Assets/Scripts/M0/Presentation/M0DebugHud.cs": "Assets/Scripts/Core/Presentation/SharedControlHud.cs",
+    "Assets/Scripts/M0/Presentation/P1ThirdPersonCamera.cs": "Assets/Scripts/Core/Presentation/P1ThirdPersonCamera.cs",
+    "Assets/Scripts/M0/Presentation/P2FirstPersonCamera.cs": "Assets/Scripts/Core/Presentation/P2FirstPersonCamera.cs",
+    "Assets/Scripts/M0/Sim/AimSector.cs": "Assets/Scripts/Core/Sim/AimSector.cs",
+    "Assets/Scripts/M0/Sim/P2AimController.cs": "Assets/Scripts/Core/Sim/P2AimController.cs",
+    "Assets/Scripts/M0/Sim/SharedBodyController.cs": "Assets/Scripts/Core/Sim/SharedBodyController.cs",
+    "Assets/Scripts/M0/Data/Materials/M0_Cover.mat": "Assets/Scripts/Core/Data/Materials/Core_Cover.mat",
+    "Assets/Scripts/M0/Data/Materials/M0_DummyBody.mat": "Assets/Scripts/Core/Data/Materials/Core_DummyBody.mat",
+    "Assets/Scripts/M0/Data/Materials/M0_DummyHead.mat": "Assets/Scripts/Core/Data/Materials/Core_DummyHead.mat",
+    "Assets/Scripts/M0/Data/Materials/M0_Ground.mat": "Assets/Scripts/Core/Data/Materials/Core_Ground.mat",
+    "Assets/Scripts/M0/Data/Materials/M0_P1Body.mat": "Assets/Scripts/Core/Data/Materials/Core_P1Body.mat",
+    "Assets/Scripts/M0/Data/Materials/M0_P1Head.mat": "Assets/Scripts/Core/Data/Materials/Core_P1Head.mat",
+    "Assets/Scripts/M0/Data/Materials/M0_P2Arm.mat": "Assets/Scripts/Core/Data/Materials/Core_P2Arm.mat",
+    "Assets/Scripts/M05/Ngo/BeMyArms.M05.Ngo.asmdef": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/BeMyArms.Diagnostics.NetcodeComparison.asmdef",
+    "Assets/Scripts/M05/Ngo/NgoBakeoffBody.cs": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/NgoBakeoffBody.cs",
+    "Assets/Scripts/M05/Ngo/NgoBakeoffBody.prefab": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/NgoBakeoffBody.prefab",
+    "Assets/Scripts/M05/Ngo/NgoBakeoffBootstrap.cs": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/NgoBakeoffBootstrap.cs",
+    "Assets/Scripts/M05/Ngo/NgoBakeoffInputDriver.cs": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/NgoBakeoffInputDriver.cs",
+    "Assets/Scripts/M05/Ngo/Editor/BeMyArms.M05.Ngo.Editor.asmdef": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/Editor/BeMyArms.Diagnostics.NetcodeComparison.Editor.asmdef",
+    "Assets/Scripts/M05/Ngo/Editor/M05NgoSceneBuilder.cs": "Assets/Scripts/Diagnostics/NetcodeComparison/Ngo/Editor/NetcodeComparisonSceneBuilder.cs",
+    "Assets/Scripts/M1/Combat/AccuracyModel.cs": "Assets/Scripts/Gameplay/Combat/AccuracyModel.cs",
+    "Assets/Scripts/M1/Combat/WeaponController.cs": "Assets/Scripts/Gameplay/Combat/WeaponController.cs",
+    "Assets/Scripts/M1/Data/M1Tuning.asset": "Assets/Scripts/Gameplay/Data/LocalCombatTuning.asset",
+    "Assets/Scripts/M1/Data/M1Tuning.cs": "Assets/Scripts/Gameplay/Data/LocalCombatTuning.cs",
+    "Assets/Scripts/M1/Editor/BeMyArms.M1.Editor.asmdef": "Assets/Scripts/Gameplay/Editor/BeMyArms.Gameplay.Editor.asmdef",
+    "Assets/Scripts/M1/Editor/M1SceneBuilder.cs": "Assets/Scripts/Gameplay/Editor/LocalCombatSceneBuilder.cs",
+    "Assets/Scripts/M1/Gameplay/M1BodyRoot.cs": "Assets/Scripts/Gameplay/Gameplay/LocalCombatBody.cs",
+    "Assets/Scripts/M1/Input/M1Commands.cs": "Assets/Scripts/Gameplay/Input/LocalCombatCommands.cs",
+    "Assets/Scripts/M1/Input/M1P1DeviceInputSource.cs": "Assets/Scripts/Gameplay/Input/LocalP1DeviceInputSource.cs",
+    "Assets/Scripts/M1/Input/M1P2DeviceInputSource.cs": "Assets/Scripts/Gameplay/Input/LocalP2DeviceInputSource.cs",
+    "Assets/Scripts/M1/Input/M1ScriptedInputSource.cs": "Assets/Scripts/Gameplay/Input/LocalScriptedInputSource.cs",
+    "Assets/Scripts/M1/Presentation/M1Hud.cs": "Assets/Scripts/Gameplay/Presentation/LocalCombatHud.cs",
+    "Assets/Scripts/M1/Presentation/M1P1Camera.cs": "Assets/Scripts/Gameplay/Presentation/LocalP1Camera.cs",
+    "Assets/Scripts/M1/Presentation/M1P2Camera.cs": "Assets/Scripts/Gameplay/Presentation/LocalP2Camera.cs",
+    "Assets/Scripts/M1/Sim/MovementState.cs": "Assets/Scripts/Gameplay/Sim/MovementState.cs",
+    "Assets/Scripts/M1/Sim/P1LookController.cs": "Assets/Scripts/Gameplay/Sim/P1LookController.cs",
+    "Assets/Scripts/M1/Sim/P1Motor.cs": "Assets/Scripts/Gameplay/Sim/P1Motor.cs",
+    "Assets/Scripts/M1/Sim/P2AimRig.cs": "Assets/Scripts/Gameplay/Sim/P2AimRig.cs",
+    "Assets/Scripts/M2/Editor/BeMyArms.M2.Editor.asmdef": "Assets/Scripts/Networking/Samples/PredictionHarness/Editor/BeMyArms.Networking.Editor.asmdef",
+    "Assets/Scripts/M2/Editor/M2Build.cs": "Assets/Scripts/Networking/Samples/PredictionHarness/Editor/PredictionHarnessBuild.cs",
+    "Assets/Scripts/M2/Editor/M2SceneBuilder.cs": "Assets/Scripts/Networking/Samples/PredictionHarness/Editor/PredictionHarnessSceneBuilder.cs",
+    "Assets/Scripts/M2/Net/M2Body.prefab": "Assets/Scripts/Networking/Samples/PredictionHarness/Body.prefab",
+    "Assets/Scripts/M2/Net/M2Bootstrap.cs": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessBootstrap.cs",
+    "Assets/Scripts/M2/Net/M2ClientPredictor.cs": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessClient.cs",
+    "Assets/Scripts/M2/Net/M2Config.cs": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessConfig.cs",
+    "Assets/Scripts/M2/Net/M2NetworkBody.cs": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessBody.cs",
+    "Assets/Scripts/M2/Net/M2RoleService.cs": "Assets/Scripts/Networking/Samples/PredictionHarness/PredictionHarnessRoleService.cs",
+    "Assets/Scripts/M2/Sim/M2BodySim.cs": "Assets/Scripts/Networking/Simulation/BodySim.cs",
+    "Assets/Scripts/M2/Sim/M2Commands.cs": "Assets/Scripts/Networking/Simulation/Commands.cs",
+    "Assets/Scripts/M2/Sim/M2DelayQueue.cs": "Assets/Scripts/Networking/Simulation/DelayQueue.cs",
+    "Assets/Scripts/M2/Sim/M2LagCompensation.cs": "Assets/Scripts/Networking/Simulation/LagCompensation.cs",
+    "Assets/Scripts/M2/Sim/M2MovementCollision.cs": "Assets/Scripts/Networking/Simulation/MovementCollision.cs",
+    "Assets/Scripts/M2/Sim/M2MovementState.cs": "Assets/Scripts/Networking/Simulation/BodyMovementState.cs",
+    "Assets/Scripts/M2/Sim/M2Reconciler.cs": "Assets/Scripts/Networking/Simulation/Reconciler.cs",
+    "Assets/Scripts/M2/Sim/M2RoleRegistry.cs": "Assets/Scripts/Networking/Simulation/BodyRoleRegistry.cs",
+    "Assets/Scripts/M2/Sim/M2WeaponState.cs": "Assets/Scripts/Networking/Simulation/WeaponState.cs",
+    "Assets/Scripts/M3/Editor/BeMyArms.M3.Editor.asmdef": "Assets/Scripts/Match/Editor/BeMyArms.Match.Editor.asmdef",
+    "Assets/Scripts/M3/Editor/M3DuelBuild.cs": "Assets/Scripts/Match/Editor/MatchSampleBuild.cs",
+    "Assets/Scripts/M3/Editor/M3DuelSceneBuilder.cs": "Assets/Scripts/Match/Editor/MatchSampleSceneBuilder.cs",
+    "Assets/Scripts/M3/Net/M3Config.cs": "Assets/Scripts/Match/Networking/MatchConfig.cs",
+    "Assets/Scripts/M3/Net/M3DuelBody.cs": "Assets/Scripts/Match/Networking/NetworkBody.cs",
+    "Assets/Scripts/M3/Net/M3DuelBody.prefab": "Assets/Scripts/Match/Networking/NetworkBody.prefab",
+    "Assets/Scripts/M3/Net/M3DuelBootstrap.cs": "Assets/Scripts/Match/Networking/MatchBootstrap.cs",
+    "Assets/Scripts/M3/Net/M3DuelClient.cs": "Assets/Scripts/Match/Networking/NetworkBodyClient.cs",
+    "Assets/Scripts/M3/Net/M3DuelDirector.cs": "Assets/Scripts/Match/Networking/MatchDirector.cs",
+    "Assets/Scripts/M3/Net/M3DuelDirector.prefab": "Assets/Scripts/Match/Networking/MatchDirector.prefab",
+    "Assets/Scripts/M3/Net/M3DuelHud.cs": "Assets/Scripts/Match/Networking/MatchDebugHud.cs",
+    "Assets/Scripts/M3/Net/M3DuelRoleService.cs": "Assets/Scripts/Match/Networking/MatchRoleService.cs",
+    "Assets/Scripts/M3/Net/M3LocalInput.cs": "Assets/Scripts/Match/Networking/LocalInput.cs",
+    "Assets/Scripts/M3/Net/M3MapSpawns.cs": "Assets/Scripts/Match/Networking/MapSpawns.cs",
+    "Assets/Scripts/M3/Net/M3ZoneVisual.cs": "Assets/Scripts/Match/Networking/ZoneVisual.cs",
+    "Assets/Scripts/M3/Sim/M3AimHistory.cs": "Assets/Scripts/Match/Combat/AimHistory.cs",
+    "Assets/Scripts/M3/Sim/M3BotAim.cs": "Assets/Scripts/Match/Bots/BotAim.cs",
+    "Assets/Scripts/M3/Sim/M3BotDifficulty.cs": "Assets/Scripts/Match/Bots/BotDifficulty.cs",
+    "Assets/Scripts/M3/Sim/M3BotEngage.cs": "Assets/Scripts/Match/Bots/BotEngage.cs",
+    "Assets/Scripts/M3/Sim/M3BotSteering.cs": "Assets/Scripts/Match/Bots/BotSteering.cs",
+    "Assets/Scripts/M3/Sim/M3BuyPhase.cs": "Assets/Scripts/Match/Rules/BuyPhase.cs",
+    "Assets/Scripts/M3/Sim/M3ClosingZone.cs": "Assets/Scripts/Match/Rules/ClosingZone.cs",
+    "Assets/Scripts/M3/Sim/M3CombatEvents.cs": "Assets/Scripts/Match/Combat/CombatEvents.cs",
+    "Assets/Scripts/M3/Sim/M3DuelRoster.cs": "Assets/Scripts/Match/Sessions/MatchRoster.cs",
+    "Assets/Scripts/M3/Sim/M3InputStream.cs": "Assets/Scripts/Match/Sessions/InputStream.cs",
+    "Assets/Scripts/M3/Sim/M3Loadouts.cs": "Assets/Scripts/Match/Combat/Loadouts.cs",
+    "Assets/Scripts/M3/Sim/M3MatchState.cs": "Assets/Scripts/Match/Rules/MatchState.cs",
+    "Assets/Scripts/M3/Sim/M3P1CommandStream.cs": "Assets/Scripts/Match/Sessions/P1CommandStream.cs",
+    "Assets/Scripts/M3/Sim/M3RifleHandling.cs": "Assets/Scripts/Match/Combat/RifleHandling.cs",
+    "Assets/Scripts/M3/Sim/M3RoleQueue.cs": "Assets/Scripts/Match/Sessions/RoleQueue.cs",
+    "Assets/Scripts/M3/Sim/M3SectorWall.cs": "Assets/Scripts/Match/Rules/SectorWall.cs",
+    "Assets/Scripts/M3/Sim/M3Telemetry.cs": "Assets/Scripts/Match/Rules/Telemetry.cs",
+    "Assets/Scripts/M3/Sim/M3UtilitySystem.cs": "Assets/Scripts/Match/Combat/UtilitySystem.cs",
+    "Assets/Scripts/M4/Sim/M4Allocation.cs": "Assets/Scripts/Matchmaking/Rules/Allocation.cs",
+    "Assets/Scripts/M4/Sim/M4BodyMmr.cs": "Assets/Scripts/Matchmaking/Rules/BodyMmr.cs",
+    "Assets/Scripts/M4/Sim/M4MatchBridge.cs": "Assets/Scripts/Matchmaking/Rules/MatchmakingBridge.cs",
+    "Assets/Scripts/M4/Sim/M4MatchHost.cs": "Assets/Scripts/Matchmaking/Rules/MatchmakingHost.cs",
+    "Assets/Scripts/M4/Sim/M4Matchmaker.cs": "Assets/Scripts/Matchmaking/Rules/Matchmaker.cs",
+    "Assets/Scripts/M4/Sim/M4Rating.cs": "Assets/Scripts/Matchmaking/Rules/RoleRating.cs",
+    "Assets/Scripts/M5/Rig/M5GameplayRigStats.cs": "Assets/Scripts/Product/Rig/GameplayRigStats.cs",
+    "Assets/Scripts/M5/Rig/M5MountAssembler.cs": "Assets/Scripts/Product/Rig/MountAssembler.cs",
+    "Assets/Scripts/M5/Rig/M5MountDemo.cs": "Assets/Scripts/Product/Rig/MountDemo.cs",
+    "Assets/Scripts/M5/Rig/M5PlaceholderRigFactory.cs": "Assets/Scripts/Product/Rig/PlaceholderRigFactory.cs",
+    "Assets/Scripts/M5/Rig/M5RigAnimation.cs": "Assets/Scripts/Product/Rig/RigAnimation.cs",
+    "Assets/Scripts/M5/Rig/M5RigValidator.cs": "Assets/Scripts/Product/Rig/RigValidator.cs",
+    "Assets/Scripts/M5/Rig/M5SkinDescriptor.cs": "Assets/Scripts/Product/Rig/SkinDescriptor.cs",
+    "Assets/Scripts/M5/Sim/M5Account.cs": "Assets/Scripts/Product/Services/Account.cs",
+    "Assets/Scripts/M5/Sim/M5Cosmetics.cs": "Assets/Scripts/Product/Services/Cosmetics.cs",
+    "Assets/Scripts/M5/Sim/M5Moderation.cs": "Assets/Scripts/Product/Services/Moderation.cs",
+    "Assets/Scripts/M5/Sim/M5Ranked.cs": "Assets/Scripts/Product/Services/Ranked.cs",
+    "Assets/Scripts/M5/Sim/M5RigContract.cs": "Assets/Scripts/Product/Services/RigContract.cs",
+    "Assets/Scripts/M5/Sim/M5Social.cs": "Assets/Scripts/Product/Services/Social.cs",
+    "Assets/Scripts/M6/Data/M6AssetConventions.cs": "Assets/Scripts/Content/Data/AssetConventions.cs",
+    "Assets/Scripts/M6/Data/M6Descriptors.cs": "Assets/Scripts/Content/Data/WeaponDescriptor.cs",
+    "Assets/Scripts/M6/Data/M6RigLayout.cs": "Assets/Scripts/Content/Data/RigLayout.cs",
+    "Assets/Scripts/M6/Editor/BeMyArms.M6.Editor.asmdef": "Assets/Scripts/Content/Editor/BeMyArms.Content.Editor.asmdef",
+    "Assets/Scripts/M6/Editor/M6AssetImportSettings.cs": "Assets/Scripts/Content/Editor/AssetImportSettings.cs",
+    "Assets/Scripts/M6/Editor/M6AssetValidator.cs": "Assets/Scripts/Content/Editor/AssetValidator.cs",
+    "Assets/Scripts/M6/Editor/M6MaterialPalette.cs": "Assets/Scripts/Content/Editor/MaterialPalette.cs",
+    "Assets/Scripts/M6/Editor/M6PipelineCommands.cs": "Assets/Scripts/Content/Editor/AssetPipeline.cs",
+    "Assets/Scripts/M6/Editor/M6PrefabBuilders.cs": "Assets/Scripts/Content/Editor/AssetPrefabBuilders.cs",
+    "Assets/Scripts/M6/Editor/M6ShowcaseSceneBuilder.cs": "Assets/Scripts/Content/Editor/ShowcaseSceneBuilder.cs",
+    "Assets/Scripts/M7/App/M7AppBootstrap.cs": "Assets/Scripts/Client/App/AppBootstrap.cs",
+    "Assets/Scripts/M7/App/M7MatchRequest.cs": "Assets/Scripts/Client/App/MatchRequest.cs",
+    "Assets/Scripts/M7/App/M7PrivateMatch.cs": "Assets/Scripts/Client/App/PrivateMatch.cs",
+    "Assets/Scripts/M7/App/M7ServerWatchdog.cs": "Assets/Scripts/Client/App/ServerWatchdog.cs",
+    "Assets/Scripts/M7/Audio/M7Audio.cs": "Assets/Scripts/Client/Audio/Audio.cs",
+    "Assets/Scripts/M7/Audio/M7AudioLibrary.cs": "Assets/Scripts/Client/Audio/AudioLibrary.cs",
+    "Assets/Scripts/M7/Audio/M7AudioService.cs": "Assets/Scripts/Client/Audio/AudioService.cs",
+    "Assets/Scripts/M7/Editor/BeMyArms.M7.Editor.asmdef": "Assets/Scripts/Client/Editor/BeMyArms.Client.Editor.asmdef",
+    "Assets/Scripts/M7/Editor/M7ArenaBuild.cs": "Assets/Scripts/Client/Editor/ArenaBuild.cs",
+    "Assets/Scripts/M7/Editor/M7ArenaSceneBuilder.cs": "Assets/Scripts/Client/Editor/ArenaSceneBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7AudioImportSettings.cs": "Assets/Scripts/Client/Editor/AudioImportSettings.cs",
+    "Assets/Scripts/M7/Editor/M7AudioLibraryBuilder.cs": "Assets/Scripts/Client/Editor/AudioLibraryBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7CharacterBodyBuilder.cs": "Assets/Scripts/Client/Editor/CharacterBodyBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7ContentValidator.cs": "Assets/Scripts/Client/Editor/ContentValidator.cs",
+    "Assets/Scripts/M7/Editor/M7FighterBuilder.cs": "Assets/Scripts/Client/Editor/FighterBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7GameBuild.cs": "Assets/Scripts/Client/Editor/GameBuild.cs",
+    "Assets/Scripts/M7/Editor/M7MapPrefabBuilder.cs": "Assets/Scripts/Client/Editor/MapPrefabBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7MapValidator.cs": "Assets/Scripts/Client/Editor/MapValidator.cs",
+    "Assets/Scripts/M7/Editor/M7MenuSceneBuilder.cs": "Assets/Scripts/Client/Editor/MenuSceneBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7PipelineCommands.cs": "Assets/Scripts/Client/Editor/ContentPipeline.cs",
+    "Assets/Scripts/M7/Editor/M7PlayerBodyBuilder.cs": "Assets/Scripts/Client/Editor/PlayerBodyBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7SmoothFighterBuilder.cs": "Assets/Scripts/Client/Editor/SmoothFighterBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7VfxLibraryBuilder.cs": "Assets/Scripts/Client/Editor/VfxLibraryBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7VfxPrefabBuilder.cs": "Assets/Scripts/Client/Editor/VfxPrefabBuilder.cs",
+    "Assets/Scripts/M7/Editor/M7WeaponBuilder.cs": "Assets/Scripts/Client/Editor/WeaponBuilder.cs",
+    "Assets/Scripts/M7/Maps/M7MapDefinition.cs": "Assets/Scripts/Client/Maps/MapDefinition.cs",
+    "Assets/Scripts/M7/Maps/M7MapSceneLink.cs": "Assets/Scripts/Client/Maps/MapSceneLink.cs",
+    "Assets/Scripts/M7/Presentation/M7CharacterAnimator.cs": "Assets/Scripts/Client/Presentation/CharacterAnimator.cs",
+    "Assets/Scripts/M7/Presentation/M7LocalPlayer.cs": "Assets/Scripts/Client/Presentation/LocalPlayer.cs",
+    "Assets/Scripts/M7/Presentation/M7RiflePose.cs": "Assets/Scripts/Client/Presentation/RiflePose.cs",
+    "Assets/Scripts/M7/Sim/M7ContentManifest.cs": "Assets/Scripts/Client/Content/ContentManifest.cs",
+    "Assets/Scripts/M7/UI/M7CombatFeedback.cs": "Assets/Scripts/Client/UI/CombatFeedback.cs",
+    "Assets/Scripts/M7/UI/M7MatchHudController.cs": "Assets/Scripts/Client/UI/MatchHudController.cs",
+    "Assets/Scripts/M7/UI/M7MenuController.cs": "Assets/Scripts/Client/UI/MenuController.cs",
+    "Assets/Scripts/M7/UI/M7PauseMenu.cs": "Assets/Scripts/Client/UI/PauseMenu.cs",
+    "Assets/Scripts/M7/UI/M7Settings.cs": "Assets/Scripts/Client/UI/Settings.cs",
+    "Assets/Scripts/M7/UI/M7Ui.cs": "Assets/Scripts/Client/UI/Ui.cs",
+    "Assets/Scripts/M7/Vfx/M7Vfx.cs": "Assets/Scripts/Client/Vfx/Vfx.cs",
+    "Assets/Scripts/M7/Vfx/M7VfxLibrary.cs": "Assets/Scripts/Client/Vfx/VfxLibrary.cs",
+    "Assets/Scripts/M7/Vfx/M7VfxService.cs": "Assets/Scripts/Client/Vfx/VfxService.cs",
+    "Assets/Scripts/NetProbe/Editor/BeMyArms.NetProbe.Editor.asmdef": "Assets/Scripts/Diagnostics/NetworkingProbe/Editor/BeMyArms.Diagnostics.NetworkingProbe.Editor.asmdef",
+    "Assets/Scripts/NetProbe/Editor/NetProbeBuild.cs": "Assets/Scripts/Diagnostics/NetworkingProbe/Editor/NetProbeBuild.cs",
+    "Assets/Tests/EditMode/BeMyArms.M0.Tests.asmdef": "Assets/Tests/EditMode/BeMyArms.Core.Tests.asmdef",
+    "Assets/Tests/EditMode/M0SceneWiringTests.cs": "Assets/Tests/EditMode/SharedControlSceneWiringTests.cs",
+    "Assets/Tests/PlayMode/BeMyArms.M0.PlayModeTests.asmdef": "Assets/Tests/PlayMode/BeMyArms.Core.PlayModeTests.asmdef",
+    "Assets/Tests/PlayMode/M0PlayModeSmokeTests.cs": "Assets/Tests/PlayMode/SharedControlSmokeTests.cs",
+    "Assets/Tests/EditMode/M1/BeMyArms.M1.Tests.asmdef": "Assets/Tests/EditMode/Gameplay/BeMyArms.Gameplay.Tests.asmdef",
+    "Assets/Tests/EditMode/M1/M1LookModelTests.cs": "Assets/Tests/EditMode/Gameplay/LookModelTests.cs",
+    "Assets/Tests/EditMode/M1/M1SimulationTests.cs": "Assets/Tests/EditMode/Gameplay/SimulationTests.cs",
+    "Assets/Tests/EditMode/M2/BeMyArms.M2.Tests.asmdef": "Assets/Tests/EditMode/Networking/BeMyArms.Networking.Tests.asmdef",
+    "Assets/Tests/EditMode/M2/M2MovementTests.cs": "Assets/Tests/EditMode/Networking/MovementTests.cs",
+    "Assets/Tests/EditMode/M2/M2RoleRegistryTests.cs": "Assets/Tests/EditMode/Networking/RoleRegistryTests.cs",
+    "Assets/Tests/EditMode/M2/M2SimulationTests.cs": "Assets/Tests/EditMode/Networking/SimulationTests.cs",
+    "Assets/Tests/EditMode/M2/M2ValidationTests.cs": "Assets/Tests/EditMode/Networking/ValidationTests.cs",
+    "Assets/Tests/EditMode/M3/BeMyArms.M3.Tests.asmdef": "Assets/Tests/EditMode/Match/BeMyArms.Match.Tests.asmdef",
+    "Assets/Tests/EditMode/M3/M3BotAccuracyTests.cs": "Assets/Tests/EditMode/Match/BotAccuracyTests.cs",
+    "Assets/Tests/EditMode/M3/M3BotEngageTests.cs": "Assets/Tests/EditMode/Match/BotEngageTests.cs",
+    "Assets/Tests/EditMode/M3/M3ControlBaselineTests.cs": "Assets/Tests/EditMode/Match/ControlBaselineTests.cs",
+    "Assets/Tests/EditMode/M3/M3DuelTests.cs": "Assets/Tests/EditMode/Match/DuelTests.cs",
+    "Assets/Tests/EditMode/M3/M3MatchTests.cs": "Assets/Tests/EditMode/Match/MatchTests.cs",
+    "Assets/Tests/EditMode/M3/M3SoloHandlingTests.cs": "Assets/Tests/EditMode/Match/SoloHandlingTests.cs",
+    "Assets/Tests/EditMode/M4/BeMyArms.M4.Tests.asmdef": "Assets/Tests/EditMode/Matchmaking/BeMyArms.Matchmaking.Tests.asmdef",
+    "Assets/Tests/EditMode/M4/M4MatchmakingTests.cs": "Assets/Tests/EditMode/Matchmaking/MatchmakingTests.cs",
+    "Assets/Tests/EditMode/M5/BeMyArms.M5.Tests.asmdef": "Assets/Tests/EditMode/Product/BeMyArms.Product.Tests.asmdef",
+    "Assets/Tests/EditMode/M5/M5ProductSystemsTests.cs": "Assets/Tests/EditMode/Product/ProductSystemsTests.cs",
+    "Assets/Tests/EditMode/M5/M5RigContractTests.cs": "Assets/Tests/EditMode/Product/RigContractTests.cs",
+    "Assets/Tests/EditMode/M6/BeMyArms.M6.Tests.asmdef": "Assets/Tests/EditMode/Content/BeMyArms.Content.Tests.asmdef",
+    "Assets/Tests/EditMode/M6/M6PipelineTests.cs": "Assets/Tests/EditMode/Content/PipelineTests.cs",
+    "Assets/Tests/EditMode/M7/BeMyArms.M7.Tests.asmdef": "Assets/Tests/EditMode/Client/BeMyArms.Client.Tests.asmdef",
+    "Assets/Tests/EditMode/M7/M7ContentTests.cs": "Assets/Tests/EditMode/Client/ContentTests.cs",
+    "Assets/Tests/EditMode/M7/M7FighterPresentationTests.cs": "Assets/Tests/EditMode/Client/FighterPresentationTests.cs",
+    "Assets/Tests/PlayMode/M5/BeMyArms.M5.PlayModeTests.asmdef": "Assets/Tests/PlayMode/Product/BeMyArms.Product.PlayModeTests.asmdef",
+    "Assets/Tests/PlayMode/M5/M5MountRuntimeTests.cs": "Assets/Tests/PlayMode/Product/MountRuntimeTests.cs",
+    "Assets/Tests/PlayMode/M7/BeMyArms.M7.PlayModeTests.asmdef": "Assets/Tests/PlayMode/Client/BeMyArms.Client.PlayModeTests.asmdef",
+    "Assets/Tests/PlayMode/M7/M7MenuRuntimeTests.cs": "Assets/Tests/PlayMode/Client/MenuRuntimeTests.cs",
+    "Assets/Tests/PlayMode/M7/M7RuntimeTests.cs": "Assets/Tests/PlayMode/Client/RuntimeTests.cs",
+    "M05Ngo": "NetcodeComparison",
+    "M0SharedBody": "SharedControl",
+    "M1VerticalSlice": "LocalCombat",
+    "M2NetworkingSpike": "PredictionHarness",
+    "M3Duel": "MatchHarness",
+    "M6ProductionShowcase": "AssetShowcase",
+    "M7DuelArena": "DuelArena",
+    "M7MainMenu": "MainMenu",
+    "M7TwoVsTwoArena": "TwoVsTwoArena",
+    "NetProbe": "NetworkingProbe",
+    "SampleScene": "URPTemplate",
+    "M7AudioLibrary": "AudioLibrary",
+    "M7PlayerBody": "PlayerBody",
+    "M7PlayerDirector": "PlayerDirector",
+    "M7VfxLibrary": "VfxLibrary",
+    "Fighter_P1": "Fighter_P1",
+    "Fighter_P2": "Fighter_P2",
+    "Legacy_ArmsViewmodel": "Legacy_ArmsViewmodel",
+    "README": "README",
+    "Arms": "Arms",
+    "P1": "P1",
+    "P2": "P2",
+    "Fighter_Armor": "Fighter_Armor",
+    "Fighter_Grip": "Fighter_Grip",
+    "Fighter_Lens": "Fighter_Lens",
+    "Fighter_Skin": "Fighter_Skin",
+    "Fighter_Team": "Fighter_Team",
+    "Fighter_Undersuit": "Fighter_Undersuit",
+    "Rifle_Accent": "Rifle_Accent",
+    "Rifle_Grip": "Rifle_Grip",
+    "Rifle_Receiver": "Rifle_Receiver",
+    "Rifle_Steel": "Rifle_Steel",
+    "Fighter_Arms": "Fighter_Arms",
+    "Rifle": "Rifle",
+    "Rig_Medium_CombatRanged": "Rig_Medium_CombatRanged",
+    "Rig_Medium_MovementAdvanced": "Rig_Medium_MovementAdvanced",
+    "Rig_Medium_MovementBasic": "Rig_Medium_MovementBasic",
+    "UAL1_Standard": "UAL1_Standard",
+    "UAL2_Standard": "UAL2_Standard",
+    "ClimbUp_1m": "ClimbUp_1m",
+    "Crouch_B_Loop": "Crouch_B_Loop",
+    "Crouch_F_Loop": "Crouch_F_Loop",
+    "Crouch_Idle_Loop": "Crouch_Idle_Loop",
+    "Crouch_L_Loop": "Crouch_L_Loop",
+    "Crouch_R_Loop": "Crouch_R_Loop",
+    "Death01": "Death01",
+    "Idle_Loop": "Idle_Loop",
+    "Jog_B_Loop": "Jog_B_Loop",
+    "Jog_F_Loop": "Jog_F_Loop",
+    "Jog_L_Loop": "Jog_L_Loop",
+    "Jog_R_Loop": "Jog_R_Loop",
+    "Jump_Land": "Jump_Land",
+    "Jump_Loop": "Jump_Loop",
+    "Rifle_Hold_Loop": "Rifle_Hold_Loop",
+    "Slide_Loop": "Slide_Loop",
+    "Sprint_Loop": "Sprint_Loop",
+    "Shared": "Shared",
+    "Fighter_Hair": "Fighter_Hair",
+    "Fighter_P1Suit": "Fighter_P1Suit",
+    "Fighter_P2Suit": "Fighter_P2Suit",
+    "Fighter_Soles": "Fighter_Soles",
+    "MI_Eyes": "MI_Eyes",
+    "MI_Hair_1": "MI_Hair_1",
+    "Fighter_Shared": "Fighter_Shared",
+    "M7_P2ArmsViewmodel": "P2ArmsViewmodel",
+    "M7_P1_Locomotion": "P1_Locomotion",
+    "M7_P2_ArmsAim": "P2_ArmsAim",
+    "M7_P2_Locomotion": "P2_Locomotion",
+    "BMA_Clay_Body": "BMA_Clay_Body",
+    "BMA_Clay_Joint": "BMA_Clay_Joint",
+    "BMA_P1_Clay": "BMA_P1_Clay",
+    "BMA_P2_Arms": "BMA_P2_Arms",
+    "BMA_P2_Clay": "BMA_P2_Clay",
+    "Legacy_P2Arms": "Legacy_P2Arms",
+    "BMA_Weapon_Rifle_Pass2": "BMA_Weapon_Rifle_View",
+    "M0Tuning": "SharedControlTuning",
+    "M0_Cover": "Core_Cover",
+    "M0_DummyBody": "Core_DummyBody",
+    "M0_DummyHead": "Core_DummyHead",
+    "M0_Ground": "Core_Ground",
+    "M0_P1Body": "Core_P1Body",
+    "M0_P1Head": "Core_P1Head",
+    "M0_P2Arm": "Core_P2Arm",
+    "NgoBakeoffBody": "NgoBakeoffBody",
+    "M1Tuning": "LocalCombatTuning",
+    "M2Body": "Body",
+    "M3DuelBody": "NetworkBody",
+    "M3DuelDirector": "MatchDirector",
+    "Assets/Art/Characters/Pass2Redo": "Assets/Art/Characters/SharedRig",
+    "Assets/Art/Characters/Pass2": "Assets/Art/Characters/Samples/SegmentRig"
+  },
+  "Types": {
+    "M3MapSpawns": "MapSpawns",
+    "M1Tuning": "LocalCombatTuning",
+    "M5RigValidationReport": "RigValidationReport",
+    "M5LocalIdentityProvider": "LocalIdentityProvider",
+    "M5InMemorySocialProvider": "InMemorySocialProvider",
+    "M6RigLayout": "RigLayout",
+    "IM4ServerAllocator": "IServerAllocator",
+    "M5InMemoryModerationProvider": "InMemoryModerationProvider",
+    "M3DuelBootstrap": "MatchBootstrap",
+    "M3MatchTests": "MatchTests",
+    "M5MountRuntimeTests": "MountRuntimeTests",
+    "M7ArenaBuild": "ArenaBuild",
+    "M0SceneBuilder": "SharedControlSceneBuilder",
+    "M6AssetValidator": "AssetValidator",
+    "IM5IdentityProvider": "IIdentityProvider",
+    "M7AudioId": "AudioId",
+    "M3BotEngageTests": "BotEngageTests",
+    "M2ClientPredictor": "PredictionHarnessClient",
+    "IM5RigAnimation": "IRigAnimation",
+    "M6EnvironmentDescriptor": "EnvironmentDescriptor",
+    "M3DuelHud": "MatchDebugHud",
+    "M6WeaponKind": "AssetWeaponKind",
+    "M1VerticalSlice": "VerticalSlice",
+    "M2LagCompensation": "LagCompensation",
+    "M4Allocation": "Allocation",
+    "M6Descriptors": "WeaponDescriptor",
+    "M7MatchHud": "MatchHud",
+    "M7VfxIds": "VfxIds",
+    "M7GameBuild": "GameBuild",
+    "M7GracefulLeave": "GracefulLeave",
+    "M5RankTier": "RankTier",
+    "M2Role": "PredictionHarnessRole",
+    "M7ArenaSceneBuilder": "ArenaSceneBuilder",
+    "M2Bootstrap": "PredictionHarnessBootstrap",
+    "M5InMemoryCatalog": "InMemoryCatalog",
+    "M5Cosmetics": "Cosmetics",
+    "M0SharedBody": "SharedBody",
+    "M3UtilityKind": "UtilityKind",
+    "M2P1Input": "P1Input",
+    "M3Build": "Build",
+    "M7MainMenu": "MainMenu",
+    "M7Build": "Build",
+    "M3ClosingZone": "ClosingZone",
+    "M3QueueEntry": "RoleQueueEntry",
+    "M1P1DeviceInputSource": "LocalP1DeviceInputSource",
+    "M3BuyPhase": "BuyPhase",
+    "M4Rating": "RoleRating",
+    "M7VfxService": "VfxService",
+    "M7PlayerDirector": "PlayerDirector",
+    "M7MenuRuntimeTests": "MenuRuntimeTests",
+    "M7VfxId": "VfxId",
+    "M1SimulationTests": "SimulationTests",
+    "M7MenuController": "MenuController",
+    "M4MatchmakingConfig": "MatchmakingConfig",
+    "M3DuelSceneBuilder": "MatchSampleSceneBuilder",
+    "M3DuelRoster": "MatchRoster",
+    "M3CombatEvents": "CombatEvents",
+    "M4MatchMode": "MatchMode",
+    "M3UtilitySystem": "UtilitySystem",
+    "M3DuelRole": "MatchProcessRole",
+    "M2Build": "PredictionHarnessBuild",
+    "M6ValidationReport": "ValidationReport",
+    "M3BotSteering": "BotSteering",
+    "IM5AccountStore": "IAccountStore",
+    "M3P1CommandStream": "P1CommandStream",
+    "M7Audio": "Audio",
+    "M05Ngo": "Ngo",
+    "M7Vfx": "Vfx",
+    "M3WeaponStats": "WeaponStats",
+    "M2BodyState": "BodyState",
+    "M7MapValidationReport": "MapValidationReport",
+    "M1LookModelTests": "LookModelTests",
+    "IM5GameplayStatSource": "IGameplayStatSource",
+    "M0SceneWiringTests": "SharedControlSceneWiringTests",
+    "M3DuelSlots": "MatchSlots",
+    "M4ServerTicket": "ServerTicket",
+    "M3ShopKind": "ShopKind",
+    "M3Telemetry": "Telemetry",
+    "M7PauseMenu": "PauseMenu",
+    "M5Social": "Social",
+    "M0DebugHud": "SharedControlHud",
+    "M7ContentManifest": "ContentManifest",
+    "M2Commands": "Commands",
+    "M3BotAim": "BotAim",
+    "M7LocalProcessAllocator": "LocalProcessAllocator",
+    "M7AudioLibraryBuilder": "AudioLibraryBuilder",
+    "M7VfxLibraryBuilder": "VfxLibraryBuilder",
+    "M3ControlBaselineTests": "ControlBaselineTests",
+    "M1P2Camera": "LocalP2Camera",
+    "M5RigContract": "RigContract",
+    "M2P2Input": "P2Input",
+    "M3DuelDirector": "MatchDirector",
+    "M2MovementState": "BodyMovementState",
+    "M1InputMode": "LocalInputMode",
+    "M7RiflePose": "RiflePose",
+    "M7VfxLibrary": "VfxLibrary",
+    "M3DuelClient": "NetworkBodyClient",
+    "M2SimulationTests": "SimulationTests",
+    "M5RankInfo": "RankInfo",
+    "M3Loadouts": "Loadouts",
+    "M05NgoSceneBuilder": "NetcodeComparisonSceneBuilder",
+    "M3Duel": "Duel",
+    "M5FriendEntry": "FriendEntry",
+    "M6WeaponDescriptor": "WeaponDescriptor",
+    "M3SlotAssignment": "RoleSlotAssignment",
+    "M7TwoVsTwoArena": "TwoVsTwoArena",
+    "M7AudioImportSettings": "AudioImportSettings",
+    "M5Ranked": "Ranked",
+    "M3BotDifficulty": "BotDifficulty",
+    "M2MovementTests": "MovementTests",
+    "M5PlaceholderSkinVariant": "PlaceholderSkinVariant",
+    "M3MatchState": "MatchState",
+    "M2Reconciler": "Reconciler",
+    "M3InputStream": "InputStream",
+    "M3DuelSlot": "MatchSlot",
+    "M5RigValidator": "RigValidator",
+    "M3Phase": "RoundPhase",
+    "M4PlayerProfile": "MatchmakingPlayerProfile",
+    "M5PlaceholderRigFactory": "PlaceholderRigFactory",
+    "M5FriendStatus": "FriendStatus",
+    "M3DamageEvent": "DamageEvent",
+    "M5ReportCategory": "ReportCategory",
+    "M7PlayerBody": "PlayerBody",
+    "M7RuntimeTests": "RuntimeTests",
+    "M6PipelineCommands": "AssetPipeline",
+    "M3DuelTests": "DuelTests",
+    "M5RankTable": "RankTable",
+    "M2Body": "Body",
+    "M4Matchmaker": "Matchmaker",
+    "M3SoloHandlingTests": "SoloHandlingTests",
+    "M3WeaponId": "WeaponType",
+    "M5Loadout": "Loadout",
+    "M7MapFamily": "MapFamily",
+    "M7Settings": "Settings",
+    "M1P1Camera": "LocalP1Camera",
+    "M5SocketKind": "SocketKind",
+    "M5RankedProfile": "RankedProfile",
+    "M5ReportStatus": "ReportStatus",
+    "M5RigContractTests": "RigContractTests",
+    "M5SocketSpec": "SocketSpec",
+    "M7Spawn": "MapSpawn",
+    "M3BodyPair": "BodyPair",
+    "M3QueuedPlayer": "QueuedPlayer",
+    "M7MapPrefabBuilder": "MapPrefabBuilder",
+    "M3ZoneVisual": "ZoneVisual",
+    "M2NetworkingSpike": "NetworkingSpike",
+    "M2RoleRegistryTests": "RoleRegistryTests",
+    "M7WeaponBuilder": "WeaponBuilder",
+    "M3LocalInput": "LocalInput",
+    "M6ShowcaseSceneBuilder": "ShowcaseSceneBuilder",
+    "M7AudioClipEntry": "AudioClipEntry",
+    "M7MapDefinition": "MapDefinition",
+    "M7PrivateMatch": "PrivateMatch",
+    "M7ContentSnapshot": "ContentSnapshot",
+    "M7DuelArena": "DuelArena",
+    "M2SceneBuilder": "PredictionHarnessSceneBuilder",
+    "M2DelayQueue": "DelayQueue",
+    "M5HitboxSpec": "HitboxSpec",
+    "M5CosmeticKind": "CosmeticKind",
+    "M7MatchHudController": "MatchHudController",
+    "M7LocalPlayer": "LocalPlayer",
+    "M5MountAssembler": "MountAssembler",
+    "M5CosmeticItem": "CosmeticItem",
+    "M3RoleQueue": "RoleQueue",
+    "M7CombatFeedback": "CombatFeedback",
+    "M0PlayModeSmokeTests": "SharedControlSmokeTests",
+    "M6PrefabBuilders": "AssetPrefabBuilders",
+    "M7AudioIds": "AudioIds",
+    "M7MenuSceneBuilder": "MenuSceneBuilder",
+    "M5ProductSystemsTests": "ProductSystemsTests",
+    "M7Menu": "Menu",
+    "M3DuelRoleService": "MatchRoleService",
+    "M4QueueEntry": "MatchmakingQueueEntry",
+    "M7CharacterAnimator": "CharacterAnimator",
+    "M1ScriptedInputSource": "LocalScriptedInputSource",
+    "M3AimHistory": "AimHistory",
+    "M5InMemoryAccountStore": "InMemoryAccountStore",
+    "M7AudioLibrary": "AudioLibrary",
+    "M7CharacterBodyBuilder": "CharacterBodyBuilder",
+    "M7VfxPrefabBuilder": "VfxPrefabBuilder",
+    "M7PipelineCommands": "ContentPipeline",
+    "M4MatchBridge": "MatchmakingBridge",
+    "M5CosmeticInventory": "CosmeticInventory",
+    "M6AssetConventions": "AssetConventions",
+    "M4MatchHost": "MatchmakingHost",
+    "M7VfxEntry": "VfxEntry",
+    "M5Moderation": "Moderation",
+    "M0Tuning": "SharedControlTuning",
+    "M3RolePreference": "RolePreference",
+    "M3MapSpawn": "BodySpawn",
+    "M5SkinDescriptor": "SkinDescriptor",
+    "M5Progression": "Progression",
+    "M1P2DeviceInputSource": "LocalP2DeviceInputSource",
+    "M2ValidationTests": "ValidationTests",
+    "M4BodyMmr": "BodyMmr",
+    "M7ContentTests": "ContentTests",
+    "M2BodySim": "BodySim",
+    "M5GameplayRigStats": "GameplayRigStats",
+    "M5Report": "Report",
+    "M2MovementCollision": "MovementCollision",
+    "M6ProductionShowcase": "ProductionShowcase",
+    "M3DuelBuild": "MatchSampleBuild",
+    "M3SectorWall": "SectorWall",
+    "M7FighterBuilder": "FighterBuilder",
+    "M1SceneBuilder": "LocalCombatSceneBuilder",
+    "M7ContentRequirements": "ContentRequirements",
+    "M2Snapshot": "Snapshot",
+    "IM7MatchServerAllocator": "IMatchServerAllocator",
+    "M7ServerWatchdog": "ServerWatchdog",
+    "M7AppBootstrap": "AppBootstrap",
+    "M1Commands": "LocalCombatCommands",
+    "M2WeaponState": "WeaponState",
+    "M4LocalAllocator": "LocalAllocator",
+    "M1BodyRoot": "LocalCombatBody",
+    "M4MatchSlot": "MatchmakingSlot",
+    "M3DuelBody": "NetworkBody",
+    "M5MountPresenter": "MountPresenter",
+    "M5Account": "Account",
+    "M7MapSceneLink": "MapSceneLink",
+    "M5AssembledBody": "AssembledBody",
+    "M2RoleRegistry": "BodyRoleRegistry",
+    "M7MapValidator": "MapValidator",
+    "M3BotAccuracyTests": "BotAccuracyTests",
+    "M4SlotAssignment": "MatchSlotAssignment",
+    "M6AssetImportSettings": "AssetImportSettings",
+    "M4MatchmakingTests": "MatchmakingTests",
+    "M5RigAnimation": "RigAnimation",
+    "M7ContentValidator": "ContentValidator",
+    "IM5SocialProvider": "ISocialProvider",
+    "M6PipelineTests": "PipelineTests",
+    "M3RifleHandling": "RifleHandling",
+    "M7PlayerBodyBuilder": "PlayerBodyBuilder",
+    "M2Config": "PredictionHarnessConfig",
+    "M2RoleService": "PredictionHarnessRoleService",
+    "M3ShopItem": "ShopItem",
+    "M0BodyRoot": "SharedControlSampleBody",
+    "M7MatchRequest": "MatchRequest",
+    "M7FighterPresentationTests": "FighterPresentationTests",
+    "M2NetworkBody": "PredictionHarnessBody",
+    "IM5ModerationProvider": "IModerationProvider",
+    "M7ContentReport": "ContentReport",
+    "M5MountDemo": "MountDemo",
+    "M7SmoothFighterBuilder": "SmoothFighterBuilder",
+    "M7AudioService": "AudioService",
+    "IM5CosmeticCatalog": "ICosmeticCatalog",
+    "M4MatchProposal": "MatchProposal",
+    "M6MaterialPalette": "MaterialPalette",
+    "M3BotEngage": "BotEngage",
+    "M1Hud": "LocalCombatHud",
+    "M5RigRole": "RigRole",
+    "M3Config": "MatchConfig",
+    "M7Ui": "Ui",
+    "SoloCleanupProbe": "HandlingProbe"
+  },
+  "Assemblies": {
+    "BeMyArms.M0": "BeMyArms.Core",
+    "BeMyArms.M1": "BeMyArms.Gameplay",
+    "BeMyArms.M2": "BeMyArms.Networking",
+    "BeMyArms.M3": "BeMyArms.Match",
+    "BeMyArms.M4": "BeMyArms.Matchmaking",
+    "BeMyArms.M5": "BeMyArms.Product",
+    "BeMyArms.M6": "BeMyArms.Content",
+    "BeMyArms.M7": "BeMyArms.Client",
+    "BeMyArms.M05.Ngo": "BeMyArms.Diagnostics.NetcodeComparison",
+    "BeMyArms.NetProbe": "BeMyArms.Diagnostics.NetworkingProbe"
+  }
+}

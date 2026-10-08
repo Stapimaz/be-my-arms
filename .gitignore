@@ -116,3 +116,6 @@ InitTestScene*.unity*
 # Python bytecode (Blender pipeline scripts)
 __pycache__/
 *.pyc
+
+# Unity Pipeline's temporary build-time Resources injection (not authored game content).
+/Assets/Settings/Pipeline/Resources/RuntimePipeline*.asset*

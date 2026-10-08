@@ -1,445 +1,74 @@
-# Be My Arms — Development Roadmap
+# Be My Arms — Roadmap
 
-**Status:** Approved working roadmap
-**Source of truth for game design:** `GAME_CONCEPT.md`
-**Companion document:** `TECHNICAL_PLAN.md`
-**Current production project:** `C:\Users\stapi\GameDev\be-my-arms`
-**Engine:** Unity `6000.4.3f1`, URP
-**Last updated:** 2026-10-07
+**Current status: clean pre-Phase-3 baseline · Updated 2026-10-08**
 
-> This roadmap owns implementation order, milestone status and acceptance criteria. Game design
-> belongs to `GAME_CONCEPT.md`, which defers sequencing to this document. Technical
-> architecture belongs to `TECHNICAL_PLAN.md`, and local tooling to `docs/DEV_ENVIRONMENT.md`.
+Design: [GAME_CONCEPT.md](GAME_CONCEPT.md). Architecture: [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md).
+Run/build: [docs/DEV_ENVIRONMENT.md](docs/DEV_ENVIRONMENT.md).
 
----
+## Naming and authority
 
-## 0. How to read this document
+Use **Phase N** for current development sequencing. Do not introduce new numbered milestone
+script folders, class prefixes or phase-named asset directories. Code/content are named by
+responsibility. Older labels survive only in archives, migration compatibility metadata and Git.
 
-Every item is tagged:
+This roadmap owns sequence, not game-design changes. Each new phase requires explicit
+authorization. Repository normalization does **not** authorize Phase 3 gameplay work.
 
-- **[LOCKED]** — from `GAME_CONCEPT.md`; do not casually change.
-- **[PROPOSED]** — technical decision adopted for planning; revisit with evidence.
-- **[SPIKE]** — must be proven by test or playtest before it becomes a rule.
-- **[DEFERRED]** — deliberately postponed.
+## Current checkpoint
 
-If this roadmap and `GAME_CONCEPT.md` ever conflict on **game design**, the concept
-document wins. If they conflict on **implementation order**, this roadmap wins.
+The user has accepted the current P2 POV **for now**. No further POV iteration is scheduled.
+The accepted playable rollback tag is **`checkpoint/pre-phase-3-playable`**; repository
+normalization produces **`checkpoint/pre-phase-3-normalized`** without rewriting gameplay.
 
----
+The checkpoint contains:
 
-## 1. Guiding principles
+- Playable menu → Duel → chosen P1/P2 role → match, with solo bot teammate support and a
+  dedicated two-human shared-body practice path. The 2v2 foundation is also present.
+- NGO/Unity Transport authority, fixed-tick body simulation, P1 prediction/reconciliation,
+  immediate local P2 aim, control epochs, historical firing-sector validation and reconnect.
+- Independent P1 look and smooth body follow; Elastic Soft P2 sector; no standalone vault.
+- Smooth shared-rig world presentation, uniform role colors and accepted third-person grips.
+- Sustained-rifle bloom and controllable real-aim recoil; bounded bot P1 turns; look-directed
+  extending kicks; simple one-support-hand rifle POV with a reload-only second hand.
+- Existing round/buy/utility/closing-zone loop, map family, local matchmaking/rating and
+  in-memory product/rig-contract foundations. These are not final production services/content.
+- Domain-organized source, GUID-preserving asset migration, canonical docs, and historical
+  studies separated from current run/build entry points.
 
-1. **Prove the mechanic first.** The shared-body control relationship is the product.
-   Nothing is built at scale until it feels good and survives networking.
-2. **Do not overengineer before requirements exist.** No custom deterministic simulation
-   framework, no custom character controller, and no assembly-definition ceremony until a
-   proven requirement forces them.
-3. **Keep gameplay code modular and data-driven.** Tuning lives in data assets. Input,
-   simulation and presentation stay separable — that is as far as early structure goes.
-4. **Netcode is decided.** M0.5 chose Netcode for GameObjects; M2 must prove prediction,
-   reconciliation and lag compensation on it (see `docs/M05_NETCODE_BAKEOFF.md`).
-5. **Keep the architecture portable** to future mobile/console without optimizing the PC
-   game around them.
-6. **Placeholder assets are temporary.** Greybox geometry, capsule bodies, proxy props and
-   untextured materials are development stand-ins only — never the intended final
-   presentation. Production art begins after the core and networking milestones pass; see
-   `TECHNICAL_PLAN.md` §13.
+Known gaps: simplified network hit regions/flat damage, incomplete combat-feedback truthfulness,
+arena/bot quality, generated audio/VFX, onboarding and round presentation, production services,
+durable identities/security and final release readiness. Human visual/feel acceptance is not
+inferred from screenshots or green tests.
 
----
+## Next phases
 
-## 2. Milestones
+| Phase | Purpose | Exit gate |
+|---|---|---|
+| **3 — Truthful rifle combat** | Make rifle aim, shot obstruction, hit/damage regions and player feedback agree with authoritative outcomes. Preserve accepted control/camera/role foundations. Resolve remaining simplifications deliberately, not as a wholesale combat rewrite. | Relevant authority/hit tests plus human rifle-combat playtest; visible feedback must not claim an unconfirmed result. **Not started.** |
+| **4 — Purposeful arena and bots** | Build readable, useful Duel routes/cover/engagements; improve complementary-role and enemy bot decisions so both solo roles are useful playtest paths. | Human solo and duo matches demonstrate purposeful positioning, sightlines and partner behavior. |
+| **5 — Presentation, onboarding and round rhythm** | Explain the two-role dependency clearly, improve buy/live/end transitions and communication of teammate intent, and address approved presentation/content needs. | Fresh-player onboarding and full-round human review; avoid reopening accepted POV without new direction. |
 
-### Current Duel vertical-slice passes
+After Phase 5, proposed—not yet approved—work is:
 
-| Pass | Status |
+| Phase | Direction |
 |---|---|
-| **Pass 1 — controls / duo foundations** | Accepted control baseline: fixed-tick authority/prediction, independent P1 look, local P2 aim, Elastic Soft sector and dedicated duo practice. See `docs/PASS1_CONTROL_BASELINE.md`. |
-| **Pass 2 — character / locomotion / FPS presentation** | **Foundation accepted.** Human-approved smooth shared rig and initial cleanup: `docs/PASS2_FOUNDATION_REDO.md`. Subsequent focused solo-playtest fixes (rifle spray, smooth bot P1 turns, look-directed extended kicks and a simple single-hand rifle POV with reload-only second hand) are rebuilt/validated and ready for human review: `docs/PASS2_SOLO_CLEANUP.md`. |
-| **Pass 3 — truthful rifle combat** | **Not started; awaiting explicit authorization.** |
-| **Pass 4 — purposeful arena / bots** | Pending. |
-| **Pass 5 — presentation / onboarding / round rhythm** | Pending. |
-
-### Status
-
-| Milestone | Status |
-|---|---|
-| **M0** — local shared-body spike | Implemented; automated verification passing (12 EditMode, 2 PlayMode); single-tester spot-check confirmed the Model C coupling; the two-human feel playtest was intentionally deferred to the M1 gate |
-| **M0.5** — netcode bake-off | **Complete — chose Netcode for GameObjects** with a custom prediction/lag-comp layer; see `docs/M05_NETCODE_BAKEOFF.md`. NfE isolated on branch `m0.5/nfe` |
-| **M1** — local vertical slice | Implemented; automated verification passing (19 EditMode, 2 PlayMode); human two-duo playtest gate deferred; see `docs/M1_VERTICAL_SLICE.md` |
-| **M2** — networked spike | **Complete** (architecture proof). Real 3-process run: approval-based role authorization, wrong-role rejection, bandwidth + prediction-error + camera metrics, transport-level conditioning, sector + lag-comp validation; disconnect→bot→reconnect handoff verified on graceful disconnect; force-kill reconnect limitation documented (UTP detection/acceptance) for M3+; see `docs/M2_NETWORKING_SPIKE.md` |
-| **M3** — PvP round loop | **Complete (acceptance level).** End-to-end dedicated-server + 4-client Duel verified: role assignment, server-authoritative buy, live combat, elimination/timeout, utility, closing zone, round/match transitions and telemetry; EditMode 61/61. See `docs/M3_PVP_ROUND_LOOP.md` |
-| **M4** — 2v2 and matchmaking | **Complete (acceptance level).** Real dedicated-server + 8-client 2v2 verified end-to-end: matchmaking, provider-neutral allocation, parties, four shared bodies and post-match role-specific ratings; EditMode 76/76. Production hosting/services integration is deferred and non-blocking. See `docs/M4_2V2_MATCHMAKING.md` |
-| **M5** — product systems | **Complete (acceptance level).** Product foundations (account/profile, role-specific ranked state/presentation, cosmetic ownership/equip, mounting presentation, social, moderation) + the enforced P1/P2 rig contract proven across all placeholder combinations; EditMode 89/89, PlayMode 3/3. Production content and vendors deferred. See `docs/M5_PRODUCT_SYSTEMS.md` |
-| **M6** — production art and content pipeline | **Complete (acceptance level).** Blender 4.5.13 LTS pipeline with enforced conventions; real P1(body-only)/P2(shoulder+arms)/weapon/utility/environment assets imported at 1:1, anatomy-correct and validated against the M5 contract; every P1×P2 combination mounts with the weapon gripped (4/4); EditMode 94/94, PlayMode 3/3. See `docs/M6_ART_PIPELINE.md` |
-| **M7** — audio, VFX, maps and content scale | **Systems complete; acceptance partially met.** Production Duel + 2v2 arenas (map family) verified in the real networked loop with map-driven spawns and spawn-clearance checks; audio + VFX systems/libraries complete; `MATCH SET READY` structurally. **Production-quality audio/music/VFX content remains deferred**, so the roadmap "production quality" bar is not fully met. EditMode 102/102, PlayMode 5/5. See `docs/M7_CONTENT.md` |
-| **M8–M10** — UI/product and release | Not started. M8 begins UI/UX, accessibility and optimization |
-
-### M0 — Very small local shared-body mechanic spike
-
-**Purpose:** answer exactly one question — *does the P1/P2 control relationship feel good?*
-
-**Scope (deliberately tiny, one process):**
-
-- Greybox floor plus a little cover; one body; two or three dummy targets.
-- Placeholder body: capsule for P1 plus a simple arm/chest proxy and a muzzle anchor.
-  No real rig, no skins.
-- **P1:** movement plus explicit `BodyYaw` control.
-  - **Superseded assumption:** M0 used a temporary simplification where P1 look input directly
-    controlled `BodyYaw`. This was replaced in M1 by the decoupled look/body model (neck limit,
-    smooth body follow, explicit align) — see the M1 section and `TECHNICAL_PLAN.md` §4.
-- **P2:** independent first-person camera at the standardized shoulder anchor; world-stable
-  yaw inside the firing sector (Aim Model C); free pitch.
-- One hitscan weapon: fire plus fire rate. Reload/swap optional.
-- Shared single HP pool on the body; P1 head proxy is the only headshot region.
-- Dual input in one process (keyboard/mouse for one role, gamepad or second device or a
-  scripted bot for the other).
-- `SectorHalf` and basic weapon values in a ScriptableObject.
-
-**Acceptance criteria:**
-
-1. Two roles are playable simultaneously on one machine.
-2. At least one target sits outside the sector until P1 rotates roughly 40°, and the test
-   duo naturally uses P1 rotation to expose it.
-3. While P2 holds a target, P1's body rotation does **not** drag the crosshair off target
-   while the aim is inside the sector.
-4. At the sector boundary, aim is pushed with the body, re-stabilizes in world space, and
-   shows **no accumulated phantom mouse offset**.
-5. The body does **not** rotate on its own toward P2's aim at any point.
-6. Written playtest notes on: is it fun and readable; does P2 feel gated by P1 rather than
-   like a passenger; does P1 feel meaningfully responsible for P2's damage. If time allows,
-   a quick A/B against Aim Model A.
-7. **Timebox:** roughly 1–2 weeks. This is a throwaway spike; do not harden it.
-
-**Status:** Implementation and automated verification are complete (details in
-`docs/M0_PLAYTEST.md`). Criteria 2–5 are covered by automated tests, criterion 1 was confirmed
-by a single-tester spot-check, and criterion 6 — the two-human feel judgement — was
-intentionally **deferred** and is **not** marked as passed. The definitive aim-model and
-game-feel validation remains the M1 playtest gate.
-
-**Assets:** the body is a placeholder capsule plus an arm proxy, and the arena is greybox. These
-are temporary development assets, not the intended final presentation.
-
----
-
-### M0.5 — Timeboxed NGO vs NfE networking bake-off
-
-**Purpose:** choose the netcode stack with numbers, using only the minimum loop.
-
-**Scope, per candidate (Netcode for GameObjects, Netcode for Entities):**
-
-- Headless server plus one client; one body; P1 move and `BodyYaw`; P2 aim and fire;
-  hitscan against a dummy; 60 Hz.
-- Simulated 100 ms RTT and 2% packet loss.
-- No art, no UI, no content, no polish.
-
-**Measure / record:**
-
-- Effort to bind **two role-tagged input domains to one entity**.
-- Built-in prediction presence and quality for the P1-owned portion; how P2's own aim is
-  handled.
-- Lag-compensation story: what exists versus what must be written.
-- CPU, memory and bandwidth per client.
-- Animation/IK and skin-mounting implications.
-- Estimated cost to reach a shippable competitive layer.
-
-**Acceptance criteria:**
-
-1. Both prototypes run under the simulated network conditions.
-2. A written recommendation with the numbers above and a clear go/no-go.
-3. **Timebox:** 3–5 days. If a stack cannot demonstrate the minimum loop inside the box,
-   that is itself a finding.
-
-**Outcome:** **Netcode for GameObjects** selected, with an explicitly budgeted custom
-prediction/lag-compensation layer. Full record and rationale: `docs/M05_NETCODE_BAKEOFF.md`.
-Netcode for Entities remains isolated on branch `m0.5/nfe` and is not merged.
-
----
-
-### M1 — Proper local vertical slice on the chosen architecture
-
-**Purpose:** the real local vertical slice, built on the architecture the bake-off selected.
-
-**Scope:**
-
-- **P1:** walk, unlimited sprint, jump, directional dodge (cooldown, no invincibility
-  frames), slide, vault, light kick, heavy kick.
-- **P1 look/body model:** camera/head look decoupled from `BodyYaw` within a neck-offset limit;
-  the body smoothly follows the look past a threshold; an explicit "align body to look" action;
-  WASD stays body-relative. All values are tuning; the align binding is temporary/configurable.
-- **P2:** shoulder-anchored first-person camera; sector-clamped aim; rifle, pistol and
-  knife; fire, reload and swap; hitscan spread and recoil; can fire during every P1
-  movement or attack state (accuracy penalty only, never a hard lockout).
-- Movement-state to accuracy table **[LOCKED direction]**.
-- Shared HP, no passive regeneration; P1 head is the only critical region; P2 arms,
-  shoulders and upper chest take normal damage; cosmetics never change hitboxes.
-- Compact greybox arena: cover, readable sightlines, some verticality. Greybox and proxy
-  assets remain temporary; final art is a later milestone.
-- All tuning in data assets.
-
-**Acceptance criteria:**
-
-1. All role abilities above function, and none of P1's actions hard-lock P2's weapon.
-2. A target placed outside the sector forces P1 rotation, and the dependency reads clearly.
-3. Playtest gate (at least three duos, at least 15 minutes each): both roles report agency;
-   no reported motion sickness; the aim model is chosen and **documented** with evidence.
-4. The architecture demonstrably matches the chosen netcode path (for example: if NfE,
-   gameplay entities are ECS-ready; if NGO, the simulation/presentation boundary is ready
-   for a prediction layer).
-5. Tuning values can change without recompiling.
-6. The P1 look/body model is implemented and documented (decoupled look, neck limit, smooth
-   follow, explicit align; movement and P2's sector use `BodyYaw` only).
-
-**Outcome:** implemented and automatically verified. P1's look/body model is implemented
-(decoupled look, neck limit, smooth follow, explicit align). The human two-duo playtest gate
-(criterion 3) is **deferred and not passed** — comprehensive human playtesting moves to the
-alpha/beta stage. Details and limitations: `docs/M1_VERTICAL_SLICE.md`.
-
----
-
-### M2 — Full two-client and dedicated-server networking spike
-
-**Purpose:** prove the networked shared body under latency, before content.
-
-**Scope:** two remote clients plus one dedicated headless server; one body; both roles
-remote; simulated latency and packet loss.
-
-**Acceptance criteria:**
-
-1. P1 locomotion is predicted and reconciled; no visible rubber-banding at 100 ms / 2%
-   loss; residual visual error stays under a defined threshold.
-2. P2 aim adds 0 ms of latency; camera correction stays under the defined snap threshold.
-3. Firing during sprint, slide, dodge and kick is validated server-side.
-4. Sector legality is checked against the **historical body orientation** at the fire tick,
-   consistent with whichever aim model the M1 playtest selects.
-5. Network correction does not introduce aim error beyond the defined threshold, and the
-   boundary behavior matches the selected aim model across the wire.
-6. Lag-compensated hit/miss agreement is at least 95% versus the offline baseline at
-   100 ms; maximum rewind is clamped.
-7. The server rejects out-of-sector fire, over-rate fire, excessive turn rate, impossible
-   movement, and ammo/inventory tampering.
-8. Reconnect within the grace window restores the same role; while a role is disconnected it is
-   temporarily **bot-controlled**, and the remaining human never gains control of both roles.
-   (Force-kill cross-disconnect is a classified package-level item — see `docs/NETWORKING_PROBE.md`.)
-9. Bandwidth per client and server CPU are measured at the target tick rate.
-
----
-
-### M3 — Real PvP round loop
-
-Duel bodies (one body versus one body, four humans), elimination, first-to-3 with a
-maximum of five rounds, P2 loadout/buy draft, utility, closing zone, role queue.
-
-**Acceptance criteria:** a complete competitive round is playable and server-authoritative,
-with basic telemetry capturing the measurements listed in `GAME_CONCEPT.md` §31.
-
-**Outcome:** implemented and verified. A real dedicated server plus four client processes run the
-complete Duel loop: connection-approval slot assignment (A P1/P2 vs B P1/P2), server-authoritative
-draft buy, live elimination and timeout, closing zone, utility (grenade/smoke/flash), round
-transitions to first-to-3 within the 5-round cap, and match end with telemetry. The authoritative
-round-loop core is engine-free and unit-tested; the NGO integration reuses the M2 pure simulation
-and lag-compensation layer. Full evidence and the exact run commands: `docs/M3_PVP_ROUND_LOOP.md`.
-Placeholder geometry, flat networked damage and immediate-resolution utility are documented
-limitations, not design decisions.
-
----
-
-### M4 — 2v2 and matchmaking
-
-Two bodies per team, derived body MMR, role-specific matchmaking, parties, dedicated
-server allocation.
-
-**Acceptance criteria:** ranked-ready structure with provider-neutral server allocation.
-
-**Progress:** implemented and verified end-to-end. The M3 match layer is generalised from a Duel to
-**N bodies per team**, so Duel (1 body/team) and 2v2 (2 bodies/team, eight humans) share one
-server-authoritative loop; a team loses only when all its bodies are eliminated. `BeMyArms.M4`
-provides role-specific Elo, derived body/team MMR, a pure Duel/2v2 matchmaker (role preferences,
-premade parties, balanced team split, queue-time relaxation) and a provider-neutral
-`IM4ServerAllocator`. A server-side `M4MatchHost` runs the pure matchmaker and allocation for a live
-match and applies post-match role-rating updates. Verified: one dedicated server + eight clients,
-`quality=0` team split (1050 vs 1050), all eight slots assigned from preferences, premade duos kept
-on one body, full match loop to first-to-3, and per-role rating deltas. EditMode 76/76. Live
-Multiplayer Services and a real hosting provider remain deferred, non-blocking integrations.
-Details: `docs/M4_2V2_MATCHMAKING.md`.
-
----
-
-### M5 — Product systems
-
-Account progression, cosmetics, mounting presentation, social/friends, reporting and
-moderation, ranked presentation.
-
-**Acceptance criteria:** the rig and skin contract is enforced before cosmetic content
-scales; the shared-body identity is intact across all shipped combinations.
-
-**Outcome:** implemented and verified. `BeMyArms.M5` provides account/profile, role-specific ranked
-state and presentation, cosmetic ownership/equip, social and moderation seams (all behind clean
-interfaces with local in-memory implementations) plus the mounting assembler. The standardized
-P1/P2 rig contract is defined and **enforced before content scales**: a validator rejects missing
-sockets, corrects hitbox/region mismatches, and forbids cosmetic layers from carrying hitboxes or
-gameplay stats; a mount assembler combines any P1 skin with any P2 skin at fixed sockets with no
-pair-specific work. Proven with three placeholder P1 variants × three P2 variants: all 9
-combinations assemble and validate, authoritative hitbox and gameplay-stat signatures are identical
-across every combination, and negative cases (hitbox-bearing skin, stats-bearing skin, missing
-socket, wrong-role skin) are rejected. EditMode 89/89, PlayMode 3/3 (runtime mount matrix). No
-production art and no backend/vendor integration. Details: `docs/M5_PRODUCT_SYSTEMS.md`.
-
----
-
-### M6 — Production art and content pipeline
-
-Establish the DCC/content pipeline and final asset standards before mass production. The DCC is
-**Blender 4.5 LTS**, installed reproducibly with a pinned version and checksum.
-
-> **Boundary:** M5 established the product foundations and enforced the P1/P2 rig contract
-> (`docs/M5_PRODUCT_SYSTEMS.md`); M6 established the production DCC/art pipeline and created the
-> first real assets. M7 builds content (audio/VFX/maps) on this pipeline rather than redefining it.
-
-- Choose the DCC/content pipeline and define import, scale, naming, LOD and material conventions.
-- Finalize the standardized P1/P2 rig contract: gameplay skeleton, attachment sockets, camera
-  anchors, weapon and utility anchors, and hitbox definitions.
-- Produce the first production P1/P2 characters, weapons and environment kit tests.
-
-**Acceptance criteria:** a production character and weapon travel the pipeline into the game,
-and an arbitrary P1 skin combines with an arbitrary P2 skin without per-pair work.
-
-**Outcome:** implemented and verified. Blender 4.5.13 LTS is installed/configured through pinned,
-checksum-verified, headless `bpy` tooling (`tools/blender`, `tools/pipeline`, `art/blender`), and
-the Blender → Unity pipeline defines and enforces scale/orientation, naming, hierarchy, transforms,
-export/import settings, materials, LOD0 budgets and rigging/skin conventions. Two production P1
-bodies, two production P2 upper-body/arms layers, a rifle, a grenade and a four-piece environment
-kit are authored, exported, imported at 1:1 and built into prefabs. Validation passes: the rig
-satisfies the M5 contract and **all 2 × 2 P1×P2 combinations mount with weapons at the correct
-anchors and unchanged authoritative hitboxes/stats**. EditMode 93/93, PlayMode 3/3. A showcase
-scene composes the assets. The first-pass visual direction is a production test and the final art
-direction remains open. A follow-up readability pass corrected the character anatomy: P1 is now the
-body/head/legs only (no arms), P2 is an upper-chest/shoulder layer with two complete arms
-(shoulder→upper arm→elbow→forearm→hand) and no head/backpack, P2's hands sit on the weapon
-grip/handguard (asserted within 0.20 m of the weapon bounds), and P2's cosmetic sensor sits below
-and clear of P1's head. Details: `docs/M6_ART_PIPELINE.md`.
-
----
-
-### M7 — Audio, VFX, maps and content scale
-
-- Audio, music and VFX production.
-- The production map set for Duel and 2v2, following the map-family strategy.
-
-**Acceptance criteria:** content volume supports a shippable match set at production quality.
-
-> **Boundary:** M7 builds on the M6 pipeline and asset conventions
-> (`docs/M6_ART_PIPELINE.md`) and keeps every new asset passing the M5 contract and M6 validator;
-> it does not redefine the asset standards or the DCC choice.
-
-**Outcome:** the systems and content pipeline are implemented and verified. A 15-piece Blender map
-kit yields two production arenas following the map-family strategy (Duel 24×24 closed flanks; 2v2
-32×32 extra lanes), each with a validated map record (complete team/body/role spawns, cover, lanes,
-verticality, spawn clearance) and wired into the shared networked match setup; **both arenas were
-run in the real dedicated-server + client loop** (Duel 4-client; 2v2 8-client with matchmaking and
-role ratings) using the map's spawns. A reproducible procedural audio set (18 SFX + 3 loops) and 11
-particle VFX are exposed through libraries/services, and a content manifest confirms the match-set
-floor. EditMode 102/102, PlayMode 5/5. A focused art-direction pass refined the characters without
-changing the rig contract and established a working (refinable) grounded stylized tactical-sci-fi
-baseline.
-
-**Acceptance reconciliation:** the roadmap bar is "production quality". The **maps, match
-integration, rigs and pipeline are production-ready** for continued work, but the **audio, music and
-VFX are production-test placeholders** — with the current generated assets they cannot be defended as
-final production quality. **M7 acceptance is therefore partially met**: systems and content pipeline
-complete and verified; audio/music/VFX production quality is deferred to a future content pass. See
-`docs/M7_CONTENT.md` and `docs/M7_ART_DIRECTION.md`.
-
----
-
-### Pre-M8 — playable private-match integration (checkpoint)
-
-**Status:** **Complete.** The normal client is directly playable through a real private-match flow
-with no command line: Main Menu → Play → Private Lobby (Duel/2v2, P1/P2 role) → fill empty slots with
-bots → Start Match → full server-authoritative match on the production arena → post-match → lobby.
-
-- The client transparently launches a **local dedicated server process of the same build** through a
-  provider-neutral allocator seam (`IM7MatchServerAllocator` / `M7LocalProcessAllocator`); a
-  production allocator replaces it without changing lobby/match code.
-- Private lobbies use the same slot model as future online lobbies: each role slot is owned by a human
-  or a bot; a human never controls both roles; bot-fill creates genuine bot ownership (distinct from
-  the disconnect bot-takeover mechanism).
-- Gameplay bots use normal P1/P2 authority (navigation/body orientation; target acquisition, sector
-  respect, aim/fire/reload/utility) and bot P2 roles get a loadout through the normal economy.
-- Segment-rig characters now have a procedural animation layer (locomotion, P1 head, P2 aim/grip,
-  recoil + muzzle flash); presentation only, rig contract and hitboxes unchanged.
-- Real player-facing UI (menu, private lobby, HUD, buy, round/match states, settings, post-match).
-
-Verified in the built player: human-P1+bot-P2 and human-P2+bot-P1 Duel, and bot-filled 2v2.
-Build: `Builds/M7/BeMyArms.exe`. Details and limitations: `docs/PRE_M8_PLAYABLE_INTEGRATION.md`.
-
----
-
-### M8 — UI/UX, accessibility and optimization
-
-- Final UI/UX, settings, onboarding, input polish and accessibility options.
-- Client and server performance optimization against defined targets.
-
-**Acceptance criteria:** defined frame-rate, memory and load targets are met, and an
-accessibility checklist passes.
-
-> **Boundary:** M8 begins final UI/UX, accessibility and optimization work. It consumes the M7 map
-> records and audio/VFX libraries and keeps new assets passing the M5/M6 validators; it does not
-> redefine content pipelines or the art/audio direction.
-
----
-
-### M9 — QA, security, anti-cheat and release hardening
-
-- Structured QA, regression and soak testing.
-- Client anti-cheat selection and integration, plus server validation hardening.
-- Backend, account and entitlement security review.
-
-**Acceptance criteria:** the release-candidate stability and competitive-integrity bar is met.
-
----
-
-### M10 — Steam integration, store and release preparation
-
-- Steam authentication, friends, achievements, store, entitlements and community integration.
-- Store page, age ratings, and legal/publishing requirements.
-- Alpha, beta and release-readiness gates, launch operations and the live-service plan.
-
-**Acceptance criteria:** a releasable PC/Steam build passes launch-readiness review.
-
----
-
-## 3. Decision gates
-
-| Gate | Milestone | Question | Evidence required |
-|---|---|---|---|
-| Aim coupling | M1 playtest | Model A, B or C | Playtest notes from at least three duos |
-| P1 look/body tuning | M1 model resolved; numbers are TUNING | Neck limit, follow threshold/speed, align speed | Tuning playtest at alpha/beta |
-| Netcode stack | M0.5 (decided) | NGO chosen | `docs/M05_NETCODE_BAKEOFF.md`; M2 confirms prediction/lag-comp |
-| Simulation customisation | M2 (resolved) | Is a custom character controller / deterministic sim actually required? | Resolved yes: NGO has no built-in prediction, so a custom deterministic pure body simulation (`M2BodySim`) with a client reconciler and lag compensation was adopted. Bandwidth/prediction metrics in `docs/M2_NETWORKING_SPIKE.md`. |
-| Disconnect policy | before M3/M4 | What happens to a body when one role disconnects mid-round? | Decided and implemented: the disconnected role becomes a temporary **bot** (never handed to the other human); a token reconnect atomically reclaims it. Single-owner invariant unit-tested (M2/M3). |
-
----
-
-## 4. Deferred until the core and networking are proven
-
-**[DEFERRED]** — then sequenced by §2 (production and release work is M6–M10).
-
-Content and art, cosmetics, mounting presentation, economy and buy-phase tuning, utility
-effects beyond stubs, closing zone, full round/match structure (until M3), 2v2 (until M4),
-matchmaking and MMR, account progression, voice chat, friends and parties, ranked
-presentation, anti-cheat provider, mobile and console ports, touch controls, cross-play
-pool rules, input-matchmaking weights, backend persistence vendor, hosting vendor
-selection, mid-round P1/P2 separation, battle royale and objective modes.
-
----
-
-## 5. Open design questions — do not finalize silently
-
-These are intentionally left open by `GAME_CONCEPT.md` and are carried forward:
-
-- Which aim-coupling model becomes permanent (A, B or C).
-- How P1 commands body yaw, and whether P1 retains a decoupled free-look camera.
-- Exact aim-clamp semantics at the boundary, plus vertical aim limits.
-- Mid-round disconnect behavior for a single role.
-- P1/P2 information asymmetry from third-person versus first-person views.
-- Whether P2 receives any non-control feedback channel from P1 beyond voice and pings.
+| **6 — Product and online integration** | Production identity/session/hosting adapters, persistence, social/communication, role-ranked systems and cosmetic entitlements; extend UI/accessibility/settings and measure performance. |
+| **7 — Hardening and competitive integrity** | Targeted regressions/soaks, backend and server security, abuse/anti-cheat policy, deployment/observability and stability against agreed budgets. |
+| **8 — PC/Steam release preparation** | Platform integration, publishing/legal/store work, alpha/beta human gates and launch operations. |
+
+Future platforms, larger/objective modes, mid-round separation and a persistent economy remain
+outside the current Duel sequence. Production content quality and performance budgets must be
+defined explicitly; a structural foundation is not a release-quality claim.
+
+## Validation policy
+
+- Match checks to the changed risk. For refactors: compile/import/reference checks, relevant
+  existing tests, one player build and minimal startup/core-Duel smoke testing.
+- For network changes: exercise the affected authority/session/transport path, not just mocks.
+- For visuals/feel: human review is the acceptance gate. Images can support diagnosis, not
+  substitute for it. Do not build screenshot-heavy QA merely to make reports look comprehensive.
+- Do not silently expand a cleanup into gameplay tuning or the next phase.
+
+Historical sequence and evidence are intentionally outside this active roadmap in
+[docs/archive](docs/archive/README.md). Current checkpoint details and migration exceptions are
+recorded in [docs/REPOSITORY_STRUCTURE.md](docs/REPOSITORY_STRUCTURE.md).

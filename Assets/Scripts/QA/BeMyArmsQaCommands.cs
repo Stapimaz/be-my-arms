@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using BeMyArms.M2;
-using BeMyArms.M3;
-using BeMyArms.M7;
+using BeMyArms.Networking;
+using BeMyArms.Match;
+using BeMyArms.Client;
 using Unity.Netcode;
 using Unity.Pipeline.Commands;
 using UnityEngine;
@@ -157,8 +157,8 @@ namespace BeMyArms.QA
             [CliArg("yaw", "Yaw delta in degrees (positive = look right).")] float yaw = 0f,
             [CliArg("pitch", "Pitch delta in degrees (positive = look up).")] float pitch = 0f)
         {
-            M3LocalInput.InjectedLookYaw += yaw;
-            M3LocalInput.InjectedLookPitch += pitch;
+            LocalInput.InjectedLookYaw += yaw;
+            LocalInput.InjectedLookPitch += pitch;
             return new QaSimpleResult { Success = true, Detail = $"queued yaw={yaw} pitch={pitch}" };
         }
 
@@ -172,11 +172,11 @@ namespace BeMyArms.QA
             [CliArg("crouch", "Hold crouch while true.")] bool crouch = false,
             [CliArg("yaw_rate", "Sustained P2 mouse yaw in degrees per second; 0 releases pressure.")] float yawRate = 0f)
         {
-            M3LocalInput.InjectedMoveX = moveX;
-            M3LocalInput.InjectedMoveZ = moveZ;
-            M3LocalInput.InjectedFire = fire;
-            M3LocalInput.InjectedCrouch = crouch;
-            M3LocalInput.InjectedLookYawRate = yawRate;
+            LocalInput.InjectedMoveX = moveX;
+            LocalInput.InjectedMoveZ = moveZ;
+            LocalInput.InjectedFire = fire;
+            LocalInput.InjectedCrouch = crouch;
+            LocalInput.InjectedLookYawRate = yawRate;
             return new QaSimpleResult { Success = true, Detail = $"move=({moveX},{moveZ}) fire={fire} crouch={crouch}" };
         }
 
@@ -187,20 +187,20 @@ namespace BeMyArms.QA
         {
             var sb = new System.Text.StringBuilder();
 
-            M3DuelClient local = null;
-            foreach (M3DuelClient client in Object.FindObjectsByType<M3DuelClient>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            NetworkBodyClient local = null;
+            foreach (NetworkBodyClient client in Object.FindObjectsByType<NetworkBodyClient>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
                 if (client != null && client.IsLocalOwnBody) { local = client; break; }
 
             if (local != null && local.Body != null)
             {
-                var pose = local.Body.GetComponent<M7RiflePose>();
+                var pose = local.Body.GetComponent<RiflePose>();
                 if (pose != null) sb.AppendLine($"body: L {pose.LeftGripError:0.000}m R {pose.RightGripError:0.000}m reload={pose.ReloadProgress:0.00}");
             }
 
-            GameObject viewmodel = GameObject.Find("M7_P2Viewmodel");
+            GameObject viewmodel = GameObject.Find("Client_P2Viewmodel");
             if (viewmodel != null)
             {
-                var pose = viewmodel.GetComponent<M7RiflePose>();
+                var pose = viewmodel.GetComponent<RiflePose>();
                 if (pose != null) sb.AppendLine($"viewmodel: L {pose.LeftGripError:0.000}m R {pose.RightGripError:0.000}m reload={pose.ReloadProgress:0.00}");
             }
 
@@ -211,11 +211,11 @@ namespace BeMyArms.QA
             MainThreadRequired = true, RuntimeOnly = true, Tags = new[] { "qa", "animation" })]
         public static object PresentationState()
         {
-            var player = Object.FindAnyObjectByType<M7LocalPlayer>();
+            var player = Object.FindAnyObjectByType<LocalPlayer>();
             var client = player != null ? player.LocalClient : null;
-            var world = client != null ? client.Body.GetComponent<M7RiflePose>() : null;
-            var view = player != null && player.Viewmodel != null ? player.Viewmodel.GetComponent<M7RiflePose>() : null;
-            var animator = client != null ? client.Body.GetComponent<M7CharacterAnimator>() : null;
+            var world = client != null ? client.Body.GetComponent<RiflePose>() : null;
+            var view = player != null && player.Viewmodel != null ? player.Viewmodel.GetComponent<RiflePose>() : null;
+            var animator = client != null ? client.Body.GetComponent<CharacterAnimator>() : null;
             return new
             {
                 WorldLeftGripError = world != null ? world.LeftGripError : -1,
@@ -255,8 +255,8 @@ namespace BeMyArms.QA
         public static QaSimpleResult HeadlessControls()
         {
             if (!Application.isBatchMode) return new QaSimpleResult { Success = false, Detail = "Headless runs only." };
-            foreach (var client in Object.FindObjectsByType<M3DuelClient>(FindObjectsSortMode.None)) client.AutoDrive = false;
-            M3LocalInput.GameplayActive = true;
+            foreach (var client in Object.FindObjectsByType<NetworkBodyClient>(FindObjectsSortMode.None)) client.AutoDrive = false;
+            LocalInput.GameplayActive = true;
             return new QaSimpleResult { Success = true, Detail = "Manual controls enabled for headless input-path checks." };
         }
 
@@ -264,9 +264,9 @@ namespace BeMyArms.QA
             MainThreadRequired = true, RuntimeOnly = true, Tags = new[] { "qa", "input" })]
         public static QaSimpleResult PracticeAction([CliArg("action", "Practice action 0..2.")] int action = 0)
         {
-            if (M3DuelDirector.Instance == null || action < 0 || action > 2)
+            if (MatchDirector.Instance == null || action < 0 || action > 2)
                 return new QaSimpleResult { Success = false, Detail = "No director or invalid action." };
-            M3DuelDirector.Instance.PracticeActionServerRpc((byte)action);
+            MatchDirector.Instance.PracticeActionServerRpc((byte)action);
             return new QaSimpleResult { Success = true, Detail = "Practice action requested." };
         }
 
@@ -280,16 +280,16 @@ namespace BeMyArms.QA
             {
                 result.Scene = SceneManager.GetActiveScene().name;
 
-                M3DuelDirector director = M3DuelDirector.Instance;
+                MatchDirector director = MatchDirector.Instance;
                 result.MatchPhase = director != null ? director.CurrentPhase.ToString() : "none";
                 result.MatchLive = director != null && director.IsLive;
 
-                M3DuelClient[] clients = Object.FindObjectsByType<M3DuelClient>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-                M3DuelBody[] bodies = Object.FindObjectsByType<M3DuelBody>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+                NetworkBodyClient[] clients = Object.FindObjectsByType<NetworkBodyClient>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+                NetworkBody[] bodies = Object.FindObjectsByType<NetworkBody>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
                 result.ClientCount = clients.Length;
                 result.BodyCount = bodies.Length;
 
-                M3DuelClient local = null;
+                NetworkBodyClient local = null;
                 int localMatches = 0;
                 for (int i = 0; i < clients.Length; i++)
                 {
@@ -298,7 +298,7 @@ namespace BeMyArms.QA
                     if (local == null) local = clients[i];
                 }
                 result.LocalClientMatches = localMatches;
-                result.LocalSlot = M3DuelClient.LocalSlotIndex;
+                result.LocalSlot = NetworkBodyClient.LocalSlotIndex;
 
                 if (local != null)
                 {
@@ -323,7 +323,7 @@ namespace BeMyArms.QA
                     result.ShotsFired = local.Body.ShotsFired.Value;
                     result.Reloading = local.Body.Reloading.Value;
 
-                    M2BodyState state = local.ViewState;
+                    BodyState state = local.ViewState;
                     result.BodyPosition = V3(state.PosX, state.PosY, state.PosZ);
                     result.BodyYaw = Round(state.BodyYaw);
                     result.Crouching = state.Crouching;
@@ -336,16 +336,16 @@ namespace BeMyArms.QA
                     if (local.Body != null)
                     {
                         result.BodyAlive = local.Body.Alive.Value;
-                        result.ActiveWeapon = ((M3WeaponId)local.Body.WeaponId.Value).ToString();
+                        result.ActiveWeapon = ((WeaponType)local.Body.WeaponId.Value).ToString();
                         result.Ammo = local.Body.Ammo.Value;
                         result.LocalShots = local.TotalLocalShots;
-                        M7CharacterAnimator presentation = local.Body.GetComponent<M7CharacterAnimator>();
+                        CharacterAnimator presentation = local.Body.GetComponent<CharacterAnimator>();
                         if (presentation != null)
                         {
                             result.CrouchWeight = Round(presentation.CrouchWeight);
                         }
 
-                        M7CharacterAnimator animator = local.Body.GetComponent<M7CharacterAnimator>();
+                        CharacterAnimator animator = local.Body.GetComponent<CharacterAnimator>();
                         result.P1 = DescribeGroup(animator != null ? animator.P1Skin : null);
                         result.P2 = DescribeGroup(animator != null ? animator.P2Skin : null);
                         result.WeaponPart = DescribeGroup(animator != null ? animator.Weapon : null);
@@ -362,9 +362,9 @@ namespace BeMyArms.QA
                     }
                 }
 
-                M7LocalPlayer[] players = Object.FindObjectsByType<M7LocalPlayer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+                LocalPlayer[] players = Object.FindObjectsByType<LocalPlayer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
                 result.LocalPlayerCount = players.Length;
-                M7LocalPlayer player = players.Length > 0 ? players[0] : null;
+                LocalPlayer player = players.Length > 0 ? players[0] : null;
                 Camera camera = player != null && player.LocalCamera != null ? player.LocalCamera : Camera.main;
                 if (camera != null)
                 {
@@ -384,18 +384,18 @@ namespace BeMyArms.QA
                     }
                 }
 
-                result.InputGameplayActive = M3LocalInput.GameplayActive;
-                result.InputCursorCaptured = M3LocalInput.CursorCaptured;
+                result.InputGameplayActive = LocalInput.GameplayActive;
+                result.InputCursorCaptured = LocalInput.CursorCaptured;
                 result.CursorLock = Cursor.lockState.ToString();
                 result.CursorVisible = Cursor.visible;
                 result.ApplicationFocused = Application.isFocused;
-                result.MouseSensitivity = Round(M3LocalInput.MouseSensitivity);
+                result.MouseSensitivity = Round(LocalInput.MouseSensitivity);
 
-                result.ViewmodelCount = CountObjectsNamed("M7_P2Viewmodel");
+                result.ViewmodelCount = CountObjectsNamed("Client_P2Viewmodel");
                 result.ViewmodelWeaponCount = CountObjectsNamed("ViewmodelWeapon");
                 int cameraCount = 0;
                 foreach (Camera cam in Object.FindObjectsByType<Camera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
-                    if (cam.name != "M7_ViewModelCamera") cameraCount++; // the FP viewmodel overlay is expected
+                    if (cam.name != "Client_ViewModelCamera") cameraCount++; // the FP viewmodel overlay is expected
                 result.CameraCount = cameraCount;
 
                 var duplicates = new List<string>();
@@ -408,7 +408,7 @@ namespace BeMyArms.QA
                 foreach (KeyValuePair<string, int> kv in bodyCounts)
                     if (kv.Value > 1) duplicates.Add($"body {kv.Key} x{kv.Value}");
                 if (localMatches > 1) duplicates.Add($"local clients x{localMatches}");
-                if (players.Length > 1) duplicates.Add($"M7LocalPlayer x{players.Length}");
+                if (players.Length > 1) duplicates.Add($"LocalPlayer x{players.Length}");
                 if (result.CameraCount > 1) duplicates.Add($"cameras x{result.CameraCount}");
                 if (result.ViewmodelCount > 1) duplicates.Add($"viewmodels x{result.ViewmodelCount}");
                 result.Duplicates = duplicates;

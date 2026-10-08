@@ -1,0 +1,19 @@
+{
+    "name": "BeMyArms.Networking",
+    "rootNamespace": "BeMyArms.Networking",
+    "references": [
+        "BeMyArms.Core",
+        "Unity.Netcode.Runtime",
+        "Unity.InputSystem",
+        "Unity.Multiplayer.Tools.NetworkSimulator.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

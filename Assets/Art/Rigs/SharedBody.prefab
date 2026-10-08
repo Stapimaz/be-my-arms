@@ -192,7 +192,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6459ab03599347943852094e6943fd3c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: BeMyArms.M0::BeMyArms.M0.HitboxRegion
+  m_EditorClassIdentifier: BeMyArms.Core::BeMyArms.Core.HitboxRegion
   region: 1
   owner: {fileID: 0}
 --- !u!1 &1058717477643479448
@@ -294,7 +294,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6459ab03599347943852094e6943fd3c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: BeMyArms.M0::BeMyArms.M0.HitboxRegion
+  m_EditorClassIdentifier: BeMyArms.Core::BeMyArms.Core.HitboxRegion
   region: 0
   owner: {fileID: 0}
 --- !u!1 &1402114402160879153
@@ -438,7 +438,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f37e74a573b85e54db4c23e97df9ee47, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: BeMyArms.M5::BeMyArms.M5.M5RigAnimation
+  m_EditorClassIdentifier: BeMyArms.Product::BeMyArms.Product.RigAnimation
 --- !u!114 &3627041685860550397
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -450,7 +450,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e528d38a89b6c7845a2e02dec74042d2, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: BeMyArms.M5::BeMyArms.M5.M5GameplayRigStats
+  m_EditorClassIdentifier: BeMyArms.Product::BeMyArms.Product.GameplayRigStats
   MaxHealth: 100
   MoveSpeed: 5
   SectorHalfDegrees: 70

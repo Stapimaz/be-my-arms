@@ -1,0 +1,21 @@
+{
+    "name": "BeMyArms.Content.Editor",
+    "rootNamespace": "BeMyArms.Content.EditorTools",
+    "references": [
+        "BeMyArms.Content",
+        "BeMyArms.Product",
+        "BeMyArms.Core",
+        "BeMyArms.Matchmaking"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,17 @@
+{
+    "name": "BeMyArms.Product",
+    "rootNamespace": "BeMyArms.Product",
+    "references": [
+        "BeMyArms.Core",
+        "BeMyArms.Matchmaking"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

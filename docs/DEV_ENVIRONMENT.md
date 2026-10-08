@@ -1,261 +1,136 @@
-# Development Environment
+# Development, Run and Build
 
-**Project:** `C:\Users\stapi\GameDev\be-my-arms`
-**Last updated:** 2026-09-20
+**Practical current workflow · Updated 2026-10-08**
 
-This documents the tooling required to develop and verify Be My Arms, and the preferred
-workflow: drive the **open Unity Editor through the Unity Pipeline package** rather than
-spawning batch-mode editors.
+Start with [README.md](../README.md). Product design, sequence and architecture are the three
+canonical root documents; historical reports are not setup instructions.
 
----
+## Setup
 
-## 1. Installed tooling
-
-| Tool | Version | Notes |
-|---|---|---|
-| Unity Editor | `6000.4.3f1` (URP) | Installed via Unity Hub |
-| Unity CLI (`unity`) | `1.0.0-beta.10` | `C:\Users\stapi\AppData\Local\Unity\bin\unity.exe` |
-| Unity Pipeline package | `0.7.0-exp.1` | `com.unity.pipeline`, registry source |
-| Input System | `1.19.0` | New Input System only |
-| Test Framework | `1.6.0` | EditMode + PlayMode |
-| .NET SDK | `8.0` | Independent verification of pure C# logic |
-| Git | present | GitHub remote configured |
-| Blender | `4.5.13 LTS` | Production DCC (M6). Pinned (version + SHA-256) in `tools/blender/BlenderVersion.json`; installed to `%LOCALAPPDATA%\BeMyArms\tools\blender` by `tools/blender/install-blender.ps1` (portable zip, no elevation) |
-
-### Unity CLI agent skill for OpenCode
-
-Installed at `.opencode/skills/unity-cli` (OpenCode discovers `.opencode/skills/<id>/SKILL.md`,
-and also `.claude/skills` / `.agents/skills`). Unity's installer has no OpenCode client, so the
-skill is materialized from `unity skill show`:
+- Unity **6000.4.3f1**, Windows build support, URP project. `ProjectSettings/ProjectVersion.txt`
+  and `Packages/{manifest,packages-lock}.json` pin the project.
+- Git + **Git LFS**. Fetch LFS content before opening/building; pointer files are not usable meshes.
+- Unity CLI (`unity`) and the project's **com.unity.pipeline 0.7.0-exp.1** for live Editor commands.
+- Python 3 for maintenance scripts. Blender **4.5.13 LTS** for DCC work, pinned with SHA-256 in
+  `tools/blender/BlenderVersion.json`. No Blender regeneration is needed for an ordinary checkout/build.
 
 ```powershell
-unity skill show --list            # SKILL.md, CHANGELOG.md, SECURITY.md, references/*.md
-unity skill show --path <file>     # print one file
+git lfs install
+git lfs pull
+unity open . --format json
+unity status --format json
+unity command --format json  # discover this Editor's commands
 ```
 
-**Encoding trap:** Windows PowerShell 5.1 decodes native-command stdout with the console code
-page (here `ibm857`), which corrupts Unity's UTF-8 output into mojibake. Capture with an explicit
-UTF-8 encoding instead — e.g. a .NET `ProcessStartInfo` with `StandardOutputEncoding = UTF8` (or
-`[Console]::OutputEncoding = [Text.Encoding]::UTF8` before running) — and write each file as
-UTF-8 without BOM. Verify that `SKILL.md` contains a real em dash (U+2014) and no `Ô`.
+The repository is `https://github.com/Stapimaz/be-my-arms.git`. Unity service project identifiers
+are preserved as existing project configuration; they are not proof of deployed accounts/services.
+Generated solutions, Library, Logs, UserSettings, builds and QA output are ignored.
 
-Verify OpenCode discovery by checking that `unity-cli` appears in the available-skills list and
-that loading it reports a base directory of `.opencode/skills/unity-cli`.
+## Preferred Editor workflow
 
----
-
-## 2. One-time setup (already done)
-
-```
-unity pipeline install --project-path C:\Users\stapi\GameDev\be-my-arms
-```
-
-The editor must be **restarted** after the package is added so it resolves the package and
-starts the server. If Unreal Package Manager reports `EPERM ... rename` while resolving,
-close the editor, delete any `Library/PackageCache/.tmp-*` folders, and re-run a batch pass
-(`Unity.exe -batchmode -quit -projectPath <project>`) before reopening.
-
----
-
-## 3. Verify the environment
+Use the connected Editor instead of editing prefab/scene/asset YAML. If commands cannot connect,
+check `unity pipeline list` and compile/Safe Mode before assuming the Editor is closed.
+With multiple Editors, add `--project-path <project>`.
 
 ```powershell
-unity pipeline list
+unity command recompile --format json
+unity command recompile_status --format json
+unity command console_status --format json
+unity command run_tests --mode editor --timeout 180 --format json
 ```
 
-Expected: `Pipeline = true`, a `Server Port` (e.g. `7800`), and `Server Reachable = true`.
+After source edits, ensure AssetDatabase has refreshed before trusting compilation status.
+The Editor's compile result, not a CLI acknowledgement that compilation was queued, is the verdict.
+PlayMode tests are optional when the changed risk requires them; use command discovery and
+`test_status` for asynchronous results rather than treating a queued 0/0 result as a pass.
+
+## Build the playable Windows player
+
+Canonical entry: `BeMyArms.Client.EditorTools.GameBuild.BuildWindowsPlayer`, also available under
+**Be My Arms → Client → Build Playable Game**.
 
 ```powershell
-unity command console_status
+unity command eval_file tools/build/build-player.cs 3600000 --timeout 3600 --format json
 ```
 
-Expected: `compilationFailed: false`.
+Output: **`Builds/Windows/BeMyArms.exe`**, with its entire accompanying folder. Scene zero is
+`MainMenu`, followed by `DuelArena` and `TwoVsTwoArena`. The same binary acts as client and local
+headless dedicated server. The entry builds Development and preserves the runtime Pipeline
+development flag correctly. Never enable the runtime command endpoint in public release builds.
 
----
+The eval positional budget is **milliseconds**; the CLI `--timeout` is **seconds**. A queued
+asynchronous build requires a final `build_status` result before it is called successful.
 
-## 4. Preferred workflow (no batch-mode editors)
-
-All commands target the **running editor** via the Pipeline server on port 7800.
+## Human playtest
 
 ```powershell
-# Discover tests without running them
-unity command list_tests --mode EditMode
-unity command list_tests --mode PlayMode
-
-# Run tests
-unity command run_tests --mode EditMode
-
-# PlayMode runs asynchronously: the call returns immediately, then poll status.
-unity command run_tests --mode PlayMode --async_tests true
-unity command test_status
-
-# Read editor console output / clear it
-unity command console --tail 40
-unity command clear_console
+Start-Process 'Builds/Windows/BeMyArms.exe' -WorkingDirectory 'Builds/Windows'
 ```
 
-**Quirk:** `run_tests --mode PlayMode` returns `0/0 passed` immediately even when it
-actually ran; the real result is reported by `test_status`
-(e.g. `completed: 2/2 passed`). EditMode `run_tests` returns its result synchronously.
+**PLAY → Duel → P1 or P2 → Start Match** for solo with a bot in the other role.
+The lobby also supports a two-human shared-body practice session. Do not open a scene in
+Editor and assume it covers the built menu's dedicated-server allocation behavior.
 
----
+Current bindings are development bindings:
 
-## 5. Package policy
-
-Gameplay and networking packages are added **only when the current milestone requires
-them**. M0 needed none. `com.unity.pipeline` is development tooling, not a gameplay
-dependency.
-
-Milestone-gated additions (see `ROADMAP.md`):
-
-- **Chosen netcode (M0.5):** `com.unity.netcode.gameobjects` 2.13.2 and
-  `com.unity.multiplayer.tools` 2.2.12. Netcode for Entities was rejected and removed from
-  `main`; it remains isolated on branch `m0.5/nfe`. Decision record:
-  `docs/M05_NETCODE_BAKEOFF.md`.
-- Unity Transport — pulled in as a dependency of NGO.
-- Multiplayer Services SDK (sessions/lobby/matchmaking) — **M4**.
-
-**Bake-off isolation:** Netcode for GameObjects and Netcode for Entities define colliding
-assembly names (`Unity.Netcode.Runtime`, `Unity.Netcode.Editor`), so they cannot be installed in
-the same project. This is why the rejected candidate lives on a separate branch.
-
----
-
-## 6. Production art pipeline (M6)
-
-The DCC is **Blender 4.5 LTS**, installed reproducibly with a pinned version and checksum.
-
-```powershell
-# once per machine (portable zip, user-local, no elevation)
-powershell -ExecutionPolicy Bypass -File tools/blender/install-blender.ps1
-
-# regenerate all .blend sources (art/blender/blend) and FBX exports (Assets/Art)
-powershell -ExecutionPolicy Bypass -File tools/pipeline/build-art.ps1
-```
-
-Then, in the editor: **Be My Arms > M6 > Regenerate Production Assets**, followed by
-**Be My Arms > M6 > Validate Production Assets** (CLI: `M6PipelineCommands.Validate()`).
-
-Coordinates, scale, naming, materials, LOD budgets and the rig/mount conventions are documented in
-`docs/M6_ART_PIPELINE.md`. Blender sources live outside `Assets/`; only exported FBX and built
-prefabs/materials enter the Unity project.
-
-### M7 content (audio, VFX, maps)
-
-```powershell
-# procedural production-test SFX/music (uses Blender's bundled Python)
-powershell -ExecutionPolicy Bypass -File tools/pipeline/build-audio.ps1
-```
-
-Then, in the editor: **Be My Arms > M7 > Regenerate Content** builds the map prefabs and arenas,
-the audio library and the VFX prefabs/libraries; **Be My Arms > M7 > Validate Content** runs the map
-and shippable-match-set checks (CLI: `M7PipelineCommands.Validate()`). See `docs/M7_CONTENT.md` and
-`docs/M7_ART_DIRECTION.md`.
-
----
-
-## 7. Runtime visual QA (the real Player build)
-
-For player-facing UI and gameplay work, verify against the **actual built player**, not the editor.
-A small set of `RuntimeOnly` Pipeline commands (in `Assets/Scripts/QA`, assembly `BeMyArms.QA`)
-drives the production UI and its real callbacks and captures what the player actually rendered —
-including **screen-space (overlay) UI**, which an editor camera capture misses.
-
-| Command | Does |
+| Role / context | Inputs |
 |---|---|
-| `qa_player_state` | **Structured local-player state** (prefer this for gameplay debugging): local slot/team/body/role, body count and duplicates, match phase, gameplay-input mode / cursor / focus, camera position-euler-fov-mask, look/aim yaw+pitch, per-part (P1/P2/weapon) renderer counts+layers+world bounds, combined-body bounds and whether they project into the camera, active weapon, viewmodel count, and each body's scene/root. |
-| `qa_ui_state` | Active scene, screen resolution, canvases, and every active `Button` with its label, interactability and on-screen visibility. |
-| `qa_capture_frame` | Renders the current player frame (overlay UI included) to a PNG and returns its absolute path. `--output` is absolute or relative to the player root; `--include_inline true` also returns base64. |
-| `qa_click_button --name <GameObject name>` | Invokes the button's real `Button.onClick` callback (case-insensitive name). |
-| `qa_inject_look --yaw <deg> --pitch <deg>` | Development only: inject a look/aim delta into the local input path for the next frame. Verifies input → prediction → camera without a physical mouse. |
+| P1 | WASD, mouse look, sprint Shift, crouch Ctrl, jump Space, dodge Q, slide C, light/heavy kick F/V, align Left Alt |
+| P2 | Mouse aim, LMB fire, R reload, grenade/smoke/flash G/T/Y, Tab turn request |
+| Practice | F6 encounter reset, F7 role exchange/reset, F8 fresh match |
+| UI | Esc pause/unlock; gameplay edges resume through explicit focus/input mode |
 
-**Prefer `qa_player_state` over screenshots.** It answers most "is the body/camera/input wrong?"
-questions directly and cheaply, e.g.:
+There is no standalone vault binding. Exact bindings are read by `NetworkBodyClient` through
+the `LocalInput` state and may be
+revisited in an approved input/onboarding phase.
 
-```powershell
-unity command qa_player_state --runtime-path $R --format json
-# Summary: scene=M7DuelArena phase=Live role=P1 slot=0 drawn=56 p1=ok p2=ok weapon=ok bboxH=1,9
-#          inView=True cam=M7_LocalCamera input=True cursor=Locked/False focused=True vm=0 dupes=none
-```
+## Command-line development sessions
 
-`p1` / `p2` / `weapon` report `ok` (world height sane), `COLLAPSED` (a skin scaled/rotated wrong)
-or `missing`; `dupes` lists duplicate bodies/players/cameras/viewmodels; `input`/`cursor`/`focused`
-describe the explicit gameplay-input mode. Use image capture only when the structured state cannot
-answer a genuinely visual question — not as routine acceptance evidence.
-
-Note: `simulate_pointer --action move` cannot drive the Input System's per-frame `Mouse.delta`
-across frames, so it will not move the camera; use `qa_inject_look` to drive the real look path.
-
-These are `RuntimeOnly`, so they are hidden from the running Editor's command listing and are
-reached with `--runtime` / `--runtime-path`. They act on the shipped UI, so navigating through
-them exercises the exact flow a player uses.
-
-### Enable the runtime server in the dev build (one-time, per project)
-
-`ProjectSettings/Packages/com.unity.pipeline/RuntimePipelineConfig.json` sets `enableInBuilds`:
+Current flags use domain names, not development-phase numbers:
 
 ```powershell
-unity command set_runtime_pipeline_settings --settings '{"enableInBuilds":true}' --confirm true
+# Direct dedicated Duel (choose a free port)
+Start-Process 'Builds/Windows/BeMyArms.exe' -ArgumentList '-batchmode -nographics -match-role server -client-arena DuelArena -queue-mode duel -queue-matchmaker 0 -match-port 7790 -match-required-players 2 -match-start-delay 0 -match-practice 1 -match-strict-slots 1 -match-delay 0 -match-loss 0'
+# Human role client, using the same build
+Start-Process 'Builds/Windows/BeMyArms.exe' -ArgumentList '-client-join 127.0.0.1 -client-port 7790 -client-join-role p1'
 ```
 
-**Security:** this starts an HTTP command server inside the Player. It is for **development/QA
-builds only** and is never enabled in a shipping build (`M7GameBuild` builds `BuildOptions.Development`;
-the build processor bakes the config only for development builds / `ENABLE_RUNTIME_PIPELINE`).
-`M7GameBuild.BuildWindowsPlayer` mirrors the Development flag into
-`EditorUserBuildSettings.development` for the duration of the build, because the Pipeline build
-processor only bakes the config for a scripted build when it can tell the build is a development
-build.
+The menu is the normal human entry; flags are for repeatable development sessions. The normalized
+build must be used on both sides. Old flags/scene names are historical launch interfaces, not the
+canonical workflow; use the current scripts rather than copying commands from archives.
 
-### Build, launch, connect
+## Risk-directed verification
 
 ```powershell
-# Build the normal playable game (canonical entry point; also Be My Arms > M7 > Build Playable Game).
-# The trailing 3600000 is the eval command's own millisecond budget; --timeout is the HTTP timeout.
-unity command eval_file tools/pipeline/qa/build-player.cs 3600000 --timeout 3600
-
-# Launch the client and wait for its runtime descriptor.
-Start-Process Builds\M7\BeMyArms.exe -WorkingDirectory Builds\M7
-# descriptor: Builds\M7\.unity-pipeline-runtime-port  (pid, port, evalToken)
-
-# Connect. --runtime-path takes the DIRECTORY that contains the descriptor, not the file.
-unity command qa_ui_state --runtime-path Builds\M7
+# Imports, missing scripts and unresolved GUIDs; no Play mode or asset regeneration
+unity command eval_file tools/maintenance/audit-unity-references.cs 30000 --timeout 120 --format json
+# Minimal menu/startup/shared-body P1/P2 Duel smoke (no screenshots)
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/smoke-duel.ps1
+# Broader session/peer-loss regression: use when ownership/lifecycle/Transport changes
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/test-session-lifecycle.ps1 -BuildDirectory Builds/Windows
 ```
 
-`unity command ... --runtime-path <build dir>` targets the Player, not the Editor.
+Run runtime scripts **sequentially**: multiple processes share the build directory's Pipeline
+descriptor. `--runtime-path` takes the directory containing `.unity-pipeline-runtime-port`, not
+the descriptor file. Each script snapshots its own process's descriptor, checks results and
+cleans up its processes. Runtime QA needs a Development build.
 
-**Dedicated-server collision:** a private match launches a second process of the same build, and
-both write the *same* `.unity-pipeline-runtime-port` next to the exe. Before starting a match,
-snapshot the client's descriptor into its own directory and drive the client through that copy:
+Prefer `qa_player_state`, `qa_ui_state` and focused input commands for objective debugging.
+No screenshot is required to prove startup/ownership. Capture images only to answer an actual
+visual question; **human review, not automated image inspection, accepts visual/feel quality**.
 
-```powershell
-New-Item -ItemType Directory -Force Builds\M7\.qa-client | Out-Null
-Copy-Item Builds\M7\.unity-pipeline-runtime-port Builds\M7\.qa-client\.unity-pipeline-runtime-port
-# then use:  --runtime-path Builds\M7\.qa-client
-```
+## Content work
 
-### Worked flow (main menu → private lobby → 2v2 match)
+- `tools/blender/install-blender.ps1` installs the pinned user-local Blender build.
+- `tools/pipeline/build-art.ps1` generates the original modular art/kit samples; it is **not**
+  a command to replace the accepted SharedRig character/POV.
+- `tools/pipeline/build-smooth-fighter.py` adapts licensed source meshes; importing/rebaking
+  SharedRig animations is explicit content work, not ordinary setup.
+- `SmoothFighterBuilder.BuildArms()` authors the rifle POV only. World grips use their own
+  path; don't re-run a historical character generator to adjust a first-person composition.
+- `AssetPipeline` and `ContentPipeline` provide import/build/validation menus under Content/Client.
+  Full regeneration overwrites authored data: inspect scope before invoking it.
+- Source/provenance stays with art and third-party packages. Keep sourcing free-only.
 
-```powershell
-$R = "Builds\M7\.qa-client"
-unity command qa_capture_frame --output "QA/01_main_menu.png" --runtime-path $R
-unity command qa_click_button  --name PLAY        --runtime-path $R
-unity command qa_capture_frame --output "QA/03_lobby.png"     --runtime-path $R
-unity command qa_click_button  --name TwoVsTwo    --runtime-path $R
-unity command qa_click_button  --name P2          --runtime-path $R
-unity command qa_capture_frame --output "QA/04_lobby_2v2_p2.png" --runtime-path $R
-unity command qa_click_button  --name Start       --runtime-path $R
-unity command qa_ui_state      --runtime-path $R          # → M7TwoVsTwoArena + M7MatchHud canvas
-unity command qa_capture_frame --output "QA/05_match_hud.png" --runtime-path $R
-```
-
-Captures default to `<player root>/QA/` (`Builds/M7/QA`, gitignored). **Read the PNGs back with
-the agent's image-capable tools** and treat them as the acceptance evidence — code inspection and
-green tests do not prove the pixels. `qa_ui_state`'s per-button `onScreen` flag is the quick
-numeric check (an off-screen button reports `onScreen:false` and a screen centre far outside
-`Resolution`).
-
-### Diagnosing runtime UI without a rebuild
-
-`eval` / `eval_file` work in a desktop development Player, so a live layout can be probed or
-temporarily mutated (then rebuilt by navigating) to reproduce a suspected defect before changing
-source. Example: `unity command eval_file tools/pipeline/qa/break-menu.cs --runtime-path Builds\M7\.qa-client`.
+The embedded Transport patch is essential to the existing disconnect path. Its note describes
+the upstream ownership defect and when it is safe to remove; normal setup must not replace it.

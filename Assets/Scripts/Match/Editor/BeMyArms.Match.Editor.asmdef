@@ -1,0 +1,22 @@
+{
+    "name": "BeMyArms.Match.Editor",
+    "rootNamespace": "BeMyArms.Match.EditorTools",
+    "references": [
+        "BeMyArms.Match",
+        "BeMyArms.Matchmaking",
+        "BeMyArms.Networking",
+        "BeMyArms.Core",
+        "Unity.Netcode.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

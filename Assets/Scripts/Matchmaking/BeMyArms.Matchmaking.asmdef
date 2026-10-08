@@ -1,0 +1,20 @@
+{
+    "name": "BeMyArms.Matchmaking",
+    "rootNamespace": "BeMyArms.Matchmaking",
+    "references": [
+        "BeMyArms.Match",
+        "BeMyArms.Networking",
+        "BeMyArms.Core",
+        "BeMyArms.Gameplay",
+        "Unity.Netcode.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

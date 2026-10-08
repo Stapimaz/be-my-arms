@@ -44,7 +44,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b072535ded423b641ac9f5b488b77f2b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: BeMyArms.M5::BeMyArms.M5.M5SkinDescriptor
+  m_EditorClassIdentifier: BeMyArms.Product::BeMyArms.Product.SkinDescriptor
   Role: 0
   SkinId: BMA_P1_Ranger
   RigId: default

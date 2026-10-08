@@ -15,10 +15,10 @@ dedicated-server check reproduced this after abruptly terminating one client: th
 timed out and subsequent connections could not be established. The socket itself remained valid, so
 the existing socket-recreation path did not restore the missing receives.
 
-The same branches remain in the registry's 2.7.4 source (checked during Pass 1). This patch changes only
+The same branches remain in the registry's 2.7.4 source (checked when establishing the control baseline). This patch changes only
 the buffer-release paths; socket recreation, protocol, reliable delivery and public APIs are unchanged.
 
-The regression is exercised by `tools/pipeline/test-pass1.ps1`: a dedicated server, two role clients,
+The regression is exercised by `tools/qa/test-session-lifecycle.ps1`: a dedicated server, two role clients,
 abrupt termination, unaffected-partner checks, token reconnect to the exchanged role, voluntary leave
 and a new guest. Run this when updating Transport; remove the local patch/embedding when an upstream
 version fixes these ownership paths and the regression passes.
