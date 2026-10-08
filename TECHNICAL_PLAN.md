@@ -1,6 +1,6 @@
 # Be My Arms — Architecture
 
-**Implemented architecture · Updated 2026-10-08**
+**Implemented architecture · Updated 2026-10-09**
 
 This describes the current project, not an obsolete prototype plan. Design intent lives in
 [GAME_CONCEPT.md](GAME_CONCEPT.md); sequencing in [ROADMAP.md](ROADMAP.md); operations in
@@ -131,13 +131,38 @@ P2 can fire during P1 actions; movement accuracy penalties remain separate from 
 - Disconnect temporarily substitutes only the missing role. Token reconnect atomically removes
   its substitute; intentional leave releases the reservation for a new human. The other human
   never gains both roles.
-- Bot fill and temporary takeover share normal P1/P2 authority paths. `BotSteering` bounds P1
-  turning; `BotAim`/`BotEngage` and difficulty settings govern P2 decisions. These are playable
-  partners, not a claim of final competitive AI.
+- Bot fill and temporary takeover share normal P1/P2 authority paths. `BotSteering` retains
+  its 90°/s P1 turn bound. `BotPositioning` replaces unconditional advancing/random strafing
+  with stable, reachable firing/cover positions and threat-driven repositioning.
+- `BotNavigation` runs a bounded .75m-cell reachability search (15m local half-width, weighted
+  route budget 22). Whole-body corridor tests use `MovementCollision` boxes, bounds, step/drop
+  limits and surface heights; low headroom can require crouch. Route smoothing cannot cut
+  blocked corners. Tactical planning is normally 1 Hz; repeated damage does not replan per tick.
+- Position scoring distinguishes standing/crouched head/torso exposure and firing visibility,
+  comfortable range, useful duck/peek cover, recent damage, reload and zone safety. Conditional
+  hide/peek windows avoid permanent crouch with no firing opportunity. A slide checks its full
+  ~6.3m stopping corridor and reduced exposure; bots add no invulnerability or physical shortcuts.
+- Observation is range/LOS limited, blocked by solids/smoke/blindness. A short four-second
+  memory stores only the last observed target pose. Hysteresis discourages target/route churn;
+  without a known target the bot explores locally, remembering recent arrivals.
+- `BotAimMotion` limits actual yaw/pitch motion, not merely cosmetic interpolation: Easy/Hard
+  have 100/160°/s angular speed bounds and 420/650°/s² acceleration limits. P1 moving a sector
+  wall may still physically push aim as it does for humans. Easy offset destinations are chosen
+  in burst pauses, not after each shot. Fire requires clear sight, legal sector and settled aim;
+  accepted bullets still go through ordinary weapon cadence, spread and hit resolution. Easy's
+  accurate-destination probability is tuning, not a guaranteed per-shot observed hit percentage.
+- Bot motion/perception/route state clears on resets and control epochs. The human P2 immediate
+  aim path, accepted cameras/viewmodel, numeric movement sim and networking payloads are unchanged.
 - `MatchState` drives buy/live/round-end/match-end, elimination and first-to-three scoring.
   `ClosingZone`, `BuyPhase`, `UtilitySystem`, `Telemetry` and `Loadouts` support that loop.
 - Duel and 2v2 reuse team/body/role encoding with one or two bodies per team. Local matchmaking
   and role-specific ratings exist; production persistence and ranked trust are not complete.
+
+Navigation currently stores one reachable floor per XZ cell and explores locally, not through
+a final global/layered graph. Complex stacked floors, long maze routing, coordinated multi-threat
+team tactics and richer cover reservations remain open work. Bots consume valid `MovementCollision`
+data from the map provider; arbitrary new art is not automatically navigable. The current provider's
+kit classification is unchanged. No arena-specific coordinates appear in the bot code.
 
 Transport is deliberately embedded. Its UDP receive-buffer ownership patch prevents failed
 receives from exhausting the pool after peer loss. See

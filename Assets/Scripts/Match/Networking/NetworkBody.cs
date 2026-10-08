@@ -49,8 +49,8 @@ namespace BeMyArms.Match
         public float BotMaxEngageDistance = 40f;
 
         [Header("Bot difficulty (server)")]
-        [Tooltip("Easy bots' target hit probability. The per-shot miss spread is derived from it so " +
-                 "the observed rate through the authoritative hitscan tracks this value (~10%).")]
+        [Tooltip("Easy bots' chance to choose an accurate burst aim goal. Smooth tracking, movement " +
+                 "and cover also affect the actual hit rate; this is not a damage dice roll.")]
         [Range(0.02f, 0.6f)] public float EasyBotAccuracy = 0.10f;
 
         [Header("Networked combat")]
@@ -119,12 +119,7 @@ namespace BeMyArms.Match
         float _spawnGraceRemaining;
         float _blindRemaining;
         float _damageRemainder;
-        float _botClock;
         float _botP2Clock;
-        float _botStuckTime;
-        float _botStrafeDir = 1f;
-        float _lastBotX;
-        float _lastBotZ;
         float _grenadeCooldown = 5f;
         float _botLiveTime;
 
@@ -142,15 +137,16 @@ namespace BeMyArms.Match
         float _botAimPhase1;
         float _botAimPhase2;
         float _botAimDrift;
-        // Easy: the current shot's miss (metres in the target plane) and the calm-strafe timer.
+        // Easy: persistent burst aim goal (metres in the target plane), never per-shot pose jumps.
         float _botShotRight;
         float _botShotUp;
-        float _botLateralTimer;
-        float _botEasyLateral;
-        // Easy P1 engagement: a per-round preferred combat distance (metres) and a latched
-        // approach/hold/retreat state (hysteresis so it does not flip near the thresholds).
         float _botPreferredRange;
-        int _botEngage;
+        readonly BotPositioning _botPositioning = new BotPositioning();
+        readonly BotAimMotion _botAimMotion = new BotAimMotion();
+        NetworkBody _botTarget;
+        BodyState _botTargetPose;
+        bool _botVisible, _botEnemyFiring, _botWasBurst;
+        double _botSenseAt, _botSeenAt = -100;
         double _serverTime;
         float _accumulator;
         int _rejectedFires;
@@ -199,9 +195,8 @@ namespace BeMyArms.Match
 
         /// <summary>
         /// Seeds this body's bot profile for the current server difficulty. Each body/round gets its
-        /// own seeded RNG, so reaction, burst length, pause, firing phase and (Easy) shot misses all
-        /// differ per bot and bots never synchronise. Hard keeps the original evasive/drifting bot;
-        /// Easy is calmer with longer reaction, shorter bursts/pauses and a controlled hit rate.
+        /// own seeded RNG, so reaction, burst length, pause and (Easy) burst aim goals differ.
+        /// Both difficulties use the same geometry-aware positioning and bounded aim controller.
         /// </summary>
         void InitializeBotProfile()
         {
@@ -228,19 +223,16 @@ namespace BeMyArms.Match
             _botAimPhase1 = Rand() * 6.2831853f;
             _botAimPhase2 = Rand() * 6.2831853f;
             _botAimDrift = Mathf.Lerp(0.9f, 1.5f, Rand());
-            _botClock = Rand() * 6.2831853f;
             _botP2Clock = Rand() * 6.2831853f;
             _grenadeCooldown = Mathf.Lerp(8f, 18f, Rand());
-            _botLateralTimer = Mathf.Lerp(1.2f, 3.0f, Rand());
-            _botEasyLateral = 0f;
-            _botPreferredRange = Mathf.Lerp(9.5f, 13.5f, Rand());
-            _botEngage = 0;
+            _botPreferredRange = Mathf.Lerp(11f, 15f, Rand());
+            ResetBotControls();
             SampleBotShot();
         }
 
         float Rand() => (float)_botRng.NextDouble();
 
-        /// <summary>Resamples the Easy bot's current shot offset from the configured accuracy target.</summary>
+        /// <summary>Choose a burst aim destination; the motion controller must turn toward it.</summary>
         void SampleBotShot()
         {
             BotAim.SampleShotOffset(EasyBotAccuracy, CombatHitGeometry.BodyRadius,
@@ -377,6 +369,8 @@ namespace BeMyArms.Match
             // time to look around before they are engaged.
             if (_director != null && _director.IsLive) _botLiveTime += dt;
             else _botLiveTime = 0f;
+            if ((IsSlotBot(SlotP1) || IsSlotBot(SlotP2)) && _director != null && _director.IsLive)
+                ObserveBotEnemies();
 
             if (_spawnGraceRemaining > 0f) _spawnGraceRemaining = Mathf.Max(0f, _spawnGraceRemaining - dt);
             ProtectionRemaining.Value = _spawnGraceRemaining;
@@ -426,13 +420,9 @@ namespace BeMyArms.Match
             if (!IsSlotBot(SlotP2)) ProcessP2(p2);
             if (IsSlotBot(SlotP2) && _director != null && _director.IsLive)
             {
-                int ammoBefore = _weapon.Ammo;
-                P2Input bot = BuildBotP2();
+                P2Input bot = BuildBotP2(dt);
                 Firing.Value = Alive.Value && bot.Fire && !_weapon.IsReloading && _weapon.Ammo > 0;
                 ProcessP2(bot);
-                // A shot actually left the barrel: pick the next shot's miss (Easy) so each round is
-                // an independent sample through the ordinary authoritative hitscan.
-                if (_weapon.Ammo < ammoBefore) SampleBotShot();
             }
 
             _weapon.Tick(_serverTime);
@@ -590,6 +580,7 @@ namespace BeMyArms.Match
             _damageRemainder -= amount;
 
             int applied = Mathf.Min(amount, _sim.State.Health);
+            if (IsSlotBot(SlotP1)) _botPositioning.Hurt((float)_serverTime, BotSight.Feet(_sim.State));
             _sim.State.Health -= amount;
             if (_sim.State.Health < 0) _sim.State.Health = 0;
             State.Value = _sim.State;
@@ -691,8 +682,6 @@ namespace BeMyArms.Match
             _utilityCharges[0] = _utilityCharges[1] = _utilityCharges[2] = 0;
             InitializeBotProfile();
             _botLiveTime = 0f;
-            _botStuckTime = 0f;
-            _lastBotX = x; _lastBotZ = z;
             _prevMovementState = BodyMovementState.Idle;
             for (int i = 0; i < _lag.Length; i++) _lag[i].Clear();
             _p2Queue.Clear();
@@ -706,145 +695,105 @@ namespace BeMyArms.Match
             if (IsServer) { _spawnGraceRemaining = SpawnGraceSeconds; _botLiveTime = 0f; }
         }
 
-        NetworkBody NearestEnemy(out float distance)
+        void ResetBotControls()
         {
+            _botPositioning.Reset(); _botAimMotion.Reset();
+            _botTarget = null; _botVisible = _botEnemyFiring = _botWasBurst = false;
+            _botSenseAt = 0; _botSeenAt = -100;
+        }
+
+        bool BotKnowsEnemy => _botTarget != null && _serverTime - _botSeenAt <= 4f;
+
+        void ObserveBotEnemies()
+        {
+            if (_serverTime < _botSenseAt) return;
+            _botSenseAt = _serverTime + .12;
+            if (_blindRemaining > 0f) { _botVisible = _botEnemyFiring = false; return; }
             NetworkBody best = null;
             float bestDistance = float.MaxValue;
+            Vector3 eye = BotSight.Eye(_sim.State);
             for (int i = 0; i < _enemies.Length; i++)
             {
                 NetworkBody e = _enemies[i];
                 if (e == null || !e.Alive.Value) continue;
-                float dx = e.State.Value.PosX - _sim.State.PosX;
-                float dz = e.State.Value.PosZ - _sim.State.PosZ;
-                float d = Mathf.Sqrt(dx * dx + dz * dz);
+                BodyState pose = e.State.Value;
+                float d = Vector3.Distance(eye, BotSight.Eye(pose));
+                if (d > BotMaxEngageDistance ||
+                    (!BotSight.Clear(_sim.Collision, eye, BotSight.Chest(pose)) &&
+                     !BotSight.Clear(_sim.Collision, eye, CombatHitGeometry.HeadCenter(pose)))) continue;
+                if (_director.Utility.BlocksLine(_serverTime, _sim.State.PosX, _sim.State.PosZ, pose.PosX, pose.PosZ)) continue;
+                if (e == _botTarget) d -= 3f; // don't alternate targets every perception update
                 if (d < bestDistance) { bestDistance = d; best = e; }
             }
-            distance = bestDistance;
-            return best;
+            _botVisible = best != null;
+            _botEnemyFiring = best != null && best.Firing.Value;
+            if (best != null)
+            {
+                _botTarget = best; _botTargetPose = best.State.Value; _botSeenAt = _serverTime;
+            }
+            // If sight is lost, retain ONLY the observed pose, not the target's live hidden position.
         }
 
         P1Input BuildBotP1(float dt)
         {
-            var input = new P1Input();
             // Idle through the reaction window so the player is not rushed at the start of live.
             if (_botLiveTime < _botReaction) return BotSteering.Turn(_sim.State.LookYaw,_sim.State.BodyYaw,_sim.State.BodyYaw,dt);
-
-            NetworkBody target = NearestEnemy(out float distance);
-            if (target == null) { input=BotSteering.Turn(_sim.State.LookYaw,_sim.State.BodyYaw,_sim.State.BodyYaw,dt);input.MoveZ = 0.5f; return input; }
-
-            float dx = target.State.Value.PosX - _sim.State.PosX;
-            float dz = target.State.Value.PosZ - _sim.State.PosZ;
-            float desired = Mathf.Atan2(dx, dz) * Mathf.Rad2Deg;
-            input = BotSteering.Turn(_sim.State.LookYaw, _sim.State.BodyYaw, desired, dt);
-
-            // Simple wall avoidance: if advancing barely moves the body, strafe instead.
-            float moved = Mathf.Sqrt((_sim.State.PosX - _lastBotX) * (_sim.State.PosX - _lastBotX) +
-                                     (_sim.State.PosZ - _lastBotZ) * (_sim.State.PosZ - _lastBotZ));
-            _lastBotX = _sim.State.PosX;
-            _lastBotZ = _sim.State.PosZ;
-            // Holding range is intentional. Only attempted travel can be blocked.
-            if (moved < 0.01f && (_difficulty != BotDifficulty.Easy || _botEngage != 0)) _botStuckTime += dt;
-            else _botStuckTime = Mathf.Max(0f, _botStuckTime - dt * 2f);
-            if (_botStuckTime > 0.4f)
-            {
-                _botStrafeDir = _botStrafeDir >= 0f ? -1f : 1f;
-                _botStuckTime = 0f;
-            }
-
-            if (_difficulty == BotDifficulty.Easy)
-            {
-                // Calm movement partner: face and approach steadily, only occasional modest lateral
-                // movement, and no jumping. The stuck-strafe is kept purely to get around geometry.
-                _botLateralTimer -= dt;
-                if (_botLateralTimer <= 0f)
-                {
-                    if (_botEasyLateral != 0f)
-                    {
-                        _botEasyLateral = 0f;
-                        _botLateralTimer = Mathf.Lerp(1.6f, 3.2f, Rand());
-                    }
-                    else
-                    {
-                        _botEasyLateral = (_botRng.NextDouble() < 0.5 ? -1f : 1f) * Mathf.Lerp(0.18f, 0.32f, Rand());
-                        _botLateralTimer = Mathf.Lerp(0.5f, 1.0f, Rand());
-                    }
-                }
-
-                // Settle at a preferred combat distance instead of charging into the enemy: a small
-                // dead band plus a latched approach/hold/retreat state gives hysteresis, so the bot
-                // does not flip direction near the thresholds. Mostly stationary in the band, with
-                // only occasional modest lateral movement, and no jumping.
-                const float EngageBand = BotEngage.DefaultBand;
-                _botEngage = BotEngage.Step(_botEngage, distance, _botPreferredRange, EngageBand);
-
-                float forward = _botEngage > 0 ? 1f : (_botEngage < 0 ? -1f : 0f);
-                input.MoveZ = _botStuckTime > 0f ? 0f : forward;
-                input.MoveX = _botStuckTime > 0f ? _botStrafeDir * 0.8f : _botEasyLateral;
-                input.Jump = false;
-                input.Sprint = _botEngage > 0 && distance > _botPreferredRange + 6f && _botLiveTime > _botReaction + 1.5f;
-            }
-            else
-            {
-                bool advance = distance > 10f && _botLiveTime > _botReaction;
-                input.MoveZ = _botStuckTime > 0f ? 0f : (advance ? 1f : 0.35f);
-                input.MoveX = _botStuckTime > 0f ? _botStrafeDir : Mathf.Sin(_botClock * 0.7f) * (distance < 12f ? 0.9f : 0.25f);
-                input.Jump = _botStuckTime > 0.3f; // hop over low cover when progress stalls
-                input.Sprint = distance > 16f && _botLiveTime > _botReaction + 1.5f;
-            }
-
-            _botClock += dt;
-            return input;
+            return _botPositioning.Step(_sim.State, _sim.Collision, BotKnowsEnemy ? _botTargetPose : (BodyState?)null,
+                _botVisible, _botEnemyFiring, _weapon.IsReloading, _botPreferredRange,
+                _director.ZoneRadius.Value, (float)_serverTime, dt);
         }
 
-        P2Input BuildBotP2()
+        P2Input BuildBotP2(float dt)
         {
-            var input = new P2Input { AimPitch = 0f, Fire = false };
-            NetworkBody target = NearestEnemy(out float distance);
-            if (target == null) { input.AimYaw = _sim.State.BodyYaw; return input; }
-
-            BodyState t = target.State.Value;
-            float dx = t.PosX - _sim.State.PosX;
-            float dz = t.PosZ - _sim.State.PosZ;
-            _botP2Clock += 1f / 60f;
-
-            if (_difficulty == BotDifficulty.Easy)
-            {
-                // Aim at the torso, then shift the shot by a fresh miss sampled in the target plane.
-                // The miss scale comes from EasyBotAccuracy, so the observed hit rate is governed by
-                // the normal authoritative hitscan rather than a smooth aim drift. Misses stay in a
-                // natural cluster around the body instead of firing in unrelated directions.
-                float horiz = Mathf.Max(0.01f, Mathf.Sqrt(dx * dx + dz * dz));
-                float height = t.HitHeight > 0.01f ? t.HitHeight : 1.8f;
-                float eye = _sim.State.PosY + (_sim.State.EyeHeight > 0.01f ? _sim.State.EyeHeight : 1.45f);
-
-                Vector3 chest = new Vector3(t.PosX, t.PosY + height * 0.55f, t.PosZ);
-                float fwdX = dx / horiz, fwdZ = dz / horiz;
-                Vector3 right = new Vector3(fwdZ, 0f, -fwdX);
-                Vector3 aimPoint = chest + right * _botShotRight + Vector3.up * _botShotUp;
-                Vector3 to = aimPoint - new Vector3(_sim.State.PosX, eye, _sim.State.PosZ);
-
-                input.AimYaw = Mathf.Atan2(to.x, to.z) * Mathf.Rad2Deg;
-                input.AimPitch = -Mathf.Atan2(to.y, Mathf.Sqrt(to.x * to.x + to.z * to.z)) * Mathf.Rad2Deg;
-            }
-            else
-            {
-                // Original evasive/drifting bot: two per-bot sine components on top of the aim at the
-                // enemy, fired in per-bot bursts.
-                input.AimYaw = Mathf.Atan2(dx, dz) * Mathf.Rad2Deg;
-                float error = (BotAimErrorBase + distance * BotAimErrorPerMeter) * _botAimDrift;
-                input.AimYaw += Mathf.Sin(_botP2Clock * _botAimRate1 + _botAimPhase1) * error
-                              + Mathf.Sin(_botP2Clock * _botAimRate2 + _botAimPhase2) * error * 0.6f;
-                input.AimPitch += Mathf.Sin(_botP2Clock * _botAimRate2 * 1.7f + _botAimPhase1) * error * 0.4f;
-            }
-
+            _botP2Clock += dt;
             bool burst = ((_botP2Clock + _botFirePhase) % _botBurstPeriod) < _botBurstOn;
-            input.Fire = burst && distance < BotMaxEngageDistance && _botLiveTime > _botReaction;
-            input.Reload = _weapon.Ammo <= 0;
+            // Choose the NEXT burst's goal during the pause, allowing time to acquire it naturally.
+            // Resampling on the first firing tick would recreate the old visible flick (or prevent
+            // every short burst from firing while the new smooth controller is still settling).
+            if (!burst && _botWasBurst) SampleBotShot();
+            _botWasBurst = burst;
+            var input = new P2Input { Reload = _weapon.Ammo <= 0 };
+            float desiredYaw = _sim.State.BodyYaw, desiredPitch = 0f;
+            float distance = float.MaxValue;
+            bool clear = false, legal = false;
+            if (BotKnowsEnemy && _botLiveTime >= _botReaction)
+            {
+                BodyState t = _botTargetPose;
+                float dx = t.PosX - _sim.State.PosX;
+                float dz = t.PosZ - _sim.State.PosZ;
+                distance = Mathf.Sqrt(dx * dx + dz * dz);
+                Vector3 chest = BotSight.Chest(t), eye = BotSight.Eye(_sim.State);
+                Vector3 aimPoint = BotSight.Clear(_sim.Collision, eye, chest) ? chest : CombatHitGeometry.HeadCenter(t);
+                if (_difficulty == BotDifficulty.Easy)
+                {
+                    Vector3 right = new Vector3(dz, 0f, -dx).normalized;
+                    aimPoint += right * _botShotRight + Vector3.up * _botShotUp;
+                }
+                Vector3 to = aimPoint - eye;
+                desiredYaw = Mathf.Atan2(to.x, to.z) * Mathf.Rad2Deg;
+                desiredPitch = -Mathf.Atan2(to.y, new Vector2(to.x, to.z).magnitude) * Mathf.Rad2Deg;
+                if (_difficulty != BotDifficulty.Easy)
+                {
+                    float error = (BotAimErrorBase + distance * BotAimErrorPerMeter) * _botAimDrift * .25f;
+                    desiredYaw += Mathf.Sin(_botP2Clock * _botAimRate1 + _botAimPhase1) * error
+                        + Mathf.Sin(_botP2Clock * _botAimRate2 + _botAimPhase2) * error * .6f;
+                    desiredPitch += Mathf.Sin(_botP2Clock * _botAimRate2 * 1.7f + _botAimPhase1) * error * .4f;
+                }
+                clear = _botVisible && BotSight.Clear(_sim.Collision, eye, aimPoint) &&
+                    !_director.Utility.BlocksLine(_serverTime, _sim.State.PosX, _sim.State.PosZ, t.PosX, t.PosZ);
+                legal = Mathf.Abs(BodySim.Normalize(desiredYaw - _sim.State.BodyYaw)) <= SectorHalfDegrees;
+            }
+            _botAimMotion.Step(_sim.State.AimYaw, _sim.State.AimPitch, desiredYaw, desiredPitch,
+                _sim.State.BodyYaw, SectorHalfDegrees + SectorWall.OvertravelDegrees, MaxPitchDegrees, dt, _difficulty == BotDifficulty.Easy,
+                out input.AimYaw, out input.AimPitch);
+            bool settled = Mathf.Abs(BodySim.Normalize(input.AimYaw - desiredYaw)) < 1.2f &&
+                Mathf.Abs(input.AimPitch - desiredPitch) < 1.2f;
+            input.Fire = burst && legal && clear && settled && _blindRemaining <= 0f && distance < BotMaxEngageDistance;
 
             // Occasional utility through the normal P2 authority path.
-            _grenadeCooldown -= 1f / 60f;
+            _grenadeCooldown -= dt;
             if (_director != null && _director.IsLive && _botLiveTime > _botReaction + 4f &&
-                distance < 24f && _grenadeCooldown <= 0f && TryConsumeUtility(UtilityKind.Grenade))
+                clear && settled && distance < 24f && _grenadeCooldown <= 0f && TryConsumeUtility(UtilityKind.Grenade))
             {
                 _director.ServerApplyUtility(TeamIndex, UtilityKind.Grenade, _sim.State.PosX, _sim.State.PosZ, _sim.State.AimYaw);
                 _grenadeCooldown = Mathf.Lerp(10f, 18f, Rand());
@@ -880,6 +829,7 @@ namespace BeMyArms.Match
             _p1Stream.Reset(_controlEpoch); _p2Queue.Clear();
             _aimHistory.Clear();
             _aimHistory.Record(_simulationTick, _sim.State.BodyYaw);
+            ResetBotControls();
         }
 
         void Log(string message)

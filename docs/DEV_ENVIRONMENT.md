@@ -1,6 +1,6 @@
 # Development, Run and Build
 
-**Practical current workflow · Updated 2026-10-08**
+**Practical current workflow · Updated 2026-10-09**
 
 Start with [README.md](../README.md). Product design, sequence and architecture are the three
 canonical root documents; historical reports are not setup instructions.
@@ -110,6 +110,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/smoke-duel.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/test-session-lifecycle.ps1 -BuildDirectory Builds/Windows
 # Focused rifle geometry/damage/feedback integration: real client RPCs and server ticks
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/test-rifle-combat.ps1
+# Isolated Easy/Hard bot server ticks: bounded aim, real shots, occlusion and reset
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/test-bot-controller.ps1
 ```
 
 Run runtime scripts **sequentially**: multiple processes share the build directory's Pipeline
@@ -121,6 +123,12 @@ The rifle test creates isolated headless processes, freezes only its disposable 
 then submits real role-authenticated input and advances the ordinary server tick. It checks
 history/cover/region damage and the events received by both roles; it does not evaluate pixels
 or balance. Never run `rifle-combat-fixture.cs` against a human playtest session.
+
+The bot-controller check likewise launches its own disposable bot-filled server. Its controlled
+fixture advances ordinary server ticks, crosses target directions and then occludes a moving
+target. It checks actual bot aim/firing and reset state, not cosmetic camera pixels. Never run
+`check-bot-controller.cs` against a human session. Reachability/stance/slide cases live in
+`BotDecisionTests`, including translated layouts, ceilings, ramps, corners and the closing zone.
 
 Prefer `qa_player_state`, `qa_ui_state` and focused input commands for objective debugging.
 No screenshot is required to prove startup/ownership. Capture images only to answer an actual

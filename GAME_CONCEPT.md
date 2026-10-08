@@ -1,6 +1,6 @@
 # Be My Arms — Game Concept
 
-**Current design source of truth · Updated 2026-10-08**
+**Current design source of truth · Updated 2026-10-09**
 
 > Two humans physically combine into one fighter: P1 controls the body and positioning;
 > P2 controls the arms, weapons and aim. Coordination is part of the control scheme.
@@ -158,6 +158,19 @@ Current competitive direction:
 Current arenas and bots are playable foundations, not final proof of competitive map quality
 or bot competence. Rifle combat is the current focus; human evidence may bring a targeted
 arena/bot improvement forward when positioning or partner behavior obstructs useful playtests.
+
+**Current bot direction, confirmed in human review:** P1 teammates establish useful firing
+positions and reposition under threat; they do not continuously charge the enemy. Crouching
+uses real cover/headroom and preserves deliberate peek opportunities for the partner. Sliding
+is a committed exposed-to-cover crossing only when its full stopping path is safe, never a
+random action added for QA. P2 bots turn their actual aim with bounded speed/acceleration,
+including target and burst changes, rather than snapping onto a target when firing. This applies
+to enemy and replacement bots too. Easy remains forgiving; actual accuracy is not guaranteed
+by a dice roll. The same role limits and physical movement rules apply to bots and humans.
+
+Bot reasoning should consume map geometry/navigation contracts, not hardcoded arena coordinates.
+The current local routing supports the existing collision model; complex multi-floor/global
+navigation and high-level duo tactics remain development work, not a claim of final AI.
 
 ## 6. Sessions, ranked and communication
 

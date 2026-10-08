@@ -1,6 +1,6 @@
 # Be My Arms — Roadmap
 
-**Current status: Phase 3 rifle-hit iteration ready for human playtest · Updated 2026-10-08**
+**Current status: cover-aware bots / smooth aim iteration ready for human playtest · Updated 2026-10-09**
 
 Design: [GAME_CONCEPT.md](GAME_CONCEPT.md). Architecture: [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md).
 Run/build: [docs/DEV_ENVIRONMENT.md](docs/DEV_ENVIRONMENT.md).
@@ -43,9 +43,41 @@ arena/bot quality, generated audio/VFX, onboarding and round presentation, produ
 durable identities/security and final release readiness. Human visual/feel acceptance is not
 inferred from screenshots or green tests.
 
-## Current iteration — rifle precision and shared confirmation
+## Current iteration — purposeful positioning and smooth bot aim
+
+Human solo-P2 review exposed that the P1 teammate did not meaningfully use stance, obstructing
+combat playtesting. The user chose useful firing positions and threat-driven repositioning over
+aggressive pushing, and requested human-like P2 aim rather than at-shot snaps. This brings a
+focused bot slice of Phase 4 forward; it does not declare rifle combat or arena design finished.
 
 Implemented, **awaiting human playtest**:
+
+- Both difficulties choose reachable firing/cover positions from the same boxes, surfaces and
+  bounds as movement simulation. No map-specific waypoints, scene edits or new movement rules.
+- Standing/crouched exposure, range, incoming damage, enemy fire, reload cover and the closing
+  zone influence stable decisions. Blocked routes replan; no idle random strafing/jumping.
+- Useful low cover gives conditional duck/peek behavior; low passages require crouching. Slide
+  requires a straight, fully clear stopping corridor that actually reduces exposure, with a
+  bot-local reuse delay. It remains intentionally uncommon, not a QA animation schedule.
+- Perception respects solids/smoke/blindness. Brief last-seen memory retains an observed pose,
+  not a live target position through walls. Lost targets lead to local exploration.
+- P2's actual server aim has bounded angular speed and acceleration. Easy aim goals change
+  during burst pauses; shooting requires sight, legal sector and acquisition. Hard also turns
+  smoothly and now has tighter drift. Human local aim/POV and Elastic Soft are untouched.
+- Epoch/round/ownership changes clear bot routes, perception and aim velocity. Existing role
+  authority, hit regions/damage, prediction, reconnect and transport are retained.
+
+Validation: **214/214 EditMode tests**, authoritative Easy/Hard bot-controller checks and the
+existing **22 session/role/lifecycle checks** passed; Windows build succeeded. These establish
+technical behavior, not that the teammate is pleasant or tactically optimal in human play.
+
+Next: play both solo roles; judge firing opportunities, repositioning, stance transitions and
+aim continuity. Tune from that evidence. Navigation is a bounded local, single-floor-per-cell
+search, not final layered navigation/global tactics. See [current playtest](docs/PLAYTEST.md).
+
+## Previous iteration — rifle precision and shared confirmation
+
+Implemented; human review is ongoing:
 
 - Replace oversized sampled-line hits with exact surface intersection against standardized
   body/head volumes. Actual target Y, stance, facing and life/control epoch rewind with X/Z.
@@ -62,17 +94,16 @@ Technical checks: **196 EditMode tests**, focused built-player network combat ch
 build and normal rendered Duel startup/control smoke. This is not visual or balance acceptance.
 See [current playtest](docs/PLAYTEST.md).
 
-Next, use human evidence to prioritize hit-profile/readability adjustments and near-cover
-camera/shot-origin agreement. Do not mark rifle combat finished merely because headshots work.
-If positioning/bot behavior is the dominant playtest obstacle, a focused arena/bot improvement
-may precede remaining combat polish rather than enforcing phase order mechanically.
+Rifle review still needs hit-profile/readability and near-cover camera/shot-origin evidence.
+Human feedback brought the focused bot iteration above forward to make those playtests more
+useful. Do not mark rifle combat finished merely because headshots work.
 
 ## Development directions
 
 | Phase | Purpose | Exit gate |
 |---|---|---|
 | **3 — Truthful rifle combat** | Make rifle aim, shot obstruction, hit/damage regions and player feedback agree with authoritative outcomes. First iteration adds historical region hits and confirmed feedback; near-cover origin/presentation and profile readability still need evidence. | Relevant authority/hit tests plus human rifle-combat playtest; visible feedback must not claim an unconfirmed result. **In progress; awaiting first iteration review.** |
-| **4 — Purposeful arena and bots** | Build readable, useful Duel routes/cover/engagements; improve complementary-role and enemy bot decisions so both solo roles are useful playtest paths. | Human solo and duo matches demonstrate purposeful positioning, sightlines and partner behavior. |
+| **4 — Purposeful arena and bots** | Bot slice brought forward: geometry-aware positions, threat cover, conditional stance and smooth P2 tracking. Arena content and deeper duo/global tactics remain open. | Human solo and duo matches demonstrate purposeful positioning, sightlines and partner behavior. **Focused bot iteration awaiting review.** |
 | **5 — Presentation, onboarding and round rhythm** | Explain the two-role dependency clearly, improve buy/live/end transitions and communication of teammate intent, and address approved presentation/content needs. | Fresh-player onboarding and full-round human review; avoid reopening accepted POV without new direction. |
 
 Later directions—not the current iteration—are:

@@ -5,12 +5,11 @@ namespace BeMyArms.Match
     /// <summary>
     /// Pure bot-aiming math (no UnityEngine), shared by the server bot and the EditMode accuracy test.
     ///
-    /// Easy bots do not rely on a smooth sine drift to miss: each shot is given an explicit offset in
-    /// the target's plane. The offset is drawn so that a configurable fraction of shots land on the
-    /// body ("hits") and the rest are near misses that stay close to it — the *observed* hit rate is
-    /// therefore governed directly by the ordinary authoritative hitscan, not by an aim curve. The
-    /// miss offset is horizontally dominant because the target is a tall segment: a purely vertical
-    /// offset would often still intersect the body.
+    /// Easy bots choose a persistent aim destination in the target's plane for each burst. A
+    /// configurable fraction of destinations lie on the body; the rest are near misses. The real
+    /// aim must track that destination through BotAimMotion, so actual hit rate also depends on
+    /// target motion, acquisition and cover. No hit is granted by the probability roll. Horizontal
+    /// misses avoid aiming through the tall body merely by shifting vertically.
     /// </summary>
     public static class BotAim
     {
@@ -24,7 +23,7 @@ namespace BeMyArms.Match
         public const float MissVerticalFraction = 0.8f;
 
         /// <summary>
-        /// Samples one shot's aim offset in the target plane: right/up metres from the target centre.
+        /// Samples a burst's aim destination: right/up metres from the target centre.
         /// <paramref name="roll"/> decides hit vs miss; <paramref name="u1"/>/<paramref name="u2"/> are
         /// independent uniform [0,1) values that shape the offset. Kept deterministic/testable.
         /// </summary>

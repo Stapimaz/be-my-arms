@@ -2,8 +2,8 @@ namespace BeMyArms.Match
 {
     /// <summary>
     /// Server-side bot behaviour profile. Private bot-filled matches default to <see cref="Easy"/>.
-    /// Hard preserves the original evasive/drifting bot; Easy is a calmer practice partner with a
-    /// controlled real hit rate.
+    /// Both use geometry-aware positioning and smooth aim. Easy has slower acquisition, longer
+    /// reaction and forgiving burst destinations; Hard tracks faster with smaller aim drift.
     /// </summary>
     public enum BotDifficulty
     {

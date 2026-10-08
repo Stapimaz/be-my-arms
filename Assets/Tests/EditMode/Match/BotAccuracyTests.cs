@@ -4,14 +4,14 @@ using UnityEngine;
 namespace BeMyArms.Match.Tests
 {
     /// <summary>
-    /// Verifies that the Easy bot's per-shot offset model actually produces the intended hit rate
+    /// Verifies that the Easy bot's stationary aim destinations produce the intended hit fraction
     /// through the real authoritative hit profile (<see cref="CombatHitGeometry"/>),
     /// and that misses stay in a natural cluster rather than spraying in unrelated directions.
     /// </summary>
     public class BotAccuracyTests
     {
         [Test]
-        public void EasyAccuracy_ObservedHitRateIsAboutTenPercent()
+        public void EasyAccuracy_SettledDestinationHitFractionIsAboutTenPercent()
         {
             const float hitRadius = CombatHitGeometry.BodyRadius;
             const float accuracy = 0.10f;
