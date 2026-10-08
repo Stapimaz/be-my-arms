@@ -3,8 +3,8 @@
 Two players, one fighter: **P1 controls body/movement; P2 controls arms/weapons/aim**.
 Unity 6 / URP, NGO + Unity Transport, server-authoritative shared-body multiplayer.
 
-**Current state:** **dynamic P2 spread crosshair + speed-dependent rifle accuracy**, ready for
-human playtest after positive bot feedback. The crosshair projects next-round movement/burst
+**Current state:** **responsive smooth P2 spread crosshair + speed-dependent rifle accuracy**, ready for
+human playtest after positive bot feedback. The crosshair smoothly tracks next-round movement/burst
 spread; slide error shrinks with actual speed. A recovered stationary first rifle round has zero
 spread. Human controls and the accepted P2 POV remain unchanged.
 

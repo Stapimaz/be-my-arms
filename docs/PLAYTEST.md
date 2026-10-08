@@ -1,6 +1,6 @@
 # Current playtest — dynamic P2 crosshair and shared-body accuracy
 
-**Visible spread / speed-dependent slide follow-up · 2026-10-09**
+**Responsive smoothing follow-up · 2026-10-09**
 
 Build: `Builds/Windows/BeMyArms.exe`. **PLAY → Duel → P2 → Start Match** tests the P1 movement
 partner; repeat as **P1** to test the P2 weapon partner. Try Easy first, then Hard. F6 resets
@@ -22,6 +22,10 @@ an encounter; F7 exchanges practice roles. Use matching client/server builds.
 - Sliding error shrinks with actual body speed (**0.75°–3°** over 0–9 m/s); an active slide still
   has a modest disturbance floor. Server accepted-shot history corrects immediate local firing
   previews. The crosshair is hidden while paused/dead, outside Live, or in the P1 role.
+- Expansion/contraction now has light, frame-independent smoothing: roughly 95% of a change
+  appears within **0.12 s**. It follows total spread from any cause, including stationary long
+  sprays. This is a smoothed preview, not a change to real bullets or an instantaneous boundary.
+  A fixed-dot render mode is ready for a future settings choice; that choice is not in the menu yet.
 
 ## Specifically evaluate accuracy first
 
@@ -37,6 +41,7 @@ an encounter; F7 exchanges practice roles. Use matching client/server builds.
    precision is available? Does the thin boundary stay readable without obscuring small targets?
    Compare window sizes/FOV if changing them. Stopping during spray must leave burst expansion;
    a recovered stationary first round must collapse the error boundary.
+   Does the quick opening/closing feel smooth and responsive rather than snapping or lagging?
 6. Slide and let it slow: both spread and the boundary should shrink rather than stay fixed-wide.
    F6/F7, reload and pause/resume should not leave a stale spray indicator.
 
@@ -96,9 +101,14 @@ same bounds/boxes/surfaces as physical movement, so new maps need valid collisio
 current bounded local, single-floor-per-cell search is not final global/stacked-floor navigation
 or deep duo tactics; human findings will determine the next improvement.
 
-Current crosshair follow-up: **239/239 EditMode tests**, **52/52 focused network rifle checks**,
+Current smoothing follow-up: **10 focused crosshair tests** and **9 Duel/HUD smoke checks** passed;
+one Windows build succeeded (**0 errors, 33 existing deprecated-API/unused-field warnings**).
+Real shot simulation/networking is unchanged; the full suite and combat/lifecycle checks were
+not rerun. Human review decides whether the quick smoothing feels right.
+
+Previous crosshair iteration: **239/239 EditMode tests**, **52/52 focused network rifle checks**,
 **9/9 Duel startup/control/HUD checks** (including projected radius and real firing expansion);
-Final Windows build succeeded (**0 errors, 0 reported warnings**); the initial full compile
+That iteration's final Windows build succeeded (**0 errors, 0 reported warnings**); its initial full compile
 reported the existing deprecated Unity/NGO API/unused-field warnings.
 The prior bot slice passed Easy/Hard authoritative bot-controller checks and **22 session/role/
 lifecycle checks** and received positive human feedback. Technical checks do not accept accuracy

@@ -45,13 +45,70 @@ namespace BeMyArms.Client.Tests
                 var rect = Ui.Rect(canvas.transform, "Crosshair");
                 Ui.Place(rect, new Vector2(.5f, .5f), Vector2.zero, new Vector2(28, 28));
                 var crosshair = rect.gameObject.AddComponent<DynamicCrosshair>(); crosshair.raycastTarget = false;
+                crosshair.SmoothingSeconds = 0;
                 Canvas.ForceUpdateCanvases();
-                crosshair.SetSpread(2.5f, camera, canvas);
+                crosshair.SetSpread(2.5f, camera, canvas, 1f / 60);
                 Assert.AreEqual(DynamicCrosshair.ProjectRadius(2.5f, 72, camera.pixelHeight, canvas.scaleFactor), crosshair.RadiusCanvasUnits);
                 RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)canvas.transform, camera.pixelRect.center, null, out var expected);
                 Assert.AreEqual(expected, (Vector2)rect.localPosition);
-                crosshair.SetSpread(0, camera, canvas); Assert.AreEqual(0, crosshair.RadiusCanvasUnits);
+                crosshair.SetSpread(0, camera, canvas, 1f / 60); Assert.AreEqual(0, crosshair.RadiusCanvasUnits);
                 Assert.IsFalse(crosshair.raycastTarget);
+            }
+            finally { Object.DestroyImmediate(canvas.gameObject); Object.DestroyImmediate(cameraObject); }
+        }
+
+        [TestCase(30)]
+        [TestCase(60)]
+        [TestCase(144)]
+        public void SmoothingIsFastFrameIndependentAndDoesNotOvershoot(int fps)
+        {
+            float opening = 0, closing = 3;
+            for (int i = 0; i < fps / 5; i++)
+            {
+                opening = DynamicCrosshair.SmoothSpread(opening, 3, 1f / fps, .04f);
+                closing = DynamicCrosshair.SmoothSpread(closing, 0, 1f / fps, .04f);
+                Assert.That(opening, Is.InRange(0f, 3f)); Assert.That(closing, Is.InRange(0f, 3f));
+            }
+            float elapsed = (fps / 5) / (float)fps;
+            Assert.AreEqual(3f * (1f - Mathf.Exp(-elapsed / .04f)), opening, .001f);
+            Assert.Less(closing, .025f); Assert.Greater(opening, 2.975f);
+            float firstFrame = DynamicCrosshair.SmoothSpread(0, 3, 1f / fps, .04f);
+            Assert.Greater(firstFrame, 0); Assert.Less(firstFrame, 3, "Changes must not snap.");
+        }
+
+        [Test]
+        public void LongStationarySprayStillExpandsAndDotModeDrawsOnlyTheCenter()
+        {
+            var canvas = Ui.CreateCanvas("CrosshairSprayTest");
+            var cameraObject = new GameObject("CrosshairCamera", typeof(Camera));
+            try
+            {
+                var camera = cameraObject.GetComponent<Camera>();
+                var rect = Ui.Rect(canvas.transform, "Crosshair");
+                var crosshair = rect.gameObject.AddComponent<DynamicCrosshair>();
+                crosshair.SetSpread(0, camera, canvas, 1f / 60);
+                var rifle = new RifleHandling();
+                for (int i = 0; i < 16; i++)
+                {
+                    int burst = rifle.Shot(i * .125);
+                    float previous = crosshair.SpreadDegrees;
+                    crosshair.SetSpread(RifleHandling.SpreadDegrees(burst + 1), camera, canvas, .125f);
+                    Assert.GreaterOrEqual(crosshair.SpreadDegrees, previous);
+                }
+                Assert.AreEqual(1.8f, crosshair.TargetSpreadDegrees);
+                Assert.Greater(crosshair.SpreadDegrees, 1.7f);
+                crosshair.SetSpread(0, camera, canvas, 1f / 60);
+                Assert.That(crosshair.SpreadDegrees, Is.InRange(.01f, 1.7f), "Recovery should close smoothly.");
+                crosshair.DynamicSpread = false;
+                crosshair.SetSpread(4, camera, canvas, 1f / 60);
+                using (var mesh = new UnityEngine.UI.VertexHelper())
+                {
+                    typeof(DynamicCrosshair).GetMethod("OnPopulateMesh", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.DeclaredOnly)
+                        .Invoke(crosshair, new object[] { mesh });
+                    Assert.AreEqual(8, mesh.currentVertCount, "Dot mode has only the dot and its contrast outline.");
+                }
+                crosshair.DynamicSpread = true; crosshair.SetSpread(0, camera, canvas, 1f / 60);
+                Assert.AreEqual(0, crosshair.SpreadDegrees, "Mode/epoch reset cannot retain the previous spray.");
             }
             finally { Object.DestroyImmediate(canvas.gameObject); Object.DestroyImmediate(cameraObject); }
         }

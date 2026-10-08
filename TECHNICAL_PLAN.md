@@ -115,8 +115,14 @@ The BODY HUD text remains movement-only. P2's `DynamicCrosshair` additionally pr
 round's total movement + burst radius: `tan(spread) * pixelHeight / (2 * tan(verticalFov/2))`,
 converted to canvas units using the actual world camera (not viewmodel FOV). A thin ring bounds
 the angular spread disk; four high-contrast ticks retain a small minimum gap for readability,
-and the center dot retains aim. At zero spread only the dot/readability ticks remain. No extra
-crosshair animation, recoil multiplier, target lock, bullet obstruction or hit confirmation is inferred.
+and the center dot retains aim. `TargetSpreadDegrees` is the current next-round estimate;
+`SpreadDegrees` follows it with frame-independent exponential smoothing (0.04 s time constant,
+about 95% response in 0.12 s), then projects it. Opening and closing are both smoothed, without
+overshoot; the ring is therefore a responsive visual estimate, not an instantaneous exact boundary.
+At zero spread only the dot/readability ticks remain. Pause/re-enable and control-epoch changes
+initialize from the new target rather than carrying a stale spray animation. No recoil multiplier,
+target lock, bullet obstruction or hit confirmation is inferred. `DynamicSpread=false` renders only
+the fixed center dot for a future settings selector; no settings-menu/persistence work was added.
 
 `RifleAccuracyState` is a new server-written 16-byte accepted-shot snapshot (control epoch, shot
 tick, shot count and burst index), replicated only when changed/reset. It does not alter existing

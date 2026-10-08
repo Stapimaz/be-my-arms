@@ -105,8 +105,11 @@ not a demand to duplicate its movement, economy or exact weapon handling.
   viewmodel kick is separate from actual aim. Zero spread is not automatic target acquisition.
 - P2 must see that dependency directly: dynamic crosshair ticks and a thin spread boundary show
   the next round's movement + burst error, projected with the world-camera FOV. The center dot
-  stays on aim. Slide spread decreases with actual sliding speed; no arbitrary cosmetic expansion
-  disconnected from the shot model. Network observations/predictions can be corrected by the server.
+  stays on aim. Opening/closing should be quick but lightly smoothed, whatever caused the spread
+  (including a long stationary spray). Smoothing changes presentation, never bullet accuracy.
+  Slide spread decreases with actual sliding speed; no arbitrary cosmetic expansion disconnected
+  from the shot model. Network observations/predictions can be corrected by the server.
+  Future settings should offer dynamic spread or a fixed center dot; that menu choice is not yet exposed.
 - Server results—not client effects—decide ammo legality, hits, damage and kills.
 - Detailed TTK, damage, recoil, spread, ammunition and recovery are playtest tuning.
 

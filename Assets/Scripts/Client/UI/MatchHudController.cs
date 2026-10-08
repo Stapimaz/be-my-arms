@@ -21,6 +21,8 @@ namespace BeMyArms.Client
         Text _weapon;
         RectTransform _crosshair;
         DynamicCrosshair _dynamicCrosshair;
+        NetworkBodyClient _crosshairClient;
+        uint _crosshairEpoch = uint.MaxValue;
         GameObject _postPanel;
         Text _postTitle;
         Text _buyHint;
@@ -230,7 +232,15 @@ namespace BeMyArms.Client
                 client.Body.Alive.Value && _director != null && _director.IsLive &&
                 _localPlayer.IsGameplayActive && camera != null;
             _crosshair.gameObject.SetActive(visible);
-            if (visible) _dynamicCrosshair.SetSpread(client.NextRifleSpreadDegrees, camera, _canvas);
+            if (visible)
+            {
+                if (_crosshairClient != client || _crosshairEpoch != client.ControlEpoch)
+                {
+                    _crosshairClient = client; _crosshairEpoch = client.ControlEpoch;
+                    _dynamicCrosshair.ResetSpread();
+                }
+                _dynamicCrosshair.SetSpread(client.NextRifleSpreadDegrees, camera, _canvas, Time.unscaledDeltaTime);
+            }
         }
 
         NetworkBody FindOwnBody()

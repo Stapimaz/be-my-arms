@@ -1,6 +1,6 @@
 # Be My Arms — Roadmap
 
-**Current status: dynamic P2 spread crosshair / speed-dependent slide accuracy ready for review · Updated 2026-10-09**
+**Current status: responsive smooth P2 spread crosshair ready for review · Updated 2026-10-09**
 
 Design: [GAME_CONCEPT.md](GAME_CONCEPT.md). Architecture: [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md).
 Run/build: [docs/DEV_ENVIRONMENT.md](docs/DEV_ENVIRONMENT.md).
@@ -43,7 +43,21 @@ arena/bot quality, generated audio/VFX, onboarding and round presentation, produ
 durable identities/security and final release readiness. Human visual/feel acceptance is not
 inferred from screenshots or green tests.
 
-## Current iteration — visible P2 spread / speed-dependent slide error
+## Current follow-up — responsive crosshair smoothing
+
+Human feedback requested quick, lightly smoothed expansion/contraction rather than snapping.
+The display continues to track total next-round spread from any cause, including stationary
+sustained-fire bloom. A 0.04 s exponential response smooths presentation only; gun accuracy,
+networking and burst recovery are unchanged. Epoch/re-enable resets drop stale animation.
+The renderer supports a fixed-center-dot mode for a future settings choice, but this follow-up
+does not build a settings menu or persistence layer. Review responsiveness/readability, then stop.
+
+Verification: the **10 focused crosshair tests** passed (including 30/60/144 FPS smoothing,
+stationary spray and dot-only rendering), plus **9 Duel/HUD smoke checks**. One Windows build
+succeeded (**0 errors, 33 existing warnings**). No full EditMode or combat/lifecycle rerun:
+this change affects presentation only.
+
+## Previous iteration — visible P2 spread / speed-dependent slide error
 
 The user requested a dynamic crosshair that communicates the area a bullet can deviate into,
 not just body-motion text. Implemented as a follow-up to movement-dependent rifle accuracy:
