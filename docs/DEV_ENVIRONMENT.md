@@ -108,7 +108,7 @@ unity command eval_file tools/maintenance/audit-unity-references.cs 30000 --time
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/smoke-duel.ps1
 # Broader session/peer-loss regression: use when ownership/lifecycle/Transport changes
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/test-session-lifecycle.ps1 -BuildDirectory Builds/Windows
-# Focused rifle geometry/damage/feedback integration: real client RPCs and server ticks
+# Rifle geometry/damage/feedback + P1-motion spread: real role RPCs and server ticks
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/test-rifle-combat.ps1
 # Isolated Easy/Hard bot server ticks: bounded aim, real shots, occlusion and reset
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/test-bot-controller.ps1
@@ -119,9 +119,10 @@ descriptor. `--runtime-path` takes the directory containing `.unity-pipeline-run
 the descriptor file. Each script snapshots its own process's descriptor, checks results and
 cleans up its processes. Runtime QA needs a Development build.
 
-The rifle test creates isolated headless processes, freezes only its disposable combat fixture,
+The rifle test creates isolated headless processes, freezes its disposable combat/round/zone clocks,
 then submits real role-authenticated input and advances the ordinary server tick. It checks
-history/cover/region damage and the events received by both roles; it does not evaluate pixels
+history/cover/region damage, P1-motion spread/stop/recovery and the events received by both roles;
+it does not evaluate pixels
 or balance. Never run `rifle-combat-fixture.cs` against a human playtest session.
 
 The bot-controller check likewise launches its own disposable bot-filled server. Its controlled

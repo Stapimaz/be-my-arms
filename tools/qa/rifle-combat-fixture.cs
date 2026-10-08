@@ -9,6 +9,9 @@ var bodies=UnityEngine.Object.FindObjectsByType(type,UnityEngine.FindObjectsSort
 var source=bodies.Single(b=>(int)type.GetProperty("TeamIndex").GetValue(b)==0);
 var target=bodies.Single(b=>(int)type.GetProperty("TeamIndex").GetValue(b)==1);
 var shooterSim=Field(source,"_sim");var targetSim=Field(target,"_sim");
+// Freeze the disposable round/zone clock too: CLI round trips must not close the zone or
+// reset the round while the ordinary body ticks are advanced explicitly below.
+((UnityEngine.Behaviour)Field(source,"_director")).enabled=false;
 string mode=(string)System.AppDomain.CurrentDomain.GetData("CombatCase");
 foreach(var body in bodies) {
     ((UnityEngine.Behaviour)body).enabled=false;
@@ -29,6 +32,7 @@ Set(sourcePose,"SimulationTick",Field(source,"_simulationTick"));
 Set(pose,"ControlEpoch",Field(target,"_controlEpoch"));
 Set(shooterSim,"State",sourcePose);Set(targetSim,"State",pose);
 Publish(source,"State",sourcePose);Publish(target,"State",pose);
+var p1Stream=Field(source,"_p1Stream");p1Stream.GetType().GetMethod("Reset").Invoke(p1Stream,new[]{Field(sourcePose,"ControlEpoch")});
 var collisionType=System.Type.GetType("BeMyArms.Networking.MovementCollision, BeMyArms.Networking");
 var collision=System.Activator.CreateInstance(collisionType);
 void Wall(float z,float height)=>collisionType.GetMethod("AddBox").Invoke(collision,new object[]{-2f,0f,z,2f,height,z+.2f});

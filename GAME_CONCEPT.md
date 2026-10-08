@@ -94,12 +94,15 @@ Responsive, aim-driven and headshot-sensitive, generally less instantly lethal t
 Counter-Strike and not a bullet-sponge shooter. CS is a readability and rifle-POV reference,
 not a demand to duplicate its movement, economy or exact weapon handling.
 
-- Standing still should be most accurate; normal movement has a lighter penalty;
-  sprint and jump/slide/dodge/heavy kick have stronger penalties.
+- A recovered first rifle round while grounded and stationary follows P2's aim exactly (zero
+  random spread). P1's actual movement adds error: crouch-walk is lighter than walk, sprint is
+  stronger, and jump/slide/dodge/heavy kick have strong penalties. This applies to bots too.
 - P2 remains able to fire during P1 movement and kicks. Do not add a hard weapon lockout.
 - Sustained automatic fire must require control. The current rifle has real local-aim
   recoil and server-enforced bloom: first rounds are tighter, a long spray spreads, and
-  a brief pause recovers burst accuracy. Cosmetic viewmodel kick is separate from actual aim.
+  a brief pause (currently over 0.30 s) recovers burst accuracy. Stopping removes movement error,
+  not ongoing spray bloom; pausing while running does not remove movement error. Cosmetic
+  viewmodel kick is separate from actual aim. Zero spread is not automatic target acquisition.
 - Server results—not client effects—decide ammo legality, hits, damage and kills.
 - Detailed TTK, damage, recoil, spread, ammunition and recovery are playtest tuning.
 

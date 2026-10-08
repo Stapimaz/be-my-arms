@@ -515,7 +515,8 @@ namespace BeMyArms.Match
             LastShotSpread = 0;
             if (_activeWeapon == WeaponType.Rifle)
             {
-                LastShotSpread = RifleHandling.SpreadDegrees(_rifle.Shot(_serverTime));
+                LastShotSpread = RifleHandling.SpreadDegrees(_rifle.Shot(_serverTime), _sim.State,
+                    _sim.WalkSpeed, _sim.SprintSpeed, _sim.CrouchSpeed);
                 RifleHandling.Spread(ShotsFired.Value, _controlEpoch ^ (uint)_botSeed,
                     LastShotSpread, out spreadYaw, out spreadPitch);
             }

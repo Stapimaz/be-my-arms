@@ -88,6 +88,37 @@ method.Invoke(body,new[]{input,rpc});Set("Sequence",++sequence);Set("Fire",false
     Start-Sleep -Milliseconds 150
     Eval $server 'var type=System.Type.GetType("BeMyArms.Match.NetworkBody, BeMyArms.Match");var body=UnityEngine.Object.FindObjectsByType(type,UnityEngine.FindObjectsSortMode.None).Single(b=>(int)type.GetProperty("TeamIndex").GetValue(b)==0);type.GetMethod("ServerTick",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(body,new object[]{1f/60f});return true;' | Out-Null
 }
+function Move-Body([string]$mode){
+    Eval $p1 @"
+var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+var type=System.Type.GetType("BeMyArms.Match.NetworkBodyClient, BeMyArms.Match");
+var client=UnityEngine.Object.FindObjectsByType(type).Single(c=>(bool)type.GetProperty("IsLocalOwnBody").GetValue(c));
+var body=type.GetProperty("Body").GetValue(client);var sequence=type.GetField("_p1Sequence",flags);uint next=(uint)sequence.GetValue(client)+1;
+var variable=body.GetType().GetField("State").GetValue(body);var state=variable.GetType().GetProperty("Value").GetValue(variable);
+var method=body.GetType().GetMethod("SubmitP1ServerRpc");var inputType=method.GetParameters()[0].ParameterType;var input=System.Activator.CreateInstance(inputType);
+void Set(string name,object value)=>inputType.GetField(name).SetValue(input,value);
+string mode="$mode";
+Set("Sequence",next);Set("ControlEpoch",state.GetType().GetField("ControlEpoch").GetValue(state));
+Set("MoveX",new[]{"walk","sprint","crouch-walk"}.Contains(mode) ? 1f : 0f);
+Set("Sprint",mode=="sprint");Set("Crouch",mode=="crouch" || mode=="crouch-walk");
+Set("Jump",mode=="jump");Set("Dodge",mode=="dodge");Set("Slide",mode=="slide");Set("HeavyKick",mode=="heavy-kick");
+method.Invoke(body,new[]{input,System.Activator.CreateInstance(method.GetParameters()[1].ParameterType)});sequence.SetValue(client,next);return true;
+"@ | Out-Null
+}
+function Read-Shot {
+    return Eval $server @'
+var type=System.Type.GetType("BeMyArms.Match.NetworkBody, BeMyArms.Match");
+var body=UnityEngine.Object.FindObjectsByType(type).Single(b=>(int)type.GetProperty("TeamIndex").GetValue(b)==0);
+var variable=type.GetField("State").GetValue(body);var state=variable.GetType().GetProperty("Value").GetValue(variable);
+object F(string name)=>state.GetType().GetField(name).GetValue(state);
+var aim=UnityEngine.Quaternion.Euler((float)F("AimPitch"),(float)F("AimYaw"),0)*UnityEngine.Vector3.forward;
+var ray=(UnityEngine.Vector3)type.GetProperty("LastShotDirection").GetValue(body);
+return new {Spread=type.GetProperty("LastShotSpread").GetValue(body),DirectionError=(ray-aim).magnitude,Speed=F("PlanarSpeed"),Stance=F("MovementState")};
+'@
+}
+function Advance-Ticks([int]$count){
+    Eval $server "var type=System.Type.GetType(`"BeMyArms.Match.NetworkBody, BeMyArms.Match`");var body=UnityEngine.Object.FindObjectsByType(type).Single(b=>(int)type.GetProperty(`"TeamIndex`").GetValue(b)==0);var tick=type.GetMethod(`"ServerTick`",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic);for(int i=0;i<$count;i++)tick.Invoke(body,new object[]{1f/60f});return true;" | Out-Null
+}
 try {
     $server=Start-Player 'server' "-match-role server -client-arena DuelArena -queue-mode duel -queue-matchmaker 0 -match-port $port -match-required-players 2 -match-start-delay 0 -match-practice 1 -match-strict-slots 1 -match-delay 0 -match-loss 0 -match-buy 1"
     $p1=Start-Player 'p1' "-client-join 127.0.0.1 -client-port $port -client-join-role p1"
@@ -133,6 +164,28 @@ System.AppDomain.CurrentDomain.SetData("CombatEvents",events);System.AppDomain.C
     Trigger $p1 $setup.Pitch
     $s=Read-Combat $p2
     Check ($s.Shots -eq 0 -and $s.Health -eq 100) 'P1 cannot submit weapon input on P2 behalf'
+    foreach($case in @(
+        @{Mode='idle';Spread=0},@{Mode='crouch';Spread=0},@{Mode='crouch-walk';Spread=.35},
+        @{Mode='walk';Spread=.75},@{Mode='sprint';Spread=2.5},@{Mode='jump';Spread=3.5},
+        @{Mode='dodge';Spread=3.5},@{Mode='slide';Spread=3},@{Mode='heavy-kick';Spread=4}
+    )){
+        $setup=Set-Case 'body'
+        Move-Body $case.Mode
+        Trigger $p2 $setup.Pitch
+        Wait-Combat $p2 {param($s)$s.Shots -eq 1} | Out-Null
+        $shot=Read-Shot
+        Check ([Math]::Abs($shot.Spread-$case.Spread) -lt .001) "$($case.Mode) : real P1 input determines P2 authoritative first-shot spread ($($case.Spread) degrees)"
+        if($case.Spread -eq 0){Check ($shot.DirectionError -lt .000001) "$($case.Mode) : stationary first bullet is exactly the submitted aim ray"}
+    }
+    $setup=Set-Case 'body';Move-Body 'sprint';Trigger $p2 $setup.Pitch
+    Advance-Ticks 9
+    Move-Body 'idle';Trigger $p2 $setup.Pitch
+    $shot=Read-Shot
+    Check ($shot.Speed -lt .001 -and [Math]::Abs($shot.Spread-.16) -lt .001) 'Stopping removes movement error but does not erase the second-round burst bloom'
+    Advance-Ticks 21
+    Trigger $p2 $setup.Pitch
+    $shot=Read-Shot
+    Check ($shot.Spread -eq 0 -and $shot.DirectionError -lt .000001) 'A stopped and recovered rifle returns to an exact first-shot ray'
     $setup=Set-Case 'head'
     for($i=0;$i -lt 3;$i++){
         # Advance the actual weapon clock between rounds without leaving the deterministic fixture.

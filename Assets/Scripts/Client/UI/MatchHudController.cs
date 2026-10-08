@@ -190,6 +190,12 @@ namespace BeMyArms.Client
         {
             if (own == null) { _weapon.text = ""; return; }
             _weapon.text = $"{(WeaponType)own.WeaponId.Value}   {own.Ammo.Value}/{own.Magazine.Value}{(own.Reloading.Value ? "  RELOADING" : "")}";
+            if ((WeaponType)own.WeaponId.Value == WeaponType.Rifle)
+            {
+                float movement = RifleHandling.MovementSpreadDegrees(own.State.Value, own.WalkSpeed, own.SprintSpeed);
+                // This is the current BODY penalty, not a claim that burst bloom/recoil has reset.
+                _weapon.text += movement > 0f ? $"\nBODY MOTION: +{movement:0.00}° SPREAD" : "\nBODY STABLE";
+            }
         }
 
         void UpdateBuy(NetworkBody own)

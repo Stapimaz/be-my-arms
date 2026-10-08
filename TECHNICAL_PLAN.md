@@ -95,10 +95,23 @@ is bounded. `LagCompensation` now retains the target's complete `BodyState`, lif
 control epoch together; rifle resolution cannot combine historical X/Z with live Y/stance or
 hit a pre-reset life. The old X/Z API remains for the diagnostic prediction sample.
 
-`RifleHandling` advances burst state on accepted rifle rounds; bloom affects the actual
-server hit/obstruction ray. Hit evaluation and impact presentation share the spread ray.
+`RifleHandling` advances burst state only on accepted rifle rounds; a recovered first round
+has zero burst spread. Server fire adds P1-motion spread from the current authoritative,
+collision-resolved `BodyState.PlanarSpeed`, grounding, stance and action (not held input or a
+client-reported accuracy value). Both humans and bots use the same resulting hit/obstruction ray.
+Target rewind and historical aim-sector validation are unchanged; the motion penalty is not
+rewound from P2's displayed body tick. Hit evaluation and impact presentation share the spread ray.
 Local rifle recoil updates controllable P2 aim, separately from cosmetic camera/viewmodel kick.
 `WeaponState`, `Loadouts`, buy and utility rules remain authoritative.
+
+Provisional additive movement spread radii: full crouch-walk **0.35°**, walk **0.75°**, sprint
+**2.5°**, airborne/jump/fall/dodge **3.5°**, slide **3°**, light/heavy kick **1.5°/4°**. Grounded
+speed ≤0.10 m/s is treated as stationary; translation penalty scales with actual speed, while
+actions retain their disturbance even at zero translation. The existing movement sim stops
+without inertia, so movement accuracy returns on the stopped tick; no new CS-style acceleration
+or counter-strafe system was introduced. Burst bloom resets only after a >0.30 s shot pause.
+The rifle HUD shows current BODY motion penalty, not total burst spread or guaranteed accuracy.
+No new network payload, camera motion, damage value, pistol or knife handling was added.
 
 `CombatHitGeometry` provides exact ray/surface intersection for the standard competitive
 profile: a **0.35 m radius** torso/legs capsule ending below a **0.18 m radius** exposed P1-head

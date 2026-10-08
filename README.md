@@ -3,9 +3,10 @@
 Two players, one fighter: **P1 controls body/movement; P2 controls arms/weapons/aim**.
 Unity 6 / URP, NGO + Unity Transport, server-authoritative shared-body multiplayer.
 
-**Current state:** focused **cover-aware positioning / smooth bot aim** iteration, ready for
-human playtest, following the first Phase 3 rifle-hit slice. Bots use shared collision geometry
-rather than map-specific routes. Human controls and the accepted P2 POV remain unchanged.
+**Current state:** **P1-motion-dependent rifle accuracy**, ready for human playtest after positive
+feedback on cover-aware positioning / smooth bot aim. A recovered stationary first rifle round
+has zero ballistic spread; moving the shared body adds spread, strongest during sprint/actions.
+Human controls and the accepted P2 POV remain unchanged.
 
 ## Start here
 
