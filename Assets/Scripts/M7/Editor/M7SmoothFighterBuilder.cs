@@ -260,17 +260,18 @@ namespace BeMyArms.M7.EditorTools
             var root=new GameObject("M7_P2ArmsViewmodel");
             try
             {
-                // Put the camera-local shoulders behind and below the eye. The old forward shoulder
-                // offset folded the firing forearm back into a hand facing the opposite direction.
-                var model=Model(ArmsModelPath,root.transform);model.transform.localPosition=new Vector3(.02f,-1.60f,-.18f);
+                // Camera-local placement also keeps the reload-only firing hand within reach.
+                var model=Model(ArmsModelPath,root.transform);model.transform.localPosition=new Vector3(.09f,-1.66f,-.05f);
                 var a=model.GetComponent<Animator>();if(a==null)a=model.AddComponent<Animator>();a.avatar=null;a.applyRootMotion=false;
                 string path=Root+"/Controllers/Arms.controller";
                 var controller=AssetDatabase.LoadAssetAtPath<AnimatorController>(path) ?? AnimatorController.CreateAnimatorControllerAtPathWithClip(path,Clip("Rifle_Hold_Loop"));
                 controller.layers[0].stateMachine.defaultState.motion=Clip("Rifle_Hold_Loop");a.runtimeAnimatorController=controller;
                 // Rifle POV is a saved, weapon-mounted hold, not a breathing world-rifle clip.
                 a.enabled=false;
-                var gun=Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(M7FighterBuilder.RiflePath));gun.name="ViewmodelWeapon";gun.transform.SetParent(root.transform,false);gun.transform.localPosition=new Vector3(.14f,-.22f,.30f);gun.transform.localRotation=Quaternion.Euler(-7,0,0);gun.transform.localScale=Vector3.one*.9f;
+                var gun=Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(M7FighterBuilder.RiflePath));gun.name="ViewmodelWeapon";gun.transform.SetParent(root.transform,false);gun.transform.localPosition=new Vector3(.23f,-.29f,.43f);gun.transform.localRotation=Quaternion.Euler(-4,-8,-6);gun.transform.localScale=Vector3.one*.9f;
                 var pose=root.AddComponent<M7RiflePose>();pose.Model=model.transform;pose.Weapon=gun.transform;pose.FirstPerson=true;
+                // Extend the support forearm under the rifle; keep the elbow low in the frame.
+                pose.FirstPersonSupportShoulderPosition=new Vector3(0,-.46f,.25f);
                 // FBX source X sign is not an anatomical side. Classify the actual weighted bones,
                 // so the visible hold is the support hand, not the hidden trigger-hand mesh.
                 bool FiringSide(SkinnedMeshRenderer r)
@@ -314,8 +315,8 @@ namespace BeMyArms.M7.EditorTools
                 {
                     // Separate authored POV sockets: the firing palm rises along the pistol grip;
                     // the support fingers wrap across the underside of the handguard.
-                    grip.localPosition=side=="R" ? new Vector3(.042f,-.070f,-.015f) : new Vector3(-.10f,-.025f,.29f);
-                    fingerForward=side=="R" ? new Vector3(-.12f,.62f,.78f) : Vector3.right;
+                    grip.localPosition=side=="R" ? new Vector3(.042f,-.070f,-.015f) : new Vector3(-.065f,-.025f,.29f);
+                    fingerForward=side=="R" ? new Vector3(-.12f,.62f,.78f) : new Vector3(.5f,0,.8660254f);
                 }
                 grip.localRotation=Quaternion.LookRotation(fingerForward,contact)*Quaternion.Inverse(anatomical);
                 // In the authored hand space, curl toward the palm contact normal. Joint values
