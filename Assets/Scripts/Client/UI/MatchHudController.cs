@@ -20,6 +20,7 @@ namespace BeMyArms.Client
         Text _vitals;
         Text _weapon;
         RectTransform _crosshair;
+        DynamicCrosshair _dynamicCrosshair;
         GameObject _postPanel;
         Text _postTitle;
         Text _buyHint;
@@ -73,15 +74,14 @@ namespace BeMyArms.Client
             _weapon = Ui.Label(_canvas.transform, "Weapon", "", 26, TextAnchor.LowerRight);
             Ui.Place(_weapon.rectTransform, new Vector2(1f, 0f), new Vector2(-24f, 24f), new Vector2(700f, 120f));
 
-            // Crosshair (P2): four arms with a gap plus a centre dot, readable against the arena.
+            // P2 spread envelope: retained center dot plus dynamic ticks and a thin distribution ring.
             _crosshair = Ui.Rect(_canvas.transform, "Crosshair");
             Ui.Place(_crosshair, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(28f, 28f));
             var cross = new Color(0.86f, 1f, 0.92f, 0.92f);
-            Ui.Place(Ui.Panel(_crosshair, "Top", cross).rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -7f), new Vector2(2f, 10f));
-            Ui.Place(Ui.Panel(_crosshair, "Bottom", cross).rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 7f), new Vector2(2f, 10f));
-            Ui.Place(Ui.Panel(_crosshair, "Left", cross).rectTransform, new Vector2(0f, 0.5f), new Vector2(7f, 0f), new Vector2(10f, 2f));
-            Ui.Place(Ui.Panel(_crosshair, "Right", cross).rectTransform, new Vector2(1f, 0.5f), new Vector2(-7f, 0f), new Vector2(10f, 2f));
-            Ui.Place(Ui.Panel(_crosshair, "Dot", cross).rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(2f, 2f));
+            _dynamicCrosshair = _crosshair.gameObject.AddComponent<DynamicCrosshair>();
+            _dynamicCrosshair.color = cross;
+            _dynamicCrosshair.raycastTarget = false;
+            _crosshair.gameObject.SetActive(false);
 
             // Vertical slice: the P2 loadout is a single auto-equipped rifle, so there is no weapon
             // selection UI. A short buy-phase hint keeps the phase readable without needing the mouse.
@@ -131,7 +131,6 @@ namespace BeMyArms.Client
             UpdateWeapon(own);
             UpdateBuy(own);
             UpdatePost();
-            UpdateCursorAndEscape();
         }
 
         void UpdateTop(NetworkBody own)
@@ -220,13 +219,18 @@ namespace BeMyArms.Client
             _postTitle.text = winner < 0 ? "MATCH DRAW" : (winner == myTeam ? "VICTORY" : "DEFEAT");
         }
 
-        void UpdateCursorAndEscape()
+        void LateUpdate()
         {
-            // Cursor capture and the ESC menu are owned by LocalPlayer; the HUD only shows the
-            // crosshair when this body is the P2 role and the round is live.
-            bool roleP2 = NetworkBodyClient.LocalSlotIndex >= 0 && MatchSlots.RoleOf(NetworkBodyClient.LocalSlotIndex) == 1;
-            bool crosshair = roleP2 && _director.IsLive;
-            if (_crosshair != null) _crosshair.gameObject.SetActive(crosshair);
+            // After local input/recoil and LocalPlayer's camera LateUpdate: use this frame's actual
+            // world-camera projection, never the separate viewmodel FOV.
+            if (_crosshair == null) return;
+            var client = _localPlayer != null ? _localPlayer.LocalClient : null;
+            var camera = _localPlayer != null ? _localPlayer.LocalCamera : null;
+            bool visible = client != null && client.IsLocalOwnBody && client.LocalRoleIndex == 1 &&
+                client.Body.Alive.Value && _director != null && _director.IsLive &&
+                _localPlayer.IsGameplayActive && camera != null;
+            _crosshair.gameObject.SetActive(visible);
+            if (visible) _dynamicCrosshair.SetSpread(client.NextRifleSpreadDegrees, camera, _canvas);
         }
 
         NetworkBody FindOwnBody()

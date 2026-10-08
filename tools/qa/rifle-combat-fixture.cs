@@ -44,6 +44,7 @@ var loadout=type.GetMethod("ServerApplyLoadout");
 loadout.Invoke(source,new[]{System.Enum.ToObject(loadout.GetParameters()[0].ParameterType,0)});
 foreach(string name in new[]{"_weapon","_rifle"}) {var obj=Field(source,name);obj.GetType().GetMethod("Reset").Invoke(obj,null);}
 Publish(source,"ShotsFired",0u);Publish(source,"Ammo",30);Publish(source,"Kills",0);
+type.GetMethod("ResetRifleAccuracy",flags).Invoke(source,null);
 double now=(double)Field(source,"_serverTime");
 // Box a separate copy for history so the current replicated crouch pose stays untouched.
 pose=Field(targetSim,"State");

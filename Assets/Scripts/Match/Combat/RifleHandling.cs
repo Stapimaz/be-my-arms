@@ -14,6 +14,8 @@ namespace BeMyArms.Match
         public const float SprintSpreadDegrees = 2.5f;
         public const float AirSpreadDegrees = 3.5f;
         public const float SlideSpreadDegrees = 3f;
+        public const float SlideMinimumSpreadDegrees = .75f;
+        public const float SlideReferenceSpeed = 9f;
         public const float LightKickSpreadDegrees = 1.5f;
         public const float HeavyKickSpreadDegrees = 4f;
         public int Burst { get; private set; }
@@ -53,7 +55,10 @@ namespace BeMyArms.Match
                 case BodyMovementState.Jump:
                 case BodyMovementState.Fall:
                 case BodyMovementState.Dodge: spread = Math.Max(spread, AirSpreadDegrees); break;
-                case BodyMovementState.Slide: spread = Math.Max(spread, SlideSpreadDegrees); break;
+                case BodyMovementState.Slide:
+                    spread = Math.Max(spread, SlideMinimumSpreadDegrees + (SlideSpreadDegrees - SlideMinimumSpreadDegrees) *
+                        Math.Min(1f, speed / SlideReferenceSpeed));
+                    break;
                 case BodyMovementState.KickLight: spread = Math.Max(spread, LightKickSpreadDegrees); break;
                 case BodyMovementState.KickHeavy: spread = Math.Max(spread, HeavyKickSpreadDegrees); break;
             }

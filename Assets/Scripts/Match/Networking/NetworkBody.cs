@@ -72,6 +72,8 @@ namespace BeMyArms.Match
         public NetworkVariable<uint> LastAckedP1Sequence = new(0u, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         public NetworkVariable<uint> LastAckedP2Sequence = new(0u, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         public NetworkVariable<uint> ShotsFired = new(0u, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        public NetworkVariable<RifleAccuracyState> RifleAccuracy = new(default,
+            NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         public NetworkVariable<bool> P1Bot = new(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         public NetworkVariable<bool> P2Bot = new(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         public NetworkVariable<bool> Firing = new(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -517,6 +519,8 @@ namespace BeMyArms.Match
             {
                 LastShotSpread = RifleHandling.SpreadDegrees(_rifle.Shot(_serverTime), _sim.State,
                     _sim.WalkSpeed, _sim.SprintSpeed, _sim.CrouchSpeed);
+                RifleAccuracy.Value = new RifleAccuracyState { ControlEpoch = _controlEpoch,
+                    ShotTick = _simulationTick, Shots = ShotsFired.Value, Burst = _rifle.Burst };
                 RifleHandling.Spread(ShotsFired.Value, _controlEpoch ^ (uint)_botSeed,
                     LastShotSpread, out spreadYaw, out spreadPitch);
             }
@@ -650,6 +654,7 @@ namespace BeMyArms.Match
             _weapon.ReloadSeconds = stats.ReloadSeconds;
             _weapon.Reset();
             _rifle.Reset(); LastShotDirection = Vector3.zero; LastShotSpread = 0;
+            ResetRifleAccuracy();
             WeaponId.Value = (byte)stats.Id;
             Magazine.Value = stats.Magazine;
             Ammo.Value = _weapon.Ammo;
@@ -823,6 +828,7 @@ namespace BeMyArms.Match
             _sim.State.ControlEpoch = _controlEpoch;
             _acceptedP2 = 0;
             _rifle.Reset();
+            ResetRifleAccuracy();
             LastAckedP1Sequence.Value = LastAckedP2Sequence.Value = 0;
             _heldP2 = default;
             _lastP2Time = -1;
@@ -835,5 +841,8 @@ namespace BeMyArms.Match
 
         void Log(string message)
             => Debug.Log($"[Match] t={Time.realtimeSinceStartup:0.000} {MatchSlots.Name(SlotP1, _director != null ? _director.BodiesPerTeam : 1)} {message}");
+
+        void ResetRifleAccuracy()
+            => RifleAccuracy.Value = new RifleAccuracyState { ControlEpoch = _controlEpoch, Shots = ShotsFired.Value };
     }
 }

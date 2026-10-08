@@ -104,7 +104,7 @@ canonical workflow; use the current scripts rather than copying commands from ar
 ```powershell
 # Imports, missing scripts and unresolved GUIDs; no Play mode or asset regeneration
 unity command eval_file tools/maintenance/audit-unity-references.cs 30000 --timeout 120 --format json
-# Minimal menu/startup/shared-body P1/P2 Duel smoke (no screenshots)
+# Menu/startup/shared-body P1/P2 Duel + rendered crosshair projection/firing smoke (no screenshots)
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/smoke-duel.ps1
 # Broader session/peer-loss regression: use when ownership/lifecycle/Transport changes
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/test-session-lifecycle.ps1 -BuildDirectory Builds/Windows
@@ -121,7 +121,8 @@ cleans up its processes. Runtime QA needs a Development build.
 
 The rifle test creates isolated headless processes, freezes its disposable combat/round/zone clocks,
 then submits real role-authenticated input and advances the ordinary server tick. It checks
-history/cover/region damage, P1-motion spread/stop/recovery and the events received by both roles;
+history/cover/region damage, P1-motion/slide spread/stop/recovery, accepted crosshair burst metadata
+and the events received by both roles;
 it does not evaluate pixels
 or balance. Never run `rifle-combat-fixture.cs` against a human playtest session.
 

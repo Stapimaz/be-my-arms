@@ -135,6 +135,25 @@ namespace BeMyArms.Match
         bool _fireArmed;
         uint _lastServerShots;
         readonly RifleHandling _rifle = new RifleHandling();
+        readonly RifleSpreadPreview _spreadPreview = new RifleSpreadPreview();
+
+        /// <summary>Angular radius of the next rifle round, from observed body motion and accepted
+        /// burst history plus immediate optimistic shots. Presentation only, never sent as input.</summary>
+        public float NextRifleSpreadDegrees
+        {
+            get
+            {
+                if (_body == null || !_body.IsSpawned || (WeaponType)_body.WeaponId.Value != WeaponType.Rifle)
+                { _spreadPreview.Reset(); return 0f; }
+                var state = _body.State.Value;
+                double now = Time.timeAsDouble;
+                var accuracy = _body.RifleAccuracy.Value;
+                if (accuracy.ControlEpoch != state.ControlEpoch)
+                    accuracy = new RifleAccuracyState { ControlEpoch = state.ControlEpoch, Shots = _body.ShotsFired.Value };
+                _spreadPreview.Synchronize(accuracy, state.SimulationTick, now);
+                return RifleHandling.SpreadDegrees(_spreadPreview.NextBurst(now), state, _body.WalkSpeed, _body.SprintSpeed);
+            }
+        }
         int _unconfirmedRecoilShots;
 
         // Edge-triggered actions are latched every frame so a press between send ticks is not lost.
@@ -304,6 +323,12 @@ namespace BeMyArms.Match
             _optimisticSpent++;
             _pendingLocalShots++;
             _unconfirmedRecoilShots++;
+            if ((WeaponType)_body.WeaponId.Value == WeaponType.Rifle)
+            {
+                // Synchronize before predicting so a confirmation cannot double-count this shot.
+                _ = NextRifleSpreadDegrees;
+                _spreadPreview.PredictShot(Time.timeAsDouble);
+            }
             ApplyRifleRecoil();
         }
 
@@ -365,6 +390,7 @@ namespace BeMyArms.Match
             _lastServerAmmo = _body.Ammo.Value;
             _lastServerShots = _body.ShotsFired.Value;
             _rifle.Reset();
+            _spreadPreview.Reset();
             _unconfirmedRecoilShots = 0;
             _hasVisual = false;
             LastMouseDelta = Vector2.zero;

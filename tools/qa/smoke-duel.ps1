@@ -41,6 +41,21 @@ function Await($player,[scriptblock]$condition,[string]$message){
     do {$state=Qa $player 'qa_player_state';if(&$condition $state){return $state};Start-Sleep -Milliseconds 100}while([DateTime]::UtcNow -lt $deadline)
     throw "$message : $($state | ConvertTo-Json -Depth 5)"
 }
+function Read-Crosshair($player){
+    $file=Join-Path $qa 'crosshair.cs'
+    [IO.File]::WriteAllText($file,@'
+var type=System.Type.GetType("BeMyArms.Client.DynamicCrosshair, BeMyArms.Client");
+var graphic=(UnityEngine.Component)UnityEngine.Object.FindObjectsByType(type,UnityEngine.FindObjectsInactive.Include).Single();
+var camera=UnityEngine.Object.FindObjectsByType(System.Type.GetType("BeMyArms.Client.LocalPlayer, BeMyArms.Client")).Single();
+var world=(UnityEngine.Camera)camera.GetType().GetProperty("LocalCamera").GetValue(camera);
+var canvas=graphic.GetComponentInParent<UnityEngine.Canvas>();
+float spread=(float)type.GetProperty("SpreadDegrees").GetValue(graphic);
+float radius=(float)type.GetProperty("RadiusCanvasUnits").GetValue(graphic);
+float expected=UnityEngine.Mathf.Tan(spread*UnityEngine.Mathf.Deg2Rad)*world.pixelHeight*.5f/(UnityEngine.Mathf.Tan(world.fieldOfView*.5f*UnityEngine.Mathf.Deg2Rad)*canvas.scaleFactor);
+return new {Active=graphic.gameObject.activeInHierarchy,Spread=spread,Radius=radius,ProjectedRadius=expected,Raycast=type.GetProperty("raycastTarget").GetValue(graphic)};
+'@)
+    return (Qa $player 'eval_file' @($file)).result
+}
 try {
     # Headless menu callbacks exercise the real entry/session path, not a custom test scene.
     $p1=Start-Player 'menu-p1' '-batchmode -nographics'
@@ -70,9 +85,13 @@ try {
     Check ($distance -gt .1) 'P1 input moves the server-owned body observed by P2'
     $p2.Process.Refresh();[DuelSmokeWindow]::SetForegroundWindow($p2.Process.MainWindowHandle) | Out-Null
     $b=Await $p2 {param($s)$s.InputGameplayActive -and $s.ApplicationFocused} 'P2 focus/input ownership'
+    $cross=Read-Crosshair $p2
+    Check ($cross.Active -and !$cross.Raycast -and [Math]::Abs($cross.Radius-$cross.ProjectedRadius) -lt .01) 'Live P2 crosshair is input-transparent and projects spread with the actual world-camera FOV/canvas scale'
     $ammo=$b.Ammo
     Qa $p2 'qa_inject_input' @('--fire','true') | Out-Null
     $b=Await $p2 {param($s)$s.Ammo -lt $ammo -and $s.ShotsFired -gt 0} 'P2 authoritative shot'
+    $cross=Read-Crosshair $p2
+    Check ($cross.Active -and $cross.Spread -gt 0 -and $cross.Radius -gt 0) 'Real local rifle firing opens the rendered P2 crosshair for next-round bloom'
     Qa $p2 'qa_inject_input' | Out-Null
     Check ($b.Ammo -lt $ammo) 'P2 fire reaches authoritative ammo/shot state'
     $logs=Get-ChildItem $qa -Filter '*.log'

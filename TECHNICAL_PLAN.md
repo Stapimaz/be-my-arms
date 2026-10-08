@@ -105,13 +105,29 @@ Local rifle recoil updates controllable P2 aim, separately from cosmetic camera/
 `WeaponState`, `Loadouts`, buy and utility rules remain authoritative.
 
 Provisional additive movement spread radii: full crouch-walk **0.35°**, walk **0.75°**, sprint
-**2.5°**, airborne/jump/fall/dodge **3.5°**, slide **3°**, light/heavy kick **1.5°/4°**. Grounded
+**2.5°**, airborne/jump/fall/dodge **3.5°**, slide **0.75°–3°** (linear actual speed 0–9 m/s),
+light/heavy kick **1.5°/4°**. Grounded
 speed ≤0.10 m/s is treated as stationary; translation penalty scales with actual speed, while
 actions retain their disturbance even at zero translation. The existing movement sim stops
 without inertia, so movement accuracy returns on the stopped tick; no new CS-style acceleration
 or counter-strafe system was introduced. Burst bloom resets only after a >0.30 s shot pause.
-The rifle HUD shows current BODY motion penalty, not total burst spread or guaranteed accuracy.
-No new network payload, camera motion, damage value, pistol or knife handling was added.
+The BODY HUD text remains movement-only. P2's `DynamicCrosshair` additionally projects the next
+round's total movement + burst radius: `tan(spread) * pixelHeight / (2 * tan(verticalFov/2))`,
+converted to canvas units using the actual world camera (not viewmodel FOV). A thin ring bounds
+the angular spread disk; four high-contrast ticks retain a small minimum gap for readability,
+and the center dot retains aim. At zero spread only the dot/readability ticks remain. No extra
+crosshair animation, recoil multiplier, target lock, bullet obstruction or hit confirmation is inferred.
+
+`RifleAccuracyState` is a new server-written 16-byte accepted-shot snapshot (control epoch, shot
+tick, shot count and burst index), replicated only when changed/reset. It does not alter existing
+input/body-state payloads. `RifleSpreadPreview` combines that history with immediate local shot
+predictions, consumes confirmations without double-counting, recovers by shot age and expires
+unconfirmed predictions after a firing pause. Client `NextRifleSpreadDegrees` adds observed body
+motion using `RifleHandling`; no client accuracy value feeds into server firing. As with observed
+body snapshots, latency and rejected/queued shots can temporarily correct the displayed estimate.
+The HUD updates after this frame's aim/camera and hides outside alive P2 gameplay. No camera
+motion, damage value, pistol or knife handling changed. Near-cover camera/shot-origin offsets
+remain a separate limitation, so the ring is an angular error preview, not a guaranteed impact area.
 
 `CombatHitGeometry` provides exact ray/surface intersection for the standard competitive
 profile: a **0.35 m radius** torso/legs capsule ending below a **0.18 m radius** exposed P1-head

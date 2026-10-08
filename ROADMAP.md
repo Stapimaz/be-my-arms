@@ -1,6 +1,6 @@
 # Be My Arms — Roadmap
 
-**Current status: movement-dependent rifle accuracy ready for human playtest; positive bot feedback · Updated 2026-10-09**
+**Current status: dynamic P2 spread crosshair / speed-dependent slide accuracy ready for review · Updated 2026-10-09**
 
 Design: [GAME_CONCEPT.md](GAME_CONCEPT.md). Architecture: [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md).
 Run/build: [docs/DEV_ENVIRONMENT.md](docs/DEV_ENVIRONMENT.md).
@@ -43,7 +43,29 @@ arena/bot quality, generated audio/VFX, onboarding and round presentation, produ
 durable identities/security and final release readiness. Human visual/feel acceptance is not
 inferred from screenshots or green tests.
 
-## Current iteration — P1 movement / P2 rifle accuracy
+## Current iteration — visible P2 spread / speed-dependent slide error
+
+The user requested a dynamic crosshair that communicates the area a bullet can deviate into,
+not just body-motion text. Implemented as a follow-up to movement-dependent rifle accuracy:
+
+- P2's center dot retains the aim direction; four ticks and a thin circular envelope expand with
+  next-round movement + burst spread. World-camera FOV, viewport height and canvas scale determine
+  the projected size; no arbitrary motion animation or smoothing lag understates the area.
+- Accepted server burst/shot-tick/epoch/count metadata reconciles immediate local shot previews.
+  Late confirmations age from the shot tick, not arrival; round/role resets clear old previews.
+  The display remains a network-observed estimate, not a new hit/weapon authority.
+- Slide spread now scales from **0.75° at zero speed to 3° at 9 m/s**, decreasing as actual
+  collision-resolved speed falls. Active sliding retains a modest disturbance floor. Human/bot
+  shot simulation and HUD use the same shared accuracy model; movement mechanics are unchanged.
+- Crosshair is P2/live/alive/gameplay only; pause, role exchange and missing body/camera hide it.
+
+Technical checks: **239/239 EditMode tests**, **52/52 focused network rifle checks**, **9/9 Duel
+checks**, final Windows Development build succeeded (**0 errors, 0 reported warnings**). Rendered
+HUD checks cover projection and real firing expansion, not visual/feel acceptance.
+Stop for human readability/tuning review and next-step discussion. Near-cover camera/shot-origin
+agreement and hit-profile readability remain recommended follow-ups, not already-started work.
+
+## Previous iteration — P1 movement / P2 rifle accuracy
 
 After positive human feedback on the bots, the user requested CS-like movement-dependent
 accuracy: P1 movement should disrupt P2's shots, but a stationary first round should be exact.

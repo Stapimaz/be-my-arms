@@ -1,6 +1,6 @@
-# Current playtest — shared-body movement and rifle accuracy
+# Current playtest — dynamic P2 crosshair and shared-body accuracy
 
-**Rifle-accuracy follow-up after positive bot feedback · 2026-10-09**
+**Visible spread / speed-dependent slide follow-up · 2026-10-09**
 
 Build: `Builds/Windows/BeMyArms.exe`. **PLAY → Duel → P2 → Start Match** tests the P1 movement
 partner; repeat as **P1** to test the P2 weapon partner. Try Easy first, then Hard. F6 resets
@@ -15,6 +15,13 @@ an encounter; F7 exchanges practice roles. Use matching client/server builds.
   to recover first-round bloom; pausing while running still leaves movement error. Recoil remains.
 - The rifle HUD shows `BODY STABLE` or `BODY MOTION: +…° SPREAD` for both roles. This is only
   the body penalty, not total spread or a guarantee that the rifle burst has recovered.
+- P2's dynamic crosshair now shows total **next-round movement + burst spread**: a fixed center
+  dot marks aim; four ticks open and a thin ring indicates the angular error boundary. Its size
+  follows the actual camera FOV/resolution, not arbitrary pixels. At perfect accuracy, the ring
+  disappears and only the dot/small readable ticks remain. No cosmetic "shot kick" inflates it.
+- Sliding error shrinks with actual body speed (**0.75°–3°** over 0–9 m/s); an active slide still
+  has a modest disturbance floor. Server accepted-shot history corrects immediate local firing
+  previews. The crosshair is hidden while paused/dead, outside Live, or in the P1 role.
 
 ## Specifically evaluate accuracy first
 
@@ -26,9 +33,16 @@ an encounter; F7 exchanges practice roles. Use matching client/server builds.
    the continuing burst. Try jump/slide/dodge/kick: P2 can still fire but loses accuracy.
 4. Solo P2: does the accepted P1 bot's positioning give enough stable firing opportunities?
    Solo P1: can you feel your positioning affect the P2 weapon partner's effectiveness?
+5. Watch the crosshair during movement and a long spray: does opening/closing communicate when
+   precision is available? Does the thin boundary stay readable without obscuring small targets?
+   Compare window sizes/FOV if changing them. Stopping during spray must leave burst expansion;
+   a recovered stationary first round must collapse the error boundary.
+6. Slide and let it slow: both spread and the boundary should shrink rather than stay fixed-wide.
+   F6/F7, reload and pause/resume should not leave a stale spray indicator.
 
 Four-second spawn protection still suppresses damage; check **PROTECTED** before interpreting
-early misses. Zero spread does not fix the still-open near-cover origin/profile questions below.
+early misses. This is an angular-spread preview, not a hit guarantee: latency can correct the
+estimate and near-cover camera/shot-origin/profile agreement is still open below.
 
 ## Retained bot iteration
 
@@ -82,9 +96,10 @@ same bounds/boxes/surfaces as physical movement, so new maps need valid collisio
 current bounded local, single-floor-per-cell search is not final global/stacked-floor navigation
 or deep duo tactics; human findings will determine the next improvement.
 
-Current accuracy follow-up: **227/227 EditMode tests**, **41/41 focused network rifle checks**,
-**7/7 Duel startup/control smoke checks**;
-Windows build succeeded (**0 errors, 42 existing deprecated Unity/NGO API/unused-field warnings**).
+Current crosshair follow-up: **239/239 EditMode tests**, **52/52 focused network rifle checks**,
+**9/9 Duel startup/control/HUD checks** (including projected radius and real firing expansion);
+Final Windows build succeeded (**0 errors, 0 reported warnings**); the initial full compile
+reported the existing deprecated Unity/NGO API/unused-field warnings.
 The prior bot slice passed Easy/Hard authoritative bot-controller checks and **22 session/role/
 lifecycle checks** and received positive human feedback. Technical checks do not accept accuracy
 balance, visual alignment or final AI quality. No screenshot exercise is required.

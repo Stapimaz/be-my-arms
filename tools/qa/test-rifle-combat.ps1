@@ -50,6 +50,7 @@ object Value(object obj,string name)=>Field(obj,name).GetType().GetProperty("Val
 var events=(System.Collections.Generic.List<object>)System.AppDomain.CurrentDomain.GetData("CombatEvents");
 var impacts=(System.Collections.Generic.List<UnityEngine.Vector3>)System.AppDomain.CurrentDomain.GetData("CombatImpacts");
 return new { Health=Field(Value(target,"State"),"Health"),Alive=Value(target,"Alive"),Shots=Value(own,"ShotsFired"),Ammo=Value(own,"Ammo"),Kills=Value(own,"Kills"),
+    Accuracy=Value(own,"RifleAccuracy"),
     Events=events.Select(e=>new {Amount=Field(e,"Amount"),Killed=Field(e,"Killed"),AttackerTeam=Field(e,"AttackerTeam"),VictimTeam=Field(e,"VictimTeam"),AttackerEpoch=Field(e,"AttackerEpoch"),Region=Field(e,"Region").ToString(),Kind=Field(e,"Kind").ToString(),Point=new[]{((UnityEngine.Vector3)Field(e,"Point")).x,((UnityEngine.Vector3)Field(e,"Point")).y,((UnityEngine.Vector3)Field(e,"Point")).z}}).ToArray(),
     Impacts=impacts.Select(p=>new[]{p.x,p.y,p.z}).ToArray() };
 '@
@@ -167,7 +168,7 @@ System.AppDomain.CurrentDomain.SetData("CombatEvents",events);System.AppDomain.C
     foreach($case in @(
         @{Mode='idle';Spread=0},@{Mode='crouch';Spread=0},@{Mode='crouch-walk';Spread=.35},
         @{Mode='walk';Spread=.75},@{Mode='sprint';Spread=2.5},@{Mode='jump';Spread=3.5},
-        @{Mode='dodge';Spread=3.5},@{Mode='slide';Spread=3},@{Mode='heavy-kick';Spread=4}
+        @{Mode='dodge';Spread=3.5},@{Mode='slide';Spread=.75},@{Mode='heavy-kick';Spread=4}
     )){
         $setup=Set-Case 'body'
         Move-Body $case.Mode
@@ -175,6 +176,8 @@ System.AppDomain.CurrentDomain.SetData("CombatEvents",events);System.AppDomain.C
         Wait-Combat $p2 {param($s)$s.Shots -eq 1} | Out-Null
         $shot=Read-Shot
         Check ([Math]::Abs($shot.Spread-$case.Spread) -lt .001) "$($case.Mode) : real P1 input determines P2 authoritative first-shot spread ($($case.Spread) degrees)"
+        $remote=Read-Combat $p2
+        Check ($remote.Accuracy.Burst -eq 1 -and $remote.Accuracy.Shots -eq 1 -and $remote.Accuracy.ControlEpoch -eq $setup.Epoch) "$($case.Mode) : P2 receives accepted rifle burst/tick/epoch for crosshair recovery"
         if($case.Spread -eq 0){Check ($shot.DirectionError -lt .000001) "$($case.Mode) : stationary first bullet is exactly the submitted aim ray"}
     }
     $setup=Set-Case 'body';Move-Body 'sprint';Trigger $p2 $setup.Pitch
@@ -186,6 +189,14 @@ System.AppDomain.CurrentDomain.SetData("CombatEvents",events);System.AppDomain.C
     Trigger $p2 $setup.Pitch
     $shot=Read-Shot
     Check ($shot.Spread -eq 0 -and $shot.DirectionError -lt .000001) 'A stopped and recovered rifle returns to an exact first-shot ray'
+    $setup=Set-Case 'body';Move-Body 'slide';Advance-Ticks 1
+    Advance-Ticks 1;Trigger $p2 $setup.Pitch
+    $fast=Read-Shot
+    Advance-Ticks 19;Trigger $p2 $setup.Pitch
+    $slow=Read-Shot
+    Check ($fast.Speed -gt $slow.Speed -and $fast.Spread -gt $slow.Spread) 'Slide first-round body penalty decreases with real collision-resolved speed'
+    $remote=Read-Combat $p2
+    Check ($remote.Accuracy.Burst -eq 1 -and $remote.Accuracy.Shots -eq 2) 'Server shot-pause recovery is replicated instead of treating late receipt as a new spray'
     $setup=Set-Case 'head'
     for($i=0;$i -lt 3;$i++){
         # Advance the actual weapon clock between rounds without leaving the deterministic fixture.

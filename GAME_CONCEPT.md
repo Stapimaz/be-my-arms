@@ -103,6 +103,10 @@ not a demand to duplicate its movement, economy or exact weapon handling.
   a brief pause (currently over 0.30 s) recovers burst accuracy. Stopping removes movement error,
   not ongoing spray bloom; pausing while running does not remove movement error. Cosmetic
   viewmodel kick is separate from actual aim. Zero spread is not automatic target acquisition.
+- P2 must see that dependency directly: dynamic crosshair ticks and a thin spread boundary show
+  the next round's movement + burst error, projected with the world-camera FOV. The center dot
+  stays on aim. Slide spread decreases with actual sliding speed; no arbitrary cosmetic expansion
+  disconnected from the shot model. Network observations/predictions can be corrected by the server.
 - Server results—not client effects—decide ammo legality, hits, damage and kills.
 - Detailed TTK, damage, recoil, spread, ammunition and recovery are playtest tuning.
 
