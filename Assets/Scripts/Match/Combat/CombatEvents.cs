@@ -2,6 +2,8 @@ using UnityEngine;
 
 namespace BeMyArms.Match
 {
+    public enum DamageKind : byte { World, Weapon, Kick }
+
     /// <summary>One authoritative damage event, broadcast to clients after the server resolved it.</summary>
     public struct DamageEvent
     {
@@ -11,9 +13,18 @@ namespace BeMyArms.Match
         public int VictimBody;
         public Vector3 Point;
         public bool Killed;
+        public int Amount;
+        public DamageKind Kind;
+        public BeMyArms.Core.HitboxRegion.Region Region;
+        public uint AttackerEpoch;
+        public uint VictimEpoch;
 
         public bool IsAttacker(int team, int body) => AttackerTeam == team && AttackerBody == body;
         public bool IsVictim(int team, int body) => VictimTeam == team && VictimBody == body;
+        public bool ConfirmsFor(int team, int body, uint epoch)
+            => Amount > 0 && Kind != DamageKind.World && IsAttacker(team, body) && AttackerEpoch == epoch;
+        public bool Hurts(int team, int body, uint epoch)
+            => Amount > 0 && IsVictim(team, body) && VictimEpoch == epoch;
     }
 
     /// <summary>

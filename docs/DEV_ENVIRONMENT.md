@@ -108,12 +108,19 @@ unity command eval_file tools/maintenance/audit-unity-references.cs 30000 --time
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/smoke-duel.ps1
 # Broader session/peer-loss regression: use when ownership/lifecycle/Transport changes
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/test-session-lifecycle.ps1 -BuildDirectory Builds/Windows
+# Focused rifle geometry/damage/feedback integration: real client RPCs and server ticks
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/test-rifle-combat.ps1
 ```
 
 Run runtime scripts **sequentially**: multiple processes share the build directory's Pipeline
 descriptor. `--runtime-path` takes the directory containing `.unity-pipeline-runtime-port`, not
 the descriptor file. Each script snapshots its own process's descriptor, checks results and
 cleans up its processes. Runtime QA needs a Development build.
+
+The rifle test creates isolated headless processes, freezes only its disposable combat fixture,
+then submits real role-authenticated input and advances the ordinary server tick. It checks
+history/cover/region damage and the events received by both roles; it does not evaluate pixels
+or balance. Never run `rifle-combat-fixture.cs` against a human playtest session.
 
 Prefer `qa_player_state`, `qa_ui_state` and focused input commands for objective debugging.
 No screenshot is required to prove startup/ownership. Capture images only to answer an actual

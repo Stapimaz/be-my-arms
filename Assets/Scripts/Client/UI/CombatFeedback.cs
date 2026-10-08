@@ -17,6 +17,7 @@ namespace BeMyArms.Client
         RectTransform _hitmarker;
         Image[] _hitArms;
         Text _death;
+        Text _confirmation;
 
         NetworkBodyClient _client;
 
@@ -24,6 +25,8 @@ namespace BeMyArms.Client
         float _hitDuration = 0.12f;
         Color _hitColor = new Color(1f, 1f, 1f, 0.95f);
         float _deathTimer;
+        uint _feedbackEpoch = uint.MaxValue;
+        int _feedbackRole = -1;
 
         void Awake()
         {
@@ -69,6 +72,9 @@ namespace BeMyArms.Client
                 _hitArms[i] = arm;
             }
             _hitmarker.gameObject.SetActive(false);
+            _confirmation = Ui.Label(_hitmarker, "Confirmation", "", 18, TextAnchor.MiddleCenter);
+            Ui.Place(_confirmation.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -38f), new Vector2(460f, 30f));
+            _confirmation.raycastTarget = false;
 
             _death = Ui.Label(_canvas.transform, "Death", "", 54, TextAnchor.MiddleCenter);
             Ui.Place(_death.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 140f), new Vector2(900f, 90f));
@@ -78,6 +84,7 @@ namespace BeMyArms.Client
 
         void Update()
         {
+            RefreshLocalContext();
             float dt = Time.deltaTime;
 
             if (_hitTimer > 0f)
@@ -107,16 +114,16 @@ namespace BeMyArms.Client
         void OnDamage(DamageEvent e)
         {
             if (_canvas == null) return; // dedicated server / headless: no local UI
-            if (_client == null) _client = FindLocalClient();
+            RefreshLocalContext();
             int team = _client != null ? _client.LocalTeam : -1;
             int body = _client != null ? _client.LocalBody : -1;
-            bool localAttacker = team >= 0 && e.IsAttacker(team, body);
-            bool localVictim = team >= 0 && e.IsVictim(team, body);
+            bool localAttacker = team >= 0 && e.ConfirmsFor(team, body, _client.ControlEpoch);
+            bool localVictim = team >= 0 && e.Hurts(team, body, _client.ControlEpoch);
 
             if (VfxService.Instance != null && e.Point != Vector3.zero)
                 VfxService.Instance.Spawn(VfxId.ImpactFlesh, e.Point, Quaternion.identity);
 
-            if (localAttacker) ShowHitmarker(e.Killed);
+            if (localAttacker) ShowHitmarker(e);
             if (localVictim) ShowDamage(e.Killed);
         }
 
@@ -127,18 +134,44 @@ namespace BeMyArms.Client
                 VfxService.Instance.Spawn(VfxId.ImpactWorld, point, Quaternion.identity);
         }
 
-        void ShowHitmarker(bool killed)
+        public static string ConfirmationText(in DamageEvent e, int role)
+        {
+            string text = e.Kind == DamageKind.Kick ? (role == 0 ? "KICK HIT" : "PARTNER KICK")
+                : e.Region == BeMyArms.Core.HitboxRegion.Region.Head ? (role == 1 ? "HEAD HIT" : "PARTNER HEAD HIT")
+                : role == 0 ? "PARTNER HIT" : "";
+            return e.Killed ? (text.Length > 0 ? text + " — ELIMINATION" : "ELIMINATION") : text;
+        }
+
+        void RefreshLocalContext()
+        {
+            if (_client == null || !_client.IsLocalOwnBody) _client = FindLocalClient();
+            uint epoch = _client != null ? _client.ControlEpoch : uint.MaxValue;
+            int role = _client != null ? _client.LocalRoleIndex : -1;
+            if (epoch == _feedbackEpoch && role == _feedbackRole) return;
+            _feedbackEpoch = epoch;
+            _feedbackRole = role;
+            _hitTimer = _deathTimer = 0f;
+            if (_hitmarker != null) _hitmarker.gameObject.SetActive(false);
+            if (_death != null) _death.gameObject.SetActive(false);
+            if (_vignette != null) { _vignette.color = new Color(0.75f, 0.03f, 0.02f, 0f); _vignette.enabled = false; }
+        }
+
+        void ShowHitmarker(DamageEvent e)
         {
             if (_hitmarker == null) return;
-            _hitColor = killed ? new Color(1f, 0.30f, 0.25f, 1f) : new Color(1f, 1f, 1f, 0.95f);
+            bool head = e.Kind == DamageKind.Weapon && e.Region == BeMyArms.Core.HitboxRegion.Region.Head;
+            _hitColor = e.Killed ? new Color(1f, 0.30f, 0.25f, 1f)
+                : head ? new Color(1f, 0.78f, 0.24f, 1f) : new Color(1f, 1f, 1f, 0.95f);
             for (int i = 0; i < _hitArms.Length; i++) _hitArms[i].color = _hitColor;
-            _hitDuration = killed ? 0.28f : 0.12f;
+            _confirmation.text = ConfirmationText(e, _feedbackRole);
+            _confirmation.color = _hitColor;
+            _hitDuration = e.Killed ? 0.6f : _confirmation.text.Length > 0 ? 0.45f : 0.12f;
             _hitTimer = _hitDuration;
             _hitmarker.gameObject.SetActive(true);
-            _hitmarker.localScale = Vector3.one * (killed ? 1.4f : 1.15f);
+            _hitmarker.localScale = Vector3.one * (e.Killed ? 1.4f : 1.15f);
 
             AudioService audio = AudioService.Instance;
-            if (audio != null) audio.Play(killed ? AudioId.Elimination : AudioId.HitBody);
+            if (audio != null) audio.Play(e.Killed ? AudioId.Elimination : head ? AudioId.Headshot : AudioId.HitBody);
         }
 
         void ShowDamage(bool killed)

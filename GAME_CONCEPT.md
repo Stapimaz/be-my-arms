@@ -103,10 +103,17 @@ not a demand to duplicate its movement, economy or exact weapon handling.
 - Server results—not client effects—decide ammo legality, hits, damage and kills.
 - Detailed TTK, damage, recoil, spread, ammunition and recovery are playtest tuning.
 
-**Current limitation:** networked damage uses a simplified historical body-hit model and
-flat weapon damage. The intended exposed P1-head critical region and fully truthful
-shot/hit presentation are not all implemented. Phase 3 addresses rifle-combat truthfulness;
-the normalization checkpoint must not quietly implement it.
+**Current implementation:** rifle shots use a standardized body capsule and exposed P1-head
+sphere, with target position/height/stance rewound together. Body hits remain **18 damage**;
+head hits are provisionally **45 damage (2.5×)** against shared 100 HP—six body hits or three
+head hits from full health, not an instant kill. These are playtest values, not locked balance.
+Both roles receive server-confirmed hit/elimination information, distinguishing P2's weapon
+from P1's kick contribution. A protected target does not produce a damage-confirmation marker.
+
+**Current limitation:** these are competitive gameplay volumes, not animated skeletal/limb
+colliders. Cosmetic sensors are never critical. Limb edges/action poses, camera-to-shot-origin
+agreement near cover, movement accuracy and remaining shot presentation need further review;
+Phase 3 is underway, not declared complete.
 
 ### P1 melee
 
@@ -149,7 +156,8 @@ Current competitive direction:
   P1 can see the loadout. A persistent CS-style economy is not currently required.
 
 Current arenas and bots are playable foundations, not final proof of competitive map quality
-or bot competence. Purposeful arena/bot work is sequenced after rifle combat.
+or bot competence. Rifle combat is the current focus; human evidence may bring a targeted
+arena/bot improvement forward when positioning or partner behavior obstructs useful playtests.
 
 ## 6. Sessions, ranked and communication
 

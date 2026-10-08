@@ -91,17 +91,34 @@ control of both roles. These are accepted architecture foundations.
 
 Authoritative fire validates ownership/epoch, cadence, ammo/weapon/live state and historical
 aim-sector legality. Historical body orientation matters because P1 owns the sector. Rewind
-is bounded. The existing histories approximate body targets rather than animated skeletal regions.
+is bounded. `LagCompensation` now retains the target's complete `BodyState`, life flag and
+control epoch together; rifle resolution cannot combine historical X/Z with live Y/stance or
+hit a pre-reset life. The old X/Z API remains for the diagnostic prediction sample.
 
 `RifleHandling` advances burst state on accepted rifle rounds; bloom affects the actual
 server hit/obstruction ray. Hit evaluation and impact presentation share the spread ray.
 Local rifle recoil updates controllable P2 aim, separately from cosmetic camera/viewmodel kick.
 `WeaponState`, `Loadouts`, buy and utility rules remain authoritative.
 
-**Not implemented as final gunplay:** skeletal/head-region truthful damage, full production
-ballistics/feedback and final weapon/utility balance. Current target testing is simplified,
-and weapon damage is flat. Utility uses existing simplified resolution/effect state, not a
-fully finished physical throw pipeline. Those gaps are Phase 3 or later work, not this refactor.
+`CombatHitGeometry` provides exact ray/surface intersection for the standard competitive
+profile: a **0.35 m radius** torso/legs capsule ending below a **0.18 m radius** exposed P1-head
+sphere. It follows authoritative feet/height/facing; the crouched head has a 0.20 m forward
+offset informed by the existing shared rig. It never reads client bones or cosmetic meshes.
+Nearest surface entry—not center distance—orders targets against solid cover. An accepted
+damage event carries the actual historical hit point, region, applied HP loss, source kind,
+kill flag and attacker/victim epochs. Spawn protection produces no damage confirmation.
+
+Rifle damage is **18 body / 45 head (2.5×)** as provisional playtest tuning; other weapon stats
+are unchanged. `CombatFeedback` consumes only server events and rejects stale local epochs.
+Both roles receive shared confirmation, with own/partner weapon-versus-kick labels and a
+distinct head-hit cue using the existing headshot audio. There is no client-guessed hitmarker.
+
+**Not implemented as final gunplay:** per-limb/animated skeletal hitboxes, final profile
+readability during action poses, complete camera-to-shot-origin agreement near cover, full
+production ballistics/feedback and final weapon/utility balance. Target volumes remain an
+approximation of anatomy, and rewind still uses the existing bounded fixed-time sampling,
+not per-client latency estimation. Utility/smoke retain their existing simplified rules.
+These are ongoing combat work, not reasons to rewrite prediction or the accepted cameras.
 
 Kicks capture look direction in action state. Server hit selection and `CharacterAnimator`
 use that captured direction; the cosmetic leg extension is not an authoritative bone collider.

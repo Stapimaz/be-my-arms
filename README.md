@@ -3,9 +3,9 @@
 Two players, one fighter: **P1 controls body/movement; P2 controls arms/weapons/aim**.
 Unity 6 / URP, NGO + Unity Transport, server-authoritative shared-body multiplayer.
 
-**Current state:** accepted playable **pre-Phase-3** checkpoint, normalized by responsibility.
-Phase 3 gameplay work has not started. Current P2 POV is accepted for now; further visual
-quality/feel remains a human judgement.
+**Current state:** first **Phase 3 rifle-combat iteration**, ready for human playtest, on the
+accepted normalized baseline. Rifle hits now resolve against historical body/head volumes,
+with confirmed head-hit feedback. Current controls and P2 POV are preserved.
 
 ## Start here
 
@@ -14,6 +14,7 @@ quality/feel remains a human judgement.
 3. [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md) — architecture that actually exists.
 4. [Development / run / build](docs/DEV_ENVIRONMENT.md) — practical setup and commands.
 5. [Repository structure](docs/REPOSITORY_STRUCTURE.md) — domain map and migration exceptions.
+6. [Current playtest](docs/PLAYTEST.md) — what changed and what to evaluate.
 
 Build entry: `tools/build/build-player.cs`. Output: `Builds/Windows/BeMyArms.exe`.
 Play: **PLAY → Duel → P1/P2 → Start Match**, with a bot teammate for solo testing.
@@ -23,5 +24,5 @@ and a separate Samples folder. Current shared-rig character assets live under
 `Assets/Art/Characters/SharedRig`. History and investigative tooling are in
 [docs/archive](docs/archive/README.md) and `tools/archive`, not the current source of truth.
 
-Use Git LFS. Preserve `.meta` GUIDs and the embedded Transport patch. Do not regenerate assets,
-change networking architecture, or start another phase implicitly during cleanup.
+Use Git LFS. Preserve `.meta` GUIDs, role ownership and the embedded Transport patch. Build
+matching client/server binaries. Automated checks do not accept visual readability or game feel.

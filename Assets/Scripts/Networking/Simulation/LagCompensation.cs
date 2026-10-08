@@ -13,8 +13,8 @@ namespace BeMyArms.Networking
         {
             public double Time;
             public float BodyYaw;
-            public float TargetX;
-            public float TargetZ;
+            public BodyState Target;
+            public bool Alive;
         }
 
         readonly List<Sample> _samples = new List<Sample>();
@@ -25,8 +25,12 @@ namespace BeMyArms.Networking
         public int SampleCount => _samples.Count;
 
         public void Record(double time, float bodyYaw, float targetX, float targetZ)
+            => Record(time, bodyYaw, new BodyState { PosX = targetX, PosZ = targetZ }, true);
+
+        /// <summary>Capture the whole combat pose together: no mixing historical X/Z with live Y/stance.</summary>
+        public void Record(double time, float bodyYaw, in BodyState target, bool alive)
         {
-            _samples.Add(new Sample { Time = time, BodyYaw = bodyYaw, TargetX = targetX, TargetZ = targetZ });
+            _samples.Add(new Sample { Time = time, BodyYaw = bodyYaw, Target = target, Alive = alive });
             double cutoff = time - MaxRewindSeconds - 0.5;
             int removeCount = 0;
             while (removeCount < _samples.Count && _samples[removeCount].Time < cutoff) removeCount++;
@@ -41,9 +45,17 @@ namespace BeMyArms.Networking
         /// </summary>
         public bool TryRewind(double time, out float bodyYaw, out float targetX, out float targetZ)
         {
+            bool found = TryRewindPose(time, out bodyYaw, out BodyState target, out _);
+            targetX = target.PosX;
+            targetZ = target.PosZ;
+            return found;
+        }
+
+        public bool TryRewindPose(double time, out float bodyYaw, out BodyState target, out bool alive)
+        {
             bodyYaw = 0f;
-            targetX = 0f;
-            targetZ = 0f;
+            target = default;
+            alive = false;
             if (_samples.Count == 0) return false;
 
             double maxTime = _samples[_samples.Count - 1].Time;
@@ -60,8 +72,8 @@ namespace BeMyArms.Networking
             }
 
             bodyYaw = best.BodyYaw;
-            targetX = best.TargetX;
-            targetZ = best.TargetZ;
+            target = best.Target;
+            alive = best.Alive;
             return true;
         }
     }

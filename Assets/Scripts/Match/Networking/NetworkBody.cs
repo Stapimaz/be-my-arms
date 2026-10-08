@@ -1,4 +1,5 @@
 using System;
+using BeMyArms.Core;
 using BeMyArms.Networking;
 using Unity.Netcode;
 using UnityEngine;
@@ -56,7 +57,6 @@ namespace BeMyArms.Match
         public float InputDelaySeconds = 0.05f;
         public float LossPercent = 2f;
         public float LagRewindSeconds = 0.1f;
-        public float TargetRadius = 0.6f;
 
         public NetworkVariable<byte> Team = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         public NetworkVariable<byte> BodyIndex = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -243,7 +243,7 @@ namespace BeMyArms.Match
         /// <summary>Resamples the Easy bot's current shot offset from the configured accuracy target.</summary>
         void SampleBotShot()
         {
-            BotAim.SampleShotOffset(EasyBotAccuracy, TargetRadius + 0.15f,
+            BotAim.SampleShotOffset(EasyBotAccuracy, CombatHitGeometry.BodyRadius,
                 _botRng.NextDouble(), _botRng.NextDouble(), _botRng.NextDouble(),
                 out _botShotRight, out _botShotUp);
         }
@@ -312,7 +312,8 @@ namespace BeMyArms.Match
         }
 
         [ClientRpc]
-        void DamageFeedbackClientRpc(byte attackerTeam, byte attackerBody, byte victimTeam, byte victimBody, Vector3 point, bool killed)
+        void DamageFeedbackClientRpc(byte attackerTeam, byte attackerBody, byte victimTeam, byte victimBody,
+            Vector3 point, bool killed, int amount, DamageKind kind, byte region, uint attackerEpoch, uint victimEpoch)
         {
             CombatEvents.RaiseDamage(new DamageEvent
             {
@@ -321,7 +322,12 @@ namespace BeMyArms.Match
                 VictimTeam = victimTeam == 255 ? -1 : victimTeam,
                 VictimBody = victimBody == 255 ? -1 : victimBody,
                 Point = point,
-                Killed = killed
+                Killed = killed,
+                Amount = amount,
+                Kind = kind,
+                Region = (HitboxRegion.Region)region,
+                AttackerEpoch = attackerEpoch,
+                VictimEpoch = victimEpoch
             });
         }
 
@@ -381,15 +387,12 @@ namespace BeMyArms.Match
                 BlindRemaining.Value = _blindRemaining;
             }
 
-            // Record the shooter's orientation and each enemy position so a fire can be validated
-            // against what the shooter saw (historical sector + rewound targets).
+            // Record each enemy's complete pose; rewind must retain its vertical position, stance
+            // and life/control epoch, not borrow those fields from a newer snapshot.
             for (int i = 0; i < _enemies.Length; i++)
             {
                 NetworkBody e = _enemies[i];
-                float ex = e != null ? e.State.Value.PosX : 0f;
-                float ez = e != null ? e.State.Value.PosZ : 0f;
-                if (e != null && e.Alive.Value) _lag[i].Record(_serverTime, _sim.State.BodyYaw, ex, ez);
-                else _lag[i].Record(_serverTime, _sim.State.BodyYaw, ex, ez);
+                if (e != null) _lag[i].Record(_serverTime, _sim.State.BodyYaw, e.State.Value, e.Alive.Value);
             }
 
             // Movement advances exactly once per server tick, never once per packet. Missing
@@ -480,7 +483,7 @@ namespace BeMyArms.Match
                 if (forward < bestForward) { bestForward = forward; best = enemy; }
             }
 
-            if (best != null) _director.ServerApplyDamage(best, damage, this);
+            if (best != null) _director.ServerApplyDamage(best, damage, this, kind: DamageKind.Kick);
         }
 
         void ProcessP2(in P2Input input)
@@ -539,31 +542,31 @@ namespace BeMyArms.Match
 
             NetworkBody bestTarget = null;
             float bestForward = float.MaxValue;
+            CombatHit bestHit = default;
             float bestX = 0f, bestZ = 0f;
             for (int i = 0; i < _enemies.Length; i++)
             {
                 NetworkBody enemy = _enemies[i];
                 if (enemy == null || !enemy.Alive.Value) continue;
-                if (!_lag[i].TryRewind(_serverTime - LagRewindSeconds, out _, out float ex, out float ez)) continue;
-
-                float enemyFeet = enemy.State.Value.PosY;
-                float enemyHeight = enemy.State.Value.HitHeight > 0.01f ? enemy.State.Value.HitHeight : 1.8f;
-                float forward = RaySegmentDistance(origin, dir, ex, enemyFeet, ez, enemyHeight, stats.RangeMeters, out float lateral);
-                if (lateral > TargetRadius + 0.15f || forward <= 0f) continue;
-                if (wallBlocked && wallDistance < forward) continue;
-                if (forward < bestForward)
+                if (!_lag[i].TryRewindPose(_serverTime - LagRewindSeconds, out _, out BodyState historical, out bool alive)) continue;
+                if (!alive || historical.ControlEpoch != enemy.State.Value.ControlEpoch) continue;
+                if (!CombatHitGeometry.Raycast(origin, dir, historical, stats.RangeMeters, out CombatHit hit)) continue;
+                if (wallBlocked && wallDistance <= hit.Distance) continue;
+                if (hit.Distance < bestForward)
                 {
-                    bestForward = forward;
+                    bestForward = hit.Distance;
                     bestTarget = enemy;
-                    bestX = ex;
-                    bestZ = ez;
+                    bestHit = hit;
+                    bestX = historical.PosX;
+                    bestZ = historical.PosZ;
                 }
             }
 
             if (bestTarget != null && (_director == null || !_director.Utility.BlocksLine(_serverTime, _sim.State.PosX, _sim.State.PosZ, bestX, bestZ)))
             {
-                _validatedHits++;
-                _director.ServerApplyDamage(bestTarget, stats.Damage, this);
+                int applied = _director.ServerApplyDamage(bestTarget, stats.DamageFor(bestHit.Region), this,
+                    bestHit.Point, bestHit.Region, DamageKind.Weapon);
+                if (applied > 0) _validatedHits++;
             }
             else if (bestTarget == null && wallBlocked && wallDistance < stats.RangeMeters)
             {
@@ -574,44 +577,19 @@ namespace BeMyArms.Match
             _sim.ApplyP2(in input);
         }
 
-        /// <summary>
-        /// Closest approach between a (normalised) ray and an enemy's vertical body segment, sampled
-        /// along the segment. Returns the forward distance and the lateral miss distance. Public so the
-        /// bot-accuracy test can exercise the same authoritative geometry.
-        /// </summary>
-        public static float RaySegmentDistance(Vector3 origin, Vector3 dir, float cx, float feet, float cz,
-            float height, float range, out float lateral)
-        {
-            const int samples = 8;
-            float bestForward = -1f;
-            lateral = float.MaxValue;
-            for (int s = 0; s <= samples; s++)
-            {
-                float y = feet + height * (s / (float)samples);
-                Vector3 p = new Vector3(cx, y, cz);
-                float t = Vector3.Dot(p - origin, dir);
-                if (t <= 0f || t > range) continue;
-                float miss = Vector3.Distance(origin + dir * t, p);
-                if (miss < lateral)
-                {
-                    lateral = miss;
-                    bestForward = t;
-                }
-            }
-            return bestForward;
-        }
-
         /// <summary>Server-only: apply damage from a validated hit (or grenade/zone). Discrete hit
         /// damage lands immediately; continuous zone damage accumulates fractionally.</summary>
-        public void ServerTakeDamage(float damage, NetworkBody attacker)
+        public int ServerTakeDamage(float damage, NetworkBody attacker, Vector3? hitPoint = null,
+            HitboxRegion.Region region = HitboxRegion.Region.Body, DamageKind kind = DamageKind.World)
         {
-            if (!IsServer || !Alive.Value || damage <= 0f) return;
-            if (_spawnGraceRemaining > 0f) return; // brief post-spawn protection
+            if (!IsServer || !Alive.Value || damage <= 0f) return 0;
+            if (_spawnGraceRemaining > 0f) return 0; // brief post-spawn protection
             _damageRemainder += damage;
             int amount = Mathf.FloorToInt(_damageRemainder);
-            if (amount <= 0) return;
+            if (amount <= 0) return 0;
             _damageRemainder -= amount;
 
+            int applied = Mathf.Min(amount, _sim.State.Health);
             _sim.State.Health -= amount;
             if (_sim.State.Health < 0) _sim.State.Health = 0;
             State.Value = _sim.State;
@@ -623,8 +601,9 @@ namespace BeMyArms.Match
                 attacker != null ? (byte)attacker.TeamIndex : (byte)255,
                 attacker != null ? (byte)attacker.BodyId : (byte)255,
                 (byte)TeamIndex, (byte)BodyId,
-                new Vector3(_sim.State.PosX, _sim.State.PosY + 1.15f, _sim.State.PosZ),
-                _sim.State.Health <= 0);
+                hitPoint ?? new Vector3(_sim.State.PosX, _sim.State.PosY + _sim.State.HitHeight * 0.55f, _sim.State.PosZ),
+                _sim.State.Health <= 0, applied, kind, (byte)region,
+                attacker != null ? attacker._controlEpoch : 0u, _controlEpoch);
 
             if (_sim.State.Health <= 0)
             {
@@ -633,6 +612,7 @@ namespace BeMyArms.Match
                 if (attacker != null) attacker.Kills.Value++;
                 if (_director != null) _director.OnBodyEliminated(TeamIndex);
             }
+            return applied;
         }
 
         /// <summary>Server-only: blind the two roles of this body (flash).</summary>

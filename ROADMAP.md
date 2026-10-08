@@ -1,6 +1,6 @@
 # Be My Arms — Roadmap
 
-**Current status: clean pre-Phase-3 baseline · Updated 2026-10-08**
+**Current status: Phase 3 rifle-hit iteration ready for human playtest · Updated 2026-10-08**
 
 Design: [GAME_CONCEPT.md](GAME_CONCEPT.md). Architecture: [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md).
 Run/build: [docs/DEV_ENVIRONMENT.md](docs/DEV_ENVIRONMENT.md).
@@ -11,14 +11,17 @@ Use **Phase N** for current development sequencing. Do not introduce new numbere
 script folders, class prefixes or phase-named asset directories. Code/content are named by
 responsibility. Older labels survive only in archives, migration compatibility metadata and Git.
 
-This roadmap owns sequence, not game-design changes. Each new phase requires explicit
-authorization. Repository normalization does **not** authorize Phase 3 gameplay work.
+This roadmap guides sequence, not artificial completion. Continued development is now
+authorized from the accepted normalized baseline. Use focused, concept-serving iterations;
+ask before genuine ambiguous product decisions, and preserve working foundations rather than
+rewriting them to satisfy a theoretical architecture or a phase label.
 
-## Current checkpoint
+## Accepted foundation
 
 The user has accepted the current P2 POV **for now**. No further POV iteration is scheduled.
-The accepted playable rollback tag is **`checkpoint/pre-phase-3-playable`**; repository
-normalization produces **`checkpoint/pre-phase-3-normalized`** without rewriting gameplay.
+The accepted playable rollback tag is **`checkpoint/pre-phase-3-playable`**; the accepted
+domain-normalized rollback tag is **`checkpoint/pre-phase-3-normalized`**. The user confirmed
+that the game still feels the same after cleanup. Neither tag is moved by later development.
 
 The checkpoint contains:
 
@@ -35,20 +38,44 @@ The checkpoint contains:
 - Domain-organized source, GUID-preserving asset migration, canonical docs, and historical
   studies separated from current run/build entry points.
 
-Known gaps: simplified network hit regions/flat damage, incomplete combat-feedback truthfulness,
+Known gaps at that checkpoint: simplified network hit regions/flat damage, incomplete combat-feedback truthfulness,
 arena/bot quality, generated audio/VFX, onboarding and round presentation, production services,
 durable identities/security and final release readiness. Human visual/feel acceptance is not
 inferred from screenshots or green tests.
 
-## Next phases
+## Current iteration — rifle precision and shared confirmation
+
+Implemented, **awaiting human playtest**:
+
+- Replace oversized sampled-line hits with exact surface intersection against standardized
+  body/head volumes. Actual target Y, stance, facing and life/control epoch rewind with X/Z.
+- Resolve the closest unobstructed enemy surface and report that actual impact point.
+- Keep rifle body damage at 18; provisionally reward P1-head precision with 45 damage.
+  No armor, regeneration, role HP split, movement invulnerability or weapon lockout was added.
+- Give both roles authoritative confirmation. P1 sees partner weapon hits; P2 distinguishes
+  partner kicks. Head hits have distinct text/color/sound; elimination remains server-confirmed.
+- Preserve cameras/POV, local P2 aim/recoil/bloom, Elastic Soft, P1 movement/kicks, bot decisions,
+  session ownership and prediction. Easy bot miss offsets now use the new body radius so the
+  existing forgiving accuracy intent is not accidentally replaced by the smaller profile.
+
+Technical checks: **196 EditMode tests**, focused built-player network combat checks, a Windows
+build and normal rendered Duel startup/control smoke. This is not visual or balance acceptance.
+See [current playtest](docs/PLAYTEST.md).
+
+Next, use human evidence to prioritize hit-profile/readability adjustments and near-cover
+camera/shot-origin agreement. Do not mark rifle combat finished merely because headshots work.
+If positioning/bot behavior is the dominant playtest obstacle, a focused arena/bot improvement
+may precede remaining combat polish rather than enforcing phase order mechanically.
+
+## Development directions
 
 | Phase | Purpose | Exit gate |
 |---|---|---|
-| **3 — Truthful rifle combat** | Make rifle aim, shot obstruction, hit/damage regions and player feedback agree with authoritative outcomes. Preserve accepted control/camera/role foundations. Resolve remaining simplifications deliberately, not as a wholesale combat rewrite. | Relevant authority/hit tests plus human rifle-combat playtest; visible feedback must not claim an unconfirmed result. **Not started.** |
+| **3 — Truthful rifle combat** | Make rifle aim, shot obstruction, hit/damage regions and player feedback agree with authoritative outcomes. First iteration adds historical region hits and confirmed feedback; near-cover origin/presentation and profile readability still need evidence. | Relevant authority/hit tests plus human rifle-combat playtest; visible feedback must not claim an unconfirmed result. **In progress; awaiting first iteration review.** |
 | **4 — Purposeful arena and bots** | Build readable, useful Duel routes/cover/engagements; improve complementary-role and enemy bot decisions so both solo roles are useful playtest paths. | Human solo and duo matches demonstrate purposeful positioning, sightlines and partner behavior. |
 | **5 — Presentation, onboarding and round rhythm** | Explain the two-role dependency clearly, improve buy/live/end transitions and communication of teammate intent, and address approved presentation/content needs. | Fresh-player onboarding and full-round human review; avoid reopening accepted POV without new direction. |
 
-After Phase 5, proposed—not yet approved—work is:
+Later directions—not the current iteration—are:
 
 | Phase | Direction |
 |---|---|
@@ -67,7 +94,8 @@ defined explicitly; a structural foundation is not a release-quality claim.
 - For network changes: exercise the affected authority/session/transport path, not just mocks.
 - For visuals/feel: human review is the acceptance gate. Images can support diagnosis, not
   substitute for it. Do not build screenshot-heavy QA merely to make reports look comprehensive.
-- Do not silently expand a cleanup into gameplay tuning or the next phase.
+- Keep each iteration focused; phase names are not acceptance criteria. A cleanup alone does
+  not justify gameplay tuning, and technical passes never substitute for human acceptance.
 
 Historical sequence and evidence are intentionally outside this active roadmap in
 [docs/archive](docs/archive/README.md). Current checkpoint details and migration exceptions are

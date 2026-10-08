@@ -432,10 +432,11 @@ namespace BeMyArms.Match
             Log($"first contact at {(float)(Time.timeAsDouble - _liveStartTime):0.00}s (team {attackerTeam} -> team {victimTeam})");
         }
 
-        public void ServerApplyDamage(NetworkBody target, float damage, NetworkBody attacker)
+        public int ServerApplyDamage(NetworkBody target, float damage, NetworkBody attacker,
+            Vector3? hitPoint = null, BeMyArms.Core.HitboxRegion.Region region = BeMyArms.Core.HitboxRegion.Region.Body,
+            DamageKind kind = DamageKind.World)
         {
-            if (target == null) return;
-            target.ServerTakeDamage(damage, attacker);
+            return target != null ? target.ServerTakeDamage(damage, attacker, hitPoint, region, kind) : 0;
         }
 
         public void OnBodyEliminated(int team)

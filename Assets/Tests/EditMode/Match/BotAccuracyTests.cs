@@ -5,7 +5,7 @@ namespace BeMyArms.Match.Tests
 {
     /// <summary>
     /// Verifies that the Easy bot's per-shot offset model actually produces the intended hit rate
-    /// through the real authoritative ray/segment geometry (<see cref="NetworkBody.RaySegmentDistance"/>),
+    /// through the real authoritative hit profile (<see cref="CombatHitGeometry"/>),
     /// and that misses stay in a natural cluster rather than spraying in unrelated directions.
     /// </summary>
     public class BotAccuracyTests
@@ -13,8 +13,7 @@ namespace BeMyArms.Match.Tests
         [Test]
         public void EasyAccuracy_ObservedHitRateIsAboutTenPercent()
         {
-            const float targetRadius = 0.6f;
-            const float hitRadius = targetRadius + 0.15f;
+            const float hitRadius = CombatHitGeometry.BodyRadius;
             const float accuracy = 0.10f;
 
             var rng = new System.Random(20260927);
@@ -42,11 +41,11 @@ namespace BeMyArms.Match.Tests
                     float pitch = -Mathf.Atan2(to.y, Mathf.Sqrt(to.x * to.x + to.z * to.z)) * Mathf.Rad2Deg;
                     Vector3 dir = Quaternion.Euler(pitch, yaw, 0f) * Vector3.forward;
 
-                    float forward = NetworkBody.RaySegmentDistance(origin, dir, 0f, feet, d, height, 60f, out float lateral);
-                    bool hit = forward > 0f && lateral <= hitRadius;
+                    var target = new BeMyArms.Networking.BodyState { PosZ = d, PosY = feet, HitHeight = height };
+                    bool hit = CombatHitGeometry.Raycast(origin, dir, target, 60f, out _);
                     shots++;
                     if (hit) hits++;
-                    else { missSum += lateral; misses++; }
+                    else { missSum += System.Math.Abs(right); misses++; }
                 }
             }
 

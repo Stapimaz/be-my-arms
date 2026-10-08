@@ -10,7 +10,7 @@ namespace BeMyArms.Client
 {
     /// <summary>
     /// Player-facing match HUD: P1/P2 essentials, buy panel, round/match states and the post-match
-    /// return path. This is the real HUD (not the debug one) and the foundation for M8.
+    /// return path. Both roles see shared combat/partner state; neither gains the other's authority.
     /// </summary>
     [UnityEngine.Scripting.APIUpdating.MovedFrom(true, "BeMyArms.M7", "BeMyArms.M7", "M7MatchHudController")]
     public class MatchHudController : MonoBehaviour

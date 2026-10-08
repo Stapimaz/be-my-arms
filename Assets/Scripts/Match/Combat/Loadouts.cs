@@ -19,6 +19,11 @@ namespace BeMyArms.Match
         public int Magazine;
         public float ReloadSeconds;
         public float RangeMeters;
+        public float HeadshotMultiplier;
+
+        public float DamageFor(BeMyArms.Core.HitboxRegion.Region region)
+            => region == BeMyArms.Core.HitboxRegion.Region.Head && HeadshotMultiplier > 1f
+                ? Damage * HeadshotMultiplier : Damage;
 
         public float SecondsBetweenShots => 60f / (RoundsPerMinute <= 0f ? 1f : RoundsPerMinute);
     }
@@ -34,7 +39,7 @@ namespace BeMyArms.Match
             switch (id)
             {
                 case WeaponType.Rifle:
-                    return new WeaponStats { Id = id, DisplayName = "Rifle", Damage = 18f, RoundsPerMinute = 480f, Magazine = 30, ReloadSeconds = 2.2f, RangeMeters = 150f };
+                    return new WeaponStats { Id = id, DisplayName = "Rifle", Damage = 18f, HeadshotMultiplier = 2.5f, RoundsPerMinute = 480f, Magazine = 30, ReloadSeconds = 2.2f, RangeMeters = 150f };
                 case WeaponType.Smg:
                     return new WeaponStats { Id = id, DisplayName = "SMG", Damage = 12f, RoundsPerMinute = 720f, Magazine = 25, ReloadSeconds = 1.9f, RangeMeters = 80f };
                 case WeaponType.Shotgun:
