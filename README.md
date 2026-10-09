@@ -3,8 +3,9 @@
 Two players, one fighter: **P1 controls body/movement; P2 controls arms/weapons/aim**.
 Unity 6 / URP, NGO + Unity Transport, server-authoritative shared-body multiplayer.
 
-**Current state:** first **Boatyard Duel blockout**, ready for layout playtest: workshop/loading
-platform versus lower quay, a central repair yard and a low maintenance passage. Starting sides
+**Current state:** revised **coast-shaped Boatyard Duel blockout**, ready for layout playtest:
+workshop/loading platform versus a bent lower quay, tighter repair yard and a low maintenance
+passage. Unreachable background coastline/buildings suggest a larger place. Starting sides
 alternate each round; team/role ownership stays fixed. Visual direction, including characters,
 is deferred. Accepted controls, P2 POV, bots and motion-dependent rifle accuracy remain unchanged.
 

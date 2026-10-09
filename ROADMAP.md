@@ -1,6 +1,6 @@
 # Be My Arms — Roadmap
 
-**Current status: first Boatyard Duel blockout ready for layout review · Updated 2026-10-09**
+**Current status: coast-shaped Boatyard revision ready for layout review · Updated 2026-10-09**
 
 Design: [GAME_CONCEPT.md](GAME_CONCEPT.md). Architecture: [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md).
 Run/build: [docs/DEV_ENVIRONMENT.md](docs/DEV_ENVIRONMENT.md).
@@ -43,20 +43,41 @@ arena/bot quality, generated audio/VFX, onboarding and round presentation, produ
 durable identities/security and final release readiness. Human visual/feel acceptance is not
 inferred from screenshots or green tests.
 
-## Current iteration — first Boatyard Duel blockout
+## Current iteration — coast-shaped Boatyard blockout
 
 The user authorized the first purpose-built Duel map: a small coastal boat/engine repair
 business, with workshop/service and lower-quay starts, a loading platform, central repair
 yard and side maintenance passage. **Visual/art direction, including characters, is deferred**;
 neutral blockout materials do not establish a style. No 2v2 variant or additional map is built.
 
-Human review: the broad rectangular floor/perimeter still feels like a boxed arena, so the
-layout is **not accepted**. Proposed next layout: workshop/service pocket → tighter loading yard
-→ quay bending sideways along the coast, with the maintenance connection cutting across the
-bend. Reshape playable pockets and sightlines, not just the outer wall; avoid a forced maze.
-This proposal has not yet been authored or confirmed as the next revision.
+Human review rejected the first broad rectangular floor/perimeter as too much like a boxed
+arena. The user confirmed a natural-feeling place inside a larger scenic world, with unreachable
+background structures if useful. Implemented that direction; human layout acceptance is pending:
 
-Immediate bug follow-up: ramps had walkable tops but no solid volume in the shared numeric
+- Replace the full square ground with three connected quay pads bending around a land spur;
+  their combined footprint is 225 m². Narrow the loading yard; retain the workshop and ramps.
+- A pump-house mass separates the yard from the maintenance route and interrupts the old
+  diagonal arena crossing. Main approach rounds the quay bend; maintenance still reaches the
+  workshop side entrance, with its low service pipe. No forced single L-shaped corridor.
+- Different cliff depths/heights and service buildings form land-side limits. Open seaward
+  guards retain horizon views; individual posts/bar geometry, not an invisible solid panel,
+  blocks bodies while leaving visible gaps. Guard height follows the quay ramp.
+- Visual-only `Backdrop`: sea context, faceted coastal/island masses, neighboring workshops,
+  service-road continuation and a distant berth/boat. These are neutral blockout silhouettes,
+  not final art or playable space. They have no colliders and are excluded from map collision.
+- Map/record GUIDs, start poses, side alternation, match wiring and existing rig/controls are
+  preserved. The old full rectangle is recoverable from `96edf68` / `d003674`; existing legacy
+  arenas and rollback tags are unchanged. The live-Editor revision script refuses dirty or
+  already-revised scenes rather than overwriting later authoring.
+
+Verification: **17 focused Boatyard tests** passed: both approaches, ramps, current bot exits,
+spawn occlusion/clearance, backdrop separation and standing/crouch jumping at the raised guard.
+One Windows Development build succeeded (**0 errors, 0 reported warnings**), and **12 normal
+menu/shared-body smoke checks** passed, including both roles on the revised map and round-side
+reset. No full movement/combat/lifecycle suite rerun: simulation and network code are unchanged
+this revision. Stop for human layout/world-continuity feedback, not an automatic art pass.
+
+Previous bug follow-up: ramps had walkable tops but no solid volume in the shared numeric
 collision model. Filled, slope-clipped ramp volumes now block high-side/back entry and bullets,
 while retaining low-edge steps and ordinary ascent/descent. Bots use that same volume. Scene
 layout, human controls, prediction protocol and rifle handling are unchanged.
@@ -66,7 +87,8 @@ warnings**). No full suite, menu smoke or lifecycle rerun; the map layout has no
 
 - Menu Duel and duo practice now open `Boatyard`. The previous `DuelArena` remains unchanged
   and included in the build for explicit development launch; `TwoVsTwoArena` is unchanged.
-- Approximately 40 × 40 m bounds, three natural floor levels (0 / 1.2 / 2.4 m), four ramps,
+- Approximately 40 × 40 m defensive simulation bounds (not a rectangular playable floor),
+  three natural floor levels (0 / 1.2 / 2.4 m), four ramps,
   wide workshop space and functional crane/engine-rack/hull cover masses. The maintenance pipe
   needs crouch/slide. Existing geometry-based bots use the same deterministic collision.
 - Starts alternate each round; team identities, scores and human P1/P2 ownership do not swap.
@@ -75,7 +97,7 @@ warnings**). No full suite, menu smoke or lifecycle rerun; the map layout has no
   angles and near-cover camera/shot-origin disagreement. Correct layout before any art pass.
   Release content target is 5+ maps per mode, not this iteration's delivery scope.
 
-Verification: **9 focused map tests** passed, covering spawn clearance/occlusion, side schedule,
+First blockout verification: **9 focused map tests** passed, covering spawn clearance/occlusion, side schedule,
 all four ramps, crouch clearance and existing bot reachability. **12 menu/shared-body smoke checks**
 passed, including Boatyard entry and real server round-side resets preserving owners/slots/score.
 One Windows Development build succeeded (**0 errors, 42 existing warnings**). No full combat or

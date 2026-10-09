@@ -90,7 +90,7 @@ namespace BeMyArms.Client.Tests
 
         [TestCase(-9.6f, 0f, -6f, 90f, -9.4f, true)]
         [TestCase(-.4f, 1.2f, 5f, -90f, -1.6f, false)]
-        [TestCase(11.2f, 0f, -5.8f, 90f, 11.6f, true)]
+        [TestCase(11.2f, 0f, -7.5f, 90f, 11.6f, true)]
         public void HighRampSideBlocksInsteadOfSwallowingTheBody(float x, float y, float z, float yaw, float edge, bool below)
         {
             foreach (bool crouch in new[] { false, true })
@@ -142,6 +142,52 @@ namespace BeMyArms.Client.Tests
             // The upper side also has a genuinely reachable side entrance, not only the yard door.
             nav.Search(_collision, new Vector3(4.5f, 2.4f, 13.5f));
             Assert.IsTrue(nav.Reachable.Any(i => nav[i].Position.x > 13 && nav[i].Position.y < 1.3f));
+        }
+
+        [Test]
+        public void QuayIsBentAndBackdropIsVisualOnly()
+        {
+            var roots = _scene.GetRootGameObjects();
+            var arena = roots.Single(g => g.name == "Arena").transform;
+            Assert.IsNull(arena.Find("BMA_Map_Solid_SeaBoundary"));
+            Assert.IsNull(arena.Find("BMA_Map_Solid_QuayBoundary"));
+            var floors = arena.Cast<Transform>().Where(t => t.name.StartsWith("BMA_Map_Floor")).ToArray();
+            Assert.AreEqual(3, floors.Length, "Connected quay pads, not a continuous square base");
+            Assert.Less(floors.Sum(t => t.localScale.x * t.localScale.z), 300);
+            var backdrop = roots.Single(g => g.name == "Backdrop");
+            Assert.GreaterOrEqual(backdrop.transform.childCount, 8);
+            Assert.IsEmpty(backdrop.GetComponentsInChildren<Collider>());
+            Assert.IsFalse(_collision.RaycastSolids(25, .25f, -25, 0, 0, 1, 10, out _), "Remote moored boat is not pretend gameplay cover");
+        }
+
+        [Test]
+        public void MainQuayApproachRoundsTheSpurAndAlternateApproachReachesWorkshop()
+        {
+            var nav = new BotNavigation(); nav.Search(_collision, new Vector3(10, 0, -16));
+            var main = new[] { new Vector3(10, 0, -16), new Vector3(10, 0, -14.2f), new Vector3(-5, 0, -14.2f),
+                new Vector3(-5, 0, -12), new Vector3(-5, 0, -11), new Vector3(-6, 0, -11.5f), new Vector3(-6, 1.2f, -4) };
+            var side = new[] { new Vector3(10, 0, -16), new Vector3(14.5f, 0, -12.5f), new Vector3(14.5f, 0, -10.5f),
+                new Vector3(14.5f, 1.2f, -4.5f), new Vector3(14.5f, 1.2f, -1), new Vector3(14.5f, 1.2f, 3),
+                new Vector3(14.5f, 1.2f, 13.5f), new Vector3(12.5f, 1.2f, 13.5f), new Vector3(4.5f, 2.4f, 13.5f) };
+            foreach (var route in new[] { main, side })
+                for (int i = 1; i < route.Length; i++)
+                {
+                    Assert.IsTrue(nav.Travel(route[i - 1], route[i], out var end, out _), $"Route segment {route[i - 1]} → {route[i]}");
+                    Assert.AreEqual(route[i].y, end.y, .025f);
+                }
+            Assert.IsFalse(nav.Travel(new Vector3(10, 0, -8), new Vector3(0, 1.2f, 0), out _, out _),
+                "The land spur/pump house must interrupt the old diagonal arena crossing");
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void SeaGuardCannotBeJumpedFromTheRaisedRamp(bool crouch)
+        {
+            float y = _collision.SurfaceHeight(15.5f, -5.8f, 1.25f);
+            var sim = new BodySim { Collision = _collision }; sim.Initialize(yaw: 90, posX: 15.5f, posZ: -5.8f, posY: y);
+            for (int i = 0; i < 120; i++)
+                sim.ApplyP1(new P1Input { MoveZ = 1, Jump = i == 0, Crouch = crouch }, 1f / 60);
+            Assert.LessOrEqual(sim.State.PosX, 16.61f, "Guard height must follow the rising walkway, not let players hop into the backdrop");
         }
     }
 }

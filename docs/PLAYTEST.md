@@ -1,6 +1,6 @@
 # Current playtest — Boatyard Duel blockout
 
-**First layout review; no art-direction decision · 2026-10-09**
+**Coast-shaped layout revision; no art-direction decision · 2026-10-09**
 
 Build: `Builds/Windows/BeMyArms.exe`. **PLAY → Duel → P2 → Start Match** tests the P1 movement
 partner; repeat as **P1** to test the P2 weapon partner. Try Easy first, then Hard. F6 resets
@@ -9,31 +9,38 @@ an encounter; F7 exchanges practice roles. Use matching client/server builds.
 ## What to review now
 
 Menu Duel and duo practice open **Boatyard**: a small coastal engine/boat repair business,
-currently neutral blockout geometry. Workshop/loading platform faces a repair yard and lower
-quay; an eastern maintenance passage offers an alternate approach with a low service pipe.
+currently neutral blockout geometry. Workshop/loading platform faces a tighter repair yard;
+the lower quay bends around a coastal spur/pump building, rather than filling a square arena.
+An eastern maintenance passage offers an alternate approach with a low service pipe.
 Floor levels are 0 / 1.2 / 2.4 m. Starting sides alternate each round, not teams or P1/P2 roles.
 F6 restarts the current round on the same side. F7 exchanges practice roles and starts a fresh
 match at round one, as before; an ordinary next round exchanges geographic starts.
 The old arena remains available via `-client-arena DuelArena` on both server and clients.
 
-First feedback: the continuous rectangular floor/perimeter feels too much like a boxed arena.
-A coast-following, bent arrangement of separate workshop/yard/quay spaces is proposed, **not
-implemented yet**. This follow-up fixes only ramp collision: try approaching high ramp sides
-and backs, then normal ascent/descent and stepping onto the low side; the ramp interior must
-not swallow the body. No art-direction change or layout acceptance is implied.
-Ramp fix verification: 13 map tests, 15 movement tests and 5 isolated built-server ramp checks
-passed. Updated Windows build succeeded with 0 errors (45 reported warnings); no full-suite or
-menu/lifecycle rerun was needed. Use the updated binary on both sides when testing this fix.
+The continuous square ground and four enclosing perimeter walls are gone. Different cliff
+offsets, service-building masses and open seaward guards limit playable space. Beyond them,
+simple sea/headland/island silhouettes, neighboring workshops, road continuation and a remote
+berth/boat suggest a larger location. That backdrop is **not reachable and not gameplay cover**.
+It is only spatial context; map/character art direction remains deferred.
 
-1. Try both P1 and P2, ideally then two humans sharing a body. Can P1 offer useful, stable firing
+Ramps retain the previous filled-volume fix: try high-side/back approaches and ordinary
+ascent/descent. The coastal guard rises with the quay ramp, including during crouch jumping.
+The revision passed 17 focused map tests and 12 normal menu/shared-body smoke checks. One
+Windows build succeeded (0 errors, 0 reported warnings). These checks do not establish natural
+feel or layout acceptance. Use matching updated client/server builds.
+
+1. Walk the whole route as P1: do spaces feel like parts of a coastal business instead of a
+   single boxed arena? Does the unreachable world continuation help, or still feel like a stage?
+   Flag misleading apparent routes, boxed-in views, abrupt borders and corners with no purpose.
+2. Try both P1 and P2, ideally then two humans sharing a body. Can P1 offer useful, stable firing
    positions while P2 requests a different angle? Does movement have a purpose beyond rushing?
-2. Compare the main yard crossing against the maintenance approach. Is the alternative useful,
+3. Compare rounding the quay into the yard against the maintenance approach. Is the alternative useful,
    findable and contestable, or simply slow and pointless? Try crouch/slide under the service pipe.
-3. Is the loading platform strong but answerable from other angles? Flag positions that lock
+4. Is the loading platform strong but answerable from other angles? Flag positions that lock
    every exit, unavoidable spawn pressure, dead ends and routes you never want to use.
-4. Judge distances, contact time, openness, workshop close fighting and cover proportions.
+5. Judge distances, contact time, openness, workshop close fighting and cover proportions.
    Flag where the P1 bot sticks, cannot leave a start or repeatedly ruins an otherwise good shot.
-5. Near lips, racks and doorway edges, report where camera aim says clear but the actual rifle
+6. Near lips, racks and doorway edges, report where camera aim says clear but the actual rifle
    shot is obstructed. This known shot-origin/presentation limitation is not solved by a new map.
 
 **Do not judge final visuals yet.** Map/character art direction is explicitly postponed.
@@ -129,7 +136,7 @@ Animated limb coverage and near-cover camera/shot-origin agreement are not decla
 
 ## Scope and evidence
 
-Boatyard: **9 focused map tests** and **12 menu/shared-body smoke checks** passed. The latter
+First rectangular Boatyard blockout: **9 focused map tests** and **12 menu/shared-body smoke checks** passed. The latter
 exercise the built map with both human roles and actual server round changes, preserving team
 scores and P1/P2 owners/slots. One Windows Development build succeeded (**0 errors, 42 existing
 warnings**). Full combat/lifecycle suites were not rerun; gun and session foundations are unchanged.

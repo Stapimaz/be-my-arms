@@ -165,6 +165,10 @@ Current competitive direction:
 - First purpose-built Duel map: **Boatyard**, a compact coastal boat/engine repair business,
   not a large commercial port. Workshop/service side versus lower quay, loading platform,
   repair yard and a side maintenance passage; modest height changes and functional cover.
+  Playable pockets should read as a believable, coast-following place, not a rectangular
+  arena with objects inside. Unreachable background coastline/structures may suggest a larger
+  world while the actual combat footprint stays compact; this is spatial layout/context,
+  not approval of a visual style. The current revision bends the quay around a land spur.
   Alternate geographic starts each round without exchanging teams or P1/P2 roles. The current
   blockout is for human layout review, not accepted final balance or art. Build one Duel map now;
   release target remains **5+ maps per mode**. Dust 2 A-site is a rough readability/scale reference,

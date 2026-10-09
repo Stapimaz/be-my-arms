@@ -40,4 +40,4 @@ MonoBehaviour:
   CoverCount: 8
   LaneCount: 2
   MaxVerticality: 2.4
-  MinSpawnClearance: 2.0591261
+  MinSpawnClearance: 0.94000053

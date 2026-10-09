@@ -223,6 +223,13 @@ Do not silently replace it with the registry version during repository cleanup.
   resolves round-aware poses while team IDs, role slots, owners and scores stay unchanged.
   The one-time Editor builder refuses to overwrite the authored scene; later layout edits use
   the connected Editor. Art direction, including characters, is deferred.
+  The coastal revision replaces the square base/perimeter with a bent quay, tighter yard,
+  land spur/pump house and open seaward guards. `Backdrop` is a separate visual-only scene
+  root: no Unity colliders and no entries in the `Arena`-derived movement/bot/shot collision.
+  Do not place gameplay cover under that root. The 40 × 40 m bounds are an outer safety clamp,
+  not the shape of the playable floor. Start poses/round schedule and collision algorithms
+  are unchanged by this layout revision. `tools/maps/revise-boatyard-coast.cs` is a guarded
+  one-time live-Editor authoring operation, not a routine regeneration/build dependency.
   Ramp authoring now provides both walkable surfaces and filled, sloped solids. Horizontal
   movement and bot clearance clip the solid footprint to the feet/step band; bullet rays clip
   against the actual sloped top rather than an enclosing box. This fixes high-side penetration
