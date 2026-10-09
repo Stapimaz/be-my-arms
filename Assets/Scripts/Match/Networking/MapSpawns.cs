@@ -132,13 +132,13 @@ namespace BeMyArms.Match
             {
                 float low = rise.x >= 0f ? b.min.y : b.max.y;
                 float high = rise.x >= 0f ? b.max.y : b.min.y;
-                collision.AddSurface(b.min.x, b.min.z, b.max.x, b.max.z, low, high, 0);
+                collision.AddRamp(b.min.x, b.min.z, b.max.x, b.max.z, b.min.y, low, high, 0);
             }
             else
             {
                 float low = rise.z >= 0f ? b.min.y : b.max.y;
                 float high = rise.z >= 0f ? b.max.y : b.min.y;
-                collision.AddSurface(b.min.x, b.min.z, b.max.x, b.max.z, low, high, 1);
+                collision.AddRamp(b.min.x, b.min.z, b.max.x, b.max.z, b.min.y, low, high, 1);
             }
         }
 

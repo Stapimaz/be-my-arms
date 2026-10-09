@@ -77,6 +77,45 @@ namespace BeMyArms.Networking.Tests
             Assert.Greater(sim.State.PosZ, 2f, "body should have advanced up the ramp");
         }
 
+        [TestCase(0)]
+        [TestCase(1)]
+        public void FilledRamp_BlocksHighEndButAllowsOrdinaryAscentAndDescent(int axis)
+        {
+            var map = new MovementCollision(); map.AddRamp(-2, 0, 2, 4, 0, 0, 1.2f, (byte)axis);
+            var sim = new BodySim { Collision = map };
+            sim.Initialize(yaw: axis == 0 ? 90 : 0, posX: axis == 0 ? -2.5f : 0, posZ: axis == 0 ? 2 : -.5f);
+            for (int i = 0; i < 54; i++) sim.ApplyP1(new P1Input { MoveZ = 1 }, Dt);
+            Assert.Greater(sim.State.PosY, 1f);
+            for (int i = 0; i < 54; i++) sim.ApplyP1(new P1Input { MoveZ = -1 }, Dt);
+            Assert.AreEqual(0, sim.State.PosY, .025f);
+            sim.Initialize(yaw: axis == 0 ? -90 : 180, posX: axis == 0 ? 3 : 0, posZ: axis == 0 ? 2 : 5);
+            for (int i = 0; i < 60; i++) sim.ApplyP1(new P1Input { MoveZ = 1 }, Dt);
+            Assert.AreEqual(0, sim.State.PosY, .001f);
+            Assert.GreaterOrEqual(axis == 0 ? sim.State.PosX : sim.State.PosZ, axis == 0 ? 2.4f : 4.4f);
+        }
+
+        [Test]
+        public void FilledRamp_RaysHitExactSlopeNotItsBoundingBox()
+        {
+            var map = new MovementCollision(); map.AddRamp(-2, 0, 2, 4, 0, 0, 1.2f, 1);
+            Assert.IsTrue(map.RaycastSolids(0, .6f, -1, 0, 0, 1, 6, out float entry));
+            Assert.AreEqual(3, entry, .001f, "Ray enters the slope at z=2, not the bounding box at z=0");
+            Assert.IsTrue(map.RaycastSolids(0, 2, 2, 0, -1, 0, 3, out entry));
+            Assert.AreEqual(1.4f, entry, .001f);
+            Assert.IsFalse(map.RaycastSolids(-3, .8f, 1, 1, 0, 0, 6, out _));
+        }
+
+        [Test]
+        public void FilledRamp_DescendingSlopeUsesTheCorrectSolidEnd()
+        {
+            var map = new MovementCollision(); map.AddRamp(-2, 0, 2, 4, 0, 1.2f, 0, 1);
+            var sim = new BodySim { Collision = map }; sim.Initialize(yaw: 0, posX: 0, posZ: -1);
+            for (int i = 0; i < 60; i++) sim.ApplyP1(new P1Input { MoveZ = 1 }, Dt);
+            Assert.LessOrEqual(sim.State.PosZ, -.4f); Assert.AreEqual(0, sim.State.PosY);
+            Assert.IsTrue(map.RaycastSolids(0, .6f, 5, 0, 0, -1, 6, out float entry));
+            Assert.AreEqual(3, entry, .001f);
+        }
+
         [Test]
         public void Wall_BlocksHorizontalMovement()
         {

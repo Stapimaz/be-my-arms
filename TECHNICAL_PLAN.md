@@ -223,6 +223,11 @@ Do not silently replace it with the registry version during repository cleanup.
   resolves round-aware poses while team IDs, role slots, owners and scores stay unchanged.
   The one-time Editor builder refuses to overwrite the authored scene; later layout edits use
   the connected Editor. Art direction, including characters, is deferred.
+  Ramp authoring now provides both walkable surfaces and filled, sloped solids. Horizontal
+  movement and bot clearance clip the solid footprint to the feet/step band; bullet rays clip
+  against the actual sloped top rather than an enclosing box. This fixes high-side penetration
+  without obstructing low-end ascent or empty air above the ramp. Pure surfaces remain available
+  for existing simulation fixtures that intentionally need only a walkable surface.
 - Audio/VFX libraries and services are presentation. Generated clips/particles are production
   test content, not subjective production-quality acceptance.
 - Blender authoring lives in `art/blender` and `tools/pipeline`; exported models/materials/prefabs

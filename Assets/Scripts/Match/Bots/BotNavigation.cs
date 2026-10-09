@@ -71,8 +71,9 @@ namespace BeMyArms.Match
             if (Collision.HasBounds && (p.x < Collision.MinX + r || p.x > Collision.MaxX - r ||
                 p.z < Collision.MinZ + r || p.z > Collision.MaxZ - r)) return false;
             foreach (var b in Collision.Solids)
-                if (b.MaxY > p.y + Collision.StepHeight && b.MinY < p.y + height &&
-                    p.x > b.MinX - r && p.x < b.MaxX + r && p.z > b.MinZ - r && p.z < b.MaxZ + r) return false;
+                if (b.Above(p.y + Collision.StepHeight, out var blocking) && blocking.MinY < p.y + height &&
+                    p.x > blocking.MinX - r && p.x < blocking.MaxX + r &&
+                    p.z > blocking.MinZ - r && p.z < blocking.MaxZ + r) return false;
             return true;
         }
 

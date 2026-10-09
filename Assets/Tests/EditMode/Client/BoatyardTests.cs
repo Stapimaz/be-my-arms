@@ -88,6 +88,33 @@ namespace BeMyArms.Client.Tests
             else Assert.Less(sim.State.PosX, endpoint);
         }
 
+        [TestCase(-9.6f, 0f, -6f, 90f, -9.4f, true)]
+        [TestCase(-.4f, 1.2f, 5f, -90f, -1.6f, false)]
+        [TestCase(11.2f, 0f, -5.8f, 90f, 11.6f, true)]
+        public void HighRampSideBlocksInsteadOfSwallowingTheBody(float x, float y, float z, float yaw, float edge, bool below)
+        {
+            foreach (bool crouch in new[] { false, true })
+            {
+                var sim = new BodySim { Collision = _collision }; sim.Initialize(yaw: yaw, posX: x, posZ: z, posY: y);
+                for (int i = 0; i < 90; i++) sim.ApplyP1(new P1Input { MoveZ = 1, Crouch = crouch }, 1f / 60);
+                float coordinate = yaw == 0 ? sim.State.PosZ : sim.State.PosX;
+                if (below) Assert.LessOrEqual(coordinate, edge + .001f);
+                else Assert.GreaterOrEqual(coordinate, edge - .001f);
+                Assert.AreEqual(y, sim.State.PosY, .01f);
+            }
+        }
+
+        [Test]
+        public void LowRampSideRemainsSteppableAndBulletsRespectTheSlopedVolume()
+        {
+            var sim = new BodySim { Collision = _collision }; sim.Initialize(yaw: 90, posX: -10, posZ: -10, posY: 0);
+            for (int i = 0; i < 45; i++) sim.ApplyP1(new P1Input { MoveZ = 1 }, 1f / 60);
+            Assert.Greater(sim.State.PosX, -9); Assert.AreEqual(.2f, sim.State.PosY, .02f);
+            Assert.IsTrue(_collision.RaycastSolids(-10, .5f, -6, 1, 0, 0, 4, out float hit));
+            Assert.AreEqual(1, hit, .001f, "High ramp side is a real solid bullet entry");
+            Assert.IsFalse(_collision.RaycastSolids(-10, .5f, -10, 1, 0, 0, 4, out _), "Do not block empty air above the low slope");
+        }
+
         [Test]
         public void ServicePipeRequiresCrouchAndOpensAgainAfterCrossing()
         {

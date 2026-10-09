@@ -8,7 +8,7 @@ namespace BeMyArms.Networking
     /// client prediction build the same model from the same scene geometry, so movement and
     /// reconciliation agree exactly. Engine-free and unit-testable.
     ///
-    /// The body is a vertical cylinder (radius + height). <see cref="Solids"/> are blocking boxes;
+    /// The body is a vertical cylinder (radius + height). <see cref="Solids"/> are boxes or filled ramps;
     /// <see cref="Surfaces"/> are walkable tops (flat or sloped, e.g. ramps). A solid whose top is
     /// within <see cref="StepHeight"/> of the feet is not a wall — the body steps onto it and the
     /// surface height takes over.
@@ -18,6 +18,37 @@ namespace BeMyArms.Networking
         public struct Box
         {
             public float MinX, MinY, MinZ, MaxX, MaxY, MaxZ;
+            // Zero keeps ordinary boxes unchanged; 1/2 makes the top rise along X/Z.
+            public byte SlopeAxis;
+            public float LowY, HighY;
+
+            public float TopAt(float x, float z)
+            {
+                if (SlopeAxis == 1) return LowY + (HighY - LowY) * (x - MinX) / (MaxX - MinX);
+                if (SlopeAxis == 2) return LowY + (HighY - LowY) * (z - MinZ) / (MaxZ - MinZ);
+                return MaxY;
+            }
+
+            /// <summary>Only the footprint taller than this step/feet band blocks movement.
+            /// This leaves the low ramp entrance open without making its high sides hollow.</summary>
+            public bool Above(float height, out Box blocking)
+            {
+                blocking = this;
+                if (MaxY <= height) return false;
+                if (SlopeAxis == 0 || Math.Min(LowY, HighY) >= height) return true;
+                float t = (height - LowY) / (HighY - LowY);
+                if (SlopeAxis == 1)
+                {
+                    float edge = MinX + (MaxX - MinX) * t;
+                    if (HighY > LowY) blocking.MinX = edge; else blocking.MaxX = edge;
+                }
+                else
+                {
+                    float edge = MinZ + (MaxZ - MinZ) * t;
+                    if (HighY > LowY) blocking.MinZ = edge; else blocking.MaxZ = edge;
+                }
+                return true;
+            }
         }
 
         /// <summary>A walkable top. SlopeAxis 0 = height rises along +X, 1 = along +Z, 2 = flat.</summary>
@@ -55,6 +86,16 @@ namespace BeMyArms.Networking
             });
         }
 
+        /// <summary>Filled ramp from baseY to its exact sloped top. Axis follows AddSurface's
+        /// 0=X / 1=Z convention; low/high are heights at the minimum/maximum axis coordinate.</summary>
+        public void AddRamp(float minX, float minZ, float maxX, float maxZ, float baseY, float lowY, float highY, byte slopeAxis)
+        {
+            AddSurface(minX, minZ, maxX, maxZ, lowY, highY, slopeAxis);
+            Solids.Add(new Box { MinX = minX, MinY = baseY, MinZ = minZ, MaxX = maxX,
+                MaxY = Math.Max(lowY, highY), MaxZ = maxZ, LowY = lowY, HighY = highY,
+                SlopeAxis = (byte)(slopeAxis + 1) });
+        }
+
         /// <summary>
         /// Highest walkable surface at (x,z) that is at or below <paramref name="maxY"/>, or the
         /// base ground height. maxY keeps the body from snapping up onto a catwalk it is under.
@@ -82,7 +123,8 @@ namespace BeMyArms.Networking
             {
                 Box b = Solids[i];
                 if (x < b.MinX || x > b.MaxX || z < b.MinZ || z > b.MaxZ) continue;
-                if (b.MaxY > best && b.MaxY <= maxY) best = b.MaxY;
+                float top = b.TopAt(x, z);
+                if (top > best && top <= maxY) best = top;
             }
 
             return best;
@@ -112,8 +154,7 @@ namespace BeMyArms.Networking
             {
                 for (int i = 0; i < Solids.Count; i++)
                 {
-                    Box b = Solids[i];
-                    if (b.MaxY <= feet + StepHeight) continue; // low enough to step onto
+                    if (!Solids[i].Above(feet + StepHeight, out Box b)) continue;
                     if (b.MinY >= head) continue;              // above the body
 
                     float minX = b.MinX - BodyRadius, maxX = b.MaxX + BodyRadius;
@@ -151,8 +192,7 @@ namespace BeMyArms.Networking
             float highBand = feetY + standHeight;
             for (int i = 0; i < Solids.Count; i++)
             {
-                Box b = Solids[i];
-                if (b.MaxY <= lowBand) continue;  // steppable / below the body
+                if (!Solids[i].Above(lowBand, out Box b)) continue;
                 if (b.MinY >= highBand) continue; // above the standing head
                 if (x <= b.MinX - BodyRadius || x >= b.MaxX + BodyRadius) continue;
                 if (z <= b.MinZ - BodyRadius || z >= b.MaxZ + BodyRadius) continue;
@@ -192,6 +232,25 @@ namespace BeMyArms.Networking
             if (!Slab(ox, dx, invX, b.MinX, b.MaxX, ref tmin, ref tmax)) return false;
             if (!Slab(oy, dy, invY, b.MinY, b.MaxY, ref tmin, ref tmax)) return false;
             if (!Slab(oz, dz, invZ, b.MinZ, b.MaxZ, ref tmin, ref tmax)) return false;
+
+            if (b.SlopeAxis != 0)
+            {
+                // Clip the bounding box against y <= ramp top; an AABB alone would block
+                // empty air above the low end and report the wrong bullet entry distance.
+                float slope = (b.HighY - b.LowY) / (b.SlopeAxis == 1 ? b.MaxX - b.MinX : b.MaxZ - b.MinZ);
+                float origin = oy - b.TopAt(ox, oz);
+                float direction = dy - slope * (b.SlopeAxis == 1 ? dx : dz);
+                if (Math.Abs(direction) < epsilon)
+                {
+                    if (origin > 0f) return false;
+                }
+                else
+                {
+                    float crossing = -origin / direction;
+                    if (direction > 0f) tmax = Math.Min(tmax, crossing);
+                    else tmin = Math.Max(tmin, crossing);
+                }
+            }
 
             if (tmax < 0f || tmin > tmax) return false;
             t = tmin > 0f ? tmin : 0f;

@@ -50,6 +50,20 @@ business, with workshop/service and lower-quay starts, a loading platform, centr
 yard and side maintenance passage. **Visual/art direction, including characters, is deferred**;
 neutral blockout materials do not establish a style. No 2v2 variant or additional map is built.
 
+Human review: the broad rectangular floor/perimeter still feels like a boxed arena, so the
+layout is **not accepted**. Proposed next layout: workshop/service pocket → tighter loading yard
+→ quay bending sideways along the coast, with the maintenance connection cutting across the
+bend. Reshape playable pockets and sightlines, not just the outer wall; avoid a forced maze.
+This proposal has not yet been authored or confirmed as the next revision.
+
+Immediate bug follow-up: ramps had walkable tops but no solid volume in the shared numeric
+collision model. Filled, slope-clipped ramp volumes now block high-side/back entry and bullets,
+while retaining low-edge steps and ordinary ascent/descent. Bots use that same volume. Scene
+layout, human controls, prediction protocol and rifle handling are unchanged.
+Verification for this fix: **13 Boatyard tests + 15 movement tests**, one isolated built-server
+check covering **5 ramp movement/ray cases**, and one Windows build (**0 errors, 45 reported
+warnings**). No full suite, menu smoke or lifecycle rerun; the map layout has not been revised.
+
 - Menu Duel and duo practice now open `Boatyard`. The previous `DuelArena` remains unchanged
   and included in the build for explicit development launch; `TwoVsTwoArena` is unchanged.
 - Approximately 40 × 40 m bounds, three natural floor levels (0 / 1.2 / 2.4 m), four ramps,

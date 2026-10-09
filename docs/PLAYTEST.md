@@ -16,6 +16,15 @@ F6 restarts the current round on the same side. F7 exchanges practice roles and 
 match at round one, as before; an ordinary next round exchanges geographic starts.
 The old arena remains available via `-client-arena DuelArena` on both server and clients.
 
+First feedback: the continuous rectangular floor/perimeter feels too much like a boxed arena.
+A coast-following, bent arrangement of separate workshop/yard/quay spaces is proposed, **not
+implemented yet**. This follow-up fixes only ramp collision: try approaching high ramp sides
+and backs, then normal ascent/descent and stepping onto the low side; the ramp interior must
+not swallow the body. No art-direction change or layout acceptance is implied.
+Ramp fix verification: 13 map tests, 15 movement tests and 5 isolated built-server ramp checks
+passed. Updated Windows build succeeded with 0 errors (45 reported warnings); no full-suite or
+menu/lifecycle rerun was needed. Use the updated binary on both sides when testing this fix.
+
 1. Try both P1 and P2, ideally then two humans sharing a body. Can P1 offer useful, stable firing
    positions while P2 requests a different angle? Does movement have a purpose beyond rushing?
 2. Compare the main yard crossing against the maintenance approach. Is the alternative useful,
