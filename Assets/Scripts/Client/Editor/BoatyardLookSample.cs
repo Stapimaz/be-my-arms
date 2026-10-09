@@ -298,7 +298,7 @@ namespace BeMyArms.Client.EditorTools
                 new[] { v[0], v[2], v[3], v[1] } }, Vector3.one);
         }
 
-        static Mesh BeveledBox(Vector3 size, float bevel)
+        internal static Mesh BeveledBox(Vector3 size, float bevel)
         {
             var h = size * .5f; float b = Mathf.Min(bevel, Mathf.Min(h.x, Mathf.Min(h.y, h.z)) * .3f);
             var inset = h - Vector3.one * b;

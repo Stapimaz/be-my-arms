@@ -223,10 +223,13 @@ have production online matchmaking, durable accounts, voice, commerce or entitle
 The current presentation uses smooth shared-rig characters, distinct uniform role surfaces,
 exposed P1 head and an independently composed rifle POV. These are playable placeholder assets,
 not an agreed visual language. After accepting the coastal Boatyard layout, the user authorized
-a **small environment look sample**, not a whole-map or character art pass: bright, welcoming,
+a **small environment look sample** initially, not a character art pass: bright, welcoming,
 readable, lightly stylized realism, slightly more realistic than Fortnite without photorealistic
 grime or dark/crushed shadows. Workshop entry/loading ramp/nearby yard are the feedback slice;
-lighting/sky affect their wider context. **Character art remains deferred**. Cross-map style,
+lighting/sky affect their wider context. After review of the corrected PBR/room-light sample,
+the user authorized continuing the remaining Boatyard environment objects, with less repetitive
+concrete and more natural joined construction. This is an expanded review pass, not approval of
+final production art or a new map. **Character art remains deferred**. Cross-map style,
 skin range, animation quality, music, SFX and VFX still need later decisions and production work.
 Generated content is not automatically final art; accepted controls/POV remain preserved.
 

@@ -81,3 +81,46 @@ Future art edits are normal authored edits, not regeneration through this helper
 `tools/maps/refine-boatyard-surfaces.cs` is the guarded one-time follow-up: it updates only the
 known sample materials/detail UVs, removes only its rejected sign and adds local room fixtures.
 It verifies identical shared collision and exterior sun before saving; do not rerun it over later edits.
+
+## Continuity / remaining environment follow-up
+
+Human review of `6325193` found the sample acceptable to continue, but flagged obvious concrete
+repetition and separate-block-looking joins. The user explicitly authorized finishing the remaining
+environment pieces, with more attention to natural continuity. Characters remain deferred.
+
+No paid asset or third-party pack was added. `make-boatyard-concrete-variation.py` derives a
+deterministic **4K / 12 m-repeat** surface from the retained CC0 Concrete030. Sixteen phase offsets
+with curved feathered overlap are shared across color, GL normals and roughness; no rotations or
+mirrors that would invalidate normal directions, procedural color noise, or painted-on lighting.
+URP's normal import/sample normalizes the blended normal response. Albedo stain contrast is reduced
+from the rejected repetitive sample, while aggregate/pores remain. Packed smoothness is still inverse
+linear roughness. These are variation composites, **not newly photographed 4K source detail**.
+
+`BoatyardContinuityPass.Author` is another guarded one-time live-Editor operation, not regeneration.
+All decks and four ramps share world-XZ UVs at 1/12 scale and the same concrete material; contact
+edges on construction boxes no longer have independent inset bevels. Walls use common world-plane
+UVs. Existing collider components and all numeric collision entries/bounds were preserved/asserted.
+
+Remaining quay/apron/maintenance pieces, buildings, cliff faces, railing, rack, winch, pipe housing
+and dry-dock housing now use the recorded PBR sets/palette. Added project-authored surface details
+live under collider-free `EnvironmentDetails`: continuous fascia/plinths, roof standing seams,
+closed window/door panels, downpipes, rubber dock bumpers, equipment service doors/latches/vents,
+base bolts, pipe straps and mould ribs. Closed panels are not gameplay openings. Equipment remains
+solid cover, including the dry-dock mould/cradle; it is not a hollow hull with misleading bullet gaps.
+Backdrop-only hills and moored workboat receive non-box authored silhouettes and remain nonplayable.
+Tinted material variants reuse the recorded maps; no displacement or new runtime environment system.
+
+Exterior sun/sky/grading and the three baked workshop area lights are unchanged. Lighting/reflections
+are rebaked after the surface/mesh changes. This is an expanded reviewable art pass, not a claim that
+every environment object is final production art or that automated checks establish naturalness.
+
+The final preview identified cliff faces reading like more concrete walls. Coastal rock now uses
+**ambientCG Rock058, CC0**, downloaded 2026-10-09 from
+https://ambientcg.com/get?file=Rock058_2K-JPG.zip (source https://ambientcg.com/a/Rock058;
+license https://docs.ambientcg.com/license/). Retained Color/NormalGL/Roughness maps are 2K; the
+derived mask stores 0 metallic and inverse linear roughness. Archive SHA-256:
+`4B6DC8C6A5314957C656785C3A8FF95D721399FAB31C9B1B13D90DA8683E2F58`.
+`tools/maps/finish-boatyard-rock.cs` replaces only that iteration's rock material/maps/UV scale,
+and adds four project-authored **unreachable backdrop** crest silhouettes above the existing
+cliff volumes to break the box skylines. It asserts unchanged shared collision. The final bake
+was refreshed for this concrete visual correction, before the single delivery build.

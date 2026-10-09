@@ -296,5 +296,40 @@ namespace BeMyArms.Client.Tests
             var sun = _scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Light>()).Single(l => l.type == LightType.Directional);
             Assert.AreEqual(1.5f, sun.intensity); Assert.Less(Quaternion.Angle(Quaternion.Euler(48, -38, 0), sun.transform.rotation), .01f);
         }
+
+        [Test]
+        public void ContinuityPassUsesSharedWorldUvAcrossDeckAndRampContacts()
+        {
+            var arena = _scene.GetRootGameObjects().Single(g => g.name == "Arena").transform;
+            foreach (var t in arena.Cast<Transform>().Where(t => t.name.StartsWith("BMA_Map_Platform") || t.name.StartsWith("BMA_Map_Floor") || t.name.StartsWith("BMA_Map_Ramp")))
+            {
+                var mesh = t.GetComponent<MeshFilter>().sharedMesh;
+                Assert.AreEqual("Concrete", t.GetComponent<Renderer>().sharedMaterial.name, t.name);
+                var v = mesh.vertices; var n = mesh.normals; var uv = mesh.uv;
+                for (int i = 0; i < v.Length; i++)
+                    if (Mathf.Abs(t.TransformDirection(n[i]).y) > .5f)
+                    {
+                        Vector3 p = t.TransformPoint(v[i]);
+                        Assert.Less(Vector2.Distance(new Vector2(p.x, p.z) / 12, uv[i]), .00001f, "Surface coordinates must not restart/rotate at " + t.name);
+                    }
+            }
+            var concrete = AssetDatabase.LoadAssetAtPath<Material>(BoatyardLookSample.AssetDir + "/Concrete.mat");
+            Assert.AreEqual(4096, concrete.GetTexture("_BaseMap").width, "Large-repeat matched surface variation");
+            var foundation = arena.Find("BMA_Map_Platform_LoadingDock").GetComponent<MeshFilter>().sharedMesh;
+            Assert.AreEqual(24, foundation.vertexCount, "No per-block contact-edge bevel on joined construction");
+        }
+
+        [Test]
+        public void ContinuityPassFinishesExistingObjectsWithoutIndependentCover()
+        {
+            var roots = _scene.GetRootGameObjects();
+            var detail = roots.Single(g => g.name == BoatyardContinuityPass.RootName);
+            Assert.IsEmpty(detail.GetComponentsInChildren<Collider>(true));
+            Assert.IsEmpty(detail.GetComponentsInChildren<MapSpawns>(true));
+            Assert.IsNotNull(detail.transform.Find("WorkshopRoofFascia"));
+            Assert.IsNotNull(detail.transform.Find("HullMouldRim"));
+            foreach (var renderer in roots.Single(g => g.name == "Arena").GetComponentsInChildren<Renderer>())
+                Assert.IsFalse(new[] { "Ground", "Structure", "Equipment", "Railing" }.Contains(renderer.sharedMaterial.name), renderer.name + " still uses the blockout material");
+        }
     }
 }

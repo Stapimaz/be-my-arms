@@ -72,6 +72,7 @@ namespace BeMyArms.Match
         /// <summary>Smoothed presentation position of this body (local body root, feet).</summary>
         public Vector3 VisualPosition => _visualPosition;
         public float VisualYaw => _visualYaw;
+        public float VisualEyeHeight { get; private set; }
 
         /// <summary>State the local camera/presentation should follow (predicted for local P1).</summary>
         public BodyState ViewState
@@ -173,6 +174,8 @@ namespace BeMyArms.Match
         float _visualYaw;
         bool _hasVisual;
         uint _visualEpoch = uint.MaxValue;
+        readonly P2MotionPresentation _p2Motion = new P2MotionPresentation();
+        bool _wasLocalP2;
 
         int BodiesPerTeam => Mathf.Clamp(MatchConfig.BodiesPerTeam, 1, 2);
         public int EffectiveRole => MatchSlots.IsValidSlot(LocalSlotIndex, BodiesPerTeam) ? MatchSlots.RoleOf(LocalSlotIndex) : MatchConfig.ClientRole;
@@ -644,6 +647,9 @@ namespace BeMyArms.Match
             if (_visualEpoch != state.ControlEpoch) { _visualEpoch = state.ControlEpoch; _hasVisual = false; }
             Vector3 targetPos = new Vector3(state.PosX, state.PosY, state.PosZ);
             float targetYaw = state.BodyYaw;
+            bool localP2 = IsOwnBody && EffectiveRole == 1;
+            if (localP2 != _wasLocalP2) { _p2Motion.Clear(); _hasVisual = false; _wasLocalP2 = localP2; }
+            VisualEyeHeight = state.EyeHeight > .01f ? state.EyeHeight : 1.45f;
 
             if (!_hasVisual)
             {
@@ -654,8 +660,15 @@ namespace BeMyArms.Match
             else
             {
                 float k = 1f - Mathf.Exp(-18f * Mathf.Max(dt, 0.0001f));
-                _visualPosition = Vector3.Lerp(_visualPosition, targetPos, k);
+                if (!localP2) _visualPosition = Vector3.Lerp(_visualPosition, targetPos, k);
                 _visualYaw = Mathf.LerpAngle(_visualYaw, targetYaw, k);
+            }
+
+            if (localP2)
+            {
+                _p2Motion.Observe(state.ControlEpoch, state.SimulationTick, targetPos, VisualEyeHeight, Time.timeAsDouble);
+                _visualPosition = _p2Motion.Evaluate(Time.timeAsDouble, out float height);
+                VisualEyeHeight = height;
             }
 
             Presentation.position = _visualPosition;

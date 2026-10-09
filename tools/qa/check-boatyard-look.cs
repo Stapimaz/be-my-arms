@@ -5,6 +5,9 @@ Assert(scene.name == "Boatyard", "Expected revised Boatyard client");
 var roots = scene.GetRootGameObjects();
 var sample = roots.Single(g => g.name == "LookSample");
 Assert(sample.GetComponentsInChildren<UnityEngine.Collider>().Length == 0, "Art detail must not add collision");
+var detail = roots.Single(g => g.name == "EnvironmentDetails");
+Assert(detail.GetComponentsInChildren<UnityEngine.Collider>().Length == 0, "Continuation detail must not add collision");
+Assert(detail.transform.Find("WorkshopRoofFascia") != null && detail.transform.Find("HullMouldRim") != null, "Environment continuation missing");
 Assert(sample.transform.Find("WorkshopServiceSign") == null, "Rejected oversized sign still present");
 var roomLights = sample.GetComponentsInChildren<UnityEngine.Light>();
 Assert(roomLights.Length == 3 && roomLights.All(l => l.type == UnityEngine.LightType.Rectangle && l.bakingOutput.isBaked && l.bakingOutput.lightmapBakeType == UnityEngine.LightmapBakeType.Baked), "Local baked workshop lights missing");
@@ -23,6 +26,7 @@ Assert(UnityEngine.LightmapSettings.lightProbes != null && UnityEngine.LightmapS
 Assert(sample.GetComponentsInChildren<UnityEngine.ReflectionProbe>().All(p => p.bakedTexture != null), "Reflection captures missing from player");
 Assert(sample.GetComponentsInChildren<UnityEngine.Renderer>().All(r => r.sharedMaterial != null && r.sharedMaterial.shader.isSupported), "Sample material/shader missing or unsupported");
 var arena = roots.Single(g => g.name == "Arena").transform;
+Assert(arena.GetComponentsInChildren<UnityEngine.Renderer>().All(r => !new[] { "Ground", "Structure", "Equipment", "Railing" }.Contains(r.sharedMaterial.name)), "Remaining gameplay pieces still use blockout materials");
 var materials = arena.GetComponentsInChildren<UnityEngine.Renderer>().Select(r => r.sharedMaterial).Distinct()
     .Where(m => new[] { "Concrete", "Plaster", "TealPaint", "SafetyOchre", "Steel" }.Contains(m.name)).ToArray();
 Assert(materials.Length == 5, "Expected five refined surface materials");

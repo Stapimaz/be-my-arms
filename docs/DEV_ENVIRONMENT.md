@@ -114,6 +114,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/smoke-duel.ps1 -Che
 # Optional: save this disposable P2's real rendered frame in Builds/Windows/QA/DuelSmoke;
 # not a desktop/human-session screenshot or an automated art acceptance requirement
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/smoke-duel.ps1 -CheckLookSample -CaptureLookReview
+# Camera follow-up only: isolated real P2 + P1-bot frame trace and role-switched 2.8 m P1 rig;
+# no full smoke repetition or human-session mutation (not human smoothness/framing acceptance)
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/check-camera-motion.ps1
 # Broader session/peer-loss regression: use when ownership/lifecycle/Transport changes
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/test-session-lifecycle.ps1 -BuildDirectory Builds/Windows
 # Rifle geometry/damage/feedback + P1-motion spread: real role RPCs and server ticks

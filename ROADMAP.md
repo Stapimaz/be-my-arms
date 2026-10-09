@@ -1,6 +1,6 @@
 # Be My Arms — Roadmap
 
-**Current status: accepted Boatyard layout; refined PBR surfaces/workshop lighting for review · Updated 2026-10-09**
+**Current status: Boatyard continuity/equipment pass + closer P1/smoother P2 for review · Updated 2026-10-09**
 
 Design: [GAME_CONCEPT.md](GAME_CONCEPT.md). Architecture: [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md).
 Run/build: [docs/DEV_ENVIRONMENT.md](docs/DEV_ENVIRONMENT.md).
@@ -44,6 +44,61 @@ durable identities/security and final release readiness. Human visual/feel accep
 inferred from screenshots or green tests.
 
 ## Current iteration — workshop/loading/yard look sample
+
+### Continuity / camera follow-up to `6325193`
+
+The user found the corrected sample reasonable to continue. They flagged repeated stone/concrete
+tiles and unnatural separate-block joins, especially ramp-to-deck, and **authorized the remaining
+environment objects**. They also reported stuttery inherited movement as P2 with a P1 bot, and a
+too-distant P1 third-person camera. This iteration addresses those three requests together, then
+stops for human playtest. No character pass, layout/combat/bot-navigation redesign, or new map.
+
+- Shared world-space surface UVs across decks/ramps; square construction contact edges remove
+  the old per-piece inset-bevel grooves. Concrete has a matched, deterministic large-repeat
+  variation composite with softer broad stain contrast, not a grid of identical 2 m patches.
+- Remaining buildings, quay/aprons, equipment, pipe housing, railings and coastal rock faces use
+  the recorded PBR material language. Collider-free authored fascia, closed panels/windows,
+  equipment service details, dock bumpers and roof seams make the existing pieces read together.
+  Nonplayable hills/workboat can have non-box silhouettes without lying about gameplay cover.
+  All original gameplay renderer bounds and numeric collision entries are asserted unchanged.
+- P1 third-person follow distance **4.6 → 2.8 m**; FOV, look/prediction, obstacle avoidance and
+  arena-bound camera correction remain unchanged. Human review decides framing comfort.
+- Only the **local P2's inherited body/stance presentation** uses a small **75 ms received-pose
+  interpolation buffer**, replacing two exponential chases of stepped replicated positions.
+  Missing snapshots hold the last pose; no extrapolation through cover. Epoch/role/teleport/stale
+  discontinuities reset the buffer. Aim/recoil/sector, authoritative shot origins, body simulation,
+  P1 prediction/reconciliation, protocol and other-body presentation are unchanged.
+- Verification chosen for changed risk: focused P2 presentation/camera-default tests, Boatyard
+  map tests (all ramp/renderer meshes touched), one rebake and one delivery build, one disposable
+  menu/shared-body runtime session with a frame trace of actual P2 + P1 bot and a role-switched P1
+  camera-distance check. No unrelated full-suite or combat/lifecycle regression run.
+
+Remaining limits: packet gaps beyond the presentation buffer can still freeze inherited motion;
+the small buffer is not a general networking/prediction overhaul. Natural joins/material quality,
+closer P1 framing and perceived P2 smoothness require human playtest, not a technical green check.
+
+Focused verification: **28 Boatyard cases + 6 P2 motion cases + 1 camera-default case passed**.
+The first combined CLI filter selected zero tests (literal substring, not regex alternation);
+the three explicit filters above produced the real verdicts. Preview review prompted one concrete
+rock correction (distinct Rock058 PBR + unreachable crest silhouettes), followed by a refreshed
+bake, not repeated baking of unchanged content. Final bake: **3 lightmaps, 72 probes, two
+reflection captures**. No gameplay code changed for that final surface correction.
+One updated Windows Development build succeeded (**0 errors, 42 warnings**, all from existing
+obsolete API/unused-field sites; no new material/build failure). Runtime camera/bot checks use
+that single delivered binary, not a separate simplified fixture build.
+Runtime verification was narrowed to `check-camera-motion.ps1` after the combined menu fixture
+ran into owner-PID/shared-discovery setup problems and initially sampled an already stationary
+bot holding cover. The ordinary smoke script is unchanged. The dedicated camera fixture captures
+its own server endpoint before starting P2 and installs its frame probe **before** requesting a
+normal practice reset, so actual bot travel is observed. No gameplay lifecycle change, repeated
+calculation suite or second player build was needed; fixture/tooling failures are not art verdicts.
+The focused actual-player camera fixture passed: **1,904 P2 frames**, **612 moving frames between
+unchanged authoritative snapshot ticks**, zero measured camera-anchor/aim-rotation error, then
+an authoritative practice role switch confirmed the **2.8 m P1 rig**. Logs had no reference/type
+errors. The rendered P2 also loaded the updated PBR/lighting data during the menu setup checks;
+an actual P2 frame was reviewed. These observations do not establish human smoothness/art acceptance.
+
+### Earlier sample history
 
 ### Follow-up to human review of `641063b`
 

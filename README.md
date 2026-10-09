@@ -3,13 +3,14 @@
 Two players, one fighter: **P1 controls body/movement; P2 controls arms/weapons/aim**.
 Unity 6 / URP, NGO + Unity Transport, server-authoritative shared-body multiplayer.
 
-**Current state:** accepted **coast-shaped Boatyard Duel layout**, with a small environment look
-sample at the workshop entry/loading/yard for visual feedback (not final art; characters deferred):
-matched PBR surface maps and local baked workshop lighting, following feedback on the first sample;
+**Current state:** accepted **coast-shaped Boatyard Duel layout**, with an expanded environment
+continuity/equipment pass following review of the workshop sample (not final art; characters deferred):
+matched PBR surfaces, less repetitive concrete, joined construction and local baked workshop light;
 workshop/loading platform versus a bent lower quay, tighter repair yard and a low maintenance
 passage. Unreachable background coastline/buildings suggest a larger place. Starting sides
-alternate each round; team/role ownership stays fixed. The sample's visual direction is awaiting
-feedback; character art remains deferred. Accepted controls, P2 POV, bots and motion-dependent
+alternate each round; team/role ownership stays fixed. Closer P1 third-person framing and a small
+local-P2 inherited-motion interpolation buffer address camera feedback without delaying aim.
+The environment/camera direction awaits human feedback. Accepted controls, P2 POV, bots and motion-dependent
 rifle accuracy remain unchanged.
 
 ## Start here

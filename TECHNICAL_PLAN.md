@@ -223,7 +223,8 @@ Do not silently replace it with the registry version during repository cleanup.
   resolves round-aware poses while team IDs, role slots, owners and scores stay unchanged.
   The one-time Editor builder refuses to overwrite the authored scene; later layout edits use
    the connected Editor. The coastal layout is human-accepted; a limited environment look sample
-   is now authorized, with character art still deferred.
+    was authorized first; review of the corrected sample then authorized remaining environment
+    objects/continuity. Character art is still deferred.
   The coastal revision replaces the square base/perimeter with a bent quay, tighter yard,
   land spur/pump house and open seaward guards. `Backdrop` is a separate visual-only scene
   root: no Unity colliders and no entries in the `Arena`-derived movement/bot/shot collision.
@@ -250,7 +251,21 @@ Do not silently replace it with the registry version during repository cleanup.
    for display but those fixtures do not contribute GI, avoiding a second baked light source.
    The rejected oversized TextMesh sign is removed. Current lighting bake has three lightmaps,
    72 probes and two local reflection captures. `tools/maps/refine-boatyard-surfaces.cs` is a
-   guarded one-time Editor correction, not regeneration or a new runtime lighting system.
+    guarded one-time Editor correction, not regeneration or a new runtime lighting system.
+    The continuation removes individual bevels on contacting construction boxes and uses common
+    world-plane UVs across connected decks/ramps/walls. A matched 4K large-repeat concrete variation
+    composite reduces visible repeated stains; it is not higher-resolution photographed source.
+    `BoatyardContinuityPass` expands PBR material treatment and surface details across the remaining
+    environment, preserving all accepted numeric collision/renderer bounds and existing camera
+    colliders. Collider-free `EnvironmentDetails` never enters `Arena` geometry. Rock058 supplies
+    distinct coastal-rock PBR; additional inaccessible crests remain under collider-free `Backdrop`.
+    Background hills/workboat can change visual silhouettes without becoming gameplay cover.
+    P1 follows at 2.8 m (previously 4.6 m), keeping FOV/obstacle/bounds handling. For the local P2
+    only, `P2MotionPresentation` interpolates received position/eye-height over a 75 ms arrival-time
+    buffer, replacing exponential snapshot chasing + a second camera chase. It holds on packet
+    gaps, snaps on epoch/teleport/stale-stream boundaries and clears on role changes. Other-body
+    presentation and local P1 prediction/reconciliation are unchanged. Local P2 aim/recoil/sector
+    and authoritative shot origins are not buffered; this is not a protocol or prediction redesign.
   Ramp authoring now provides both walkable surfaces and filled, sloped solids. Horizontal
   movement and bot clearance clip the solid footprint to the feet/step band; bullet rays clip
   against the actual sloped top rather than an enclosing box. This fixes high-side penetration

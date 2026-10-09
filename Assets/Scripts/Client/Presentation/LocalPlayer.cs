@@ -33,7 +33,7 @@ namespace BeMyArms.Client
         const int ViewModelLayer = 9;  // dedicated first-person viewmodel layer
 
         [Header("P1 third person (Cinemachine)")]
-        public float P1Distance = 4.6f;
+        public float P1Distance = 2.8f;
         public float P1PivotHeight = 1.55f;
         public float P1VerticalArmLength = 0.12f;
         public float P1CameraSide = 0.62f;
@@ -48,8 +48,6 @@ namespace BeMyArms.Client
         [Header("P2 first person")]
         public float P2EyeHeight = 1.58f;
         public float ViewmodelFieldOfView = 68f;
-        /// <summary>Presentation-only smoothing of the camera's inherited body position (seconds).</summary>
-        public float P2BodyPositionSmoothing = 0.06f;
 
         [Header("Shot feel")]
 
@@ -75,10 +73,6 @@ namespace BeMyArms.Client
         bool _camLookInitialized;
         Vector3 _boundsOffset;
         bool _boundsOffsetInitialized;
-
-        // P2 first-person: smoothed inherited body eye position (aim/recoil stay immediate).
-        Vector3 _p2Eye;
-        bool _p2EyeInitialized;
 
         NetworkBodyClient _client;
         MatchDirector _director;
@@ -131,7 +125,7 @@ namespace BeMyArms.Client
             if (_cameraEpoch != _client.ControlEpoch)
             {
                 _cameraEpoch = _client.ControlEpoch;
-                _camLookInitialized = _p2EyeInitialized = _boundsOffsetInitialized = false;
+                _camLookInitialized = _boundsOffsetInitialized = false;
                 _p1Cam.PreviousStateIsValid = _p2Cam.PreviousStateIsValid = false;
                 _boundsOffset = Vector3.zero;
                 _viewmodelKick = _viewmodelKickVelocity = 0f;
@@ -147,7 +141,7 @@ namespace BeMyArms.Client
             {
                 if (_viewmodel != null) _viewmodel.SetActive(_client.Body.Alive.Value);
                 UpdateShotFeedback(Time.deltaTime);
-                UpdateP2Camera(state);
+                UpdateP2Camera();
             }
 
             // Frame-accurate: the look/aim above is sampled this frame, then Cinemachine applies it.
@@ -311,7 +305,6 @@ namespace BeMyArms.Client
             _camLookInitialized = false;
             _boundsOffset = Vector3.zero;
             _boundsOffsetInitialized = false;
-            _p2EyeInitialized = false;
 
             _camera.cullingMask = (role == 1 ? ~(1 << PlayerBodyLayer) : ~0) & ~(1 << ViewModelLayer);
             _camera.fieldOfView = FieldOfView;
@@ -352,25 +345,18 @@ namespace BeMyArms.Client
             _pivot.SetPositionAndRotation(pivot, Quaternion.Euler(_camLookPitch, _camLookYaw, 0f));
         }
 
-        void UpdateP2Camera(BodyState state)
+        void UpdateP2Camera()
         {
             if (_p2Cam == null) return;
-            // Aim/recoil rotation stays immediate; only the position inherited from the shared body
-            // (translation + stance height) is eased, so mouse aim has no added latency.
+            // Aim/recoil rotation stays immediate. Body/stance already follows the received-snapshot
+            // timeline; a second exponential chase here would reintroduce uneven lag.
             float pitch = Mathf.Clamp(_client.LocalAimPitch, -80f, 80f);
             Quaternion rotation = Quaternion.Euler(pitch, _client.LocalAimYaw, 0f);
 
             // Stable logical eye: follows the smoothed shared-body position at the current stance
             // height and is completely independent of the animated chest/shoulder rig.
-            float eyeHeight = state.EyeHeight > 0.01f ? state.EyeHeight : 1.45f;
-            Vector3 eyeTarget = _client.VisualPosition + Vector3.up * eyeHeight;
-
-            float dt = Mathf.Max(1e-4f, Time.deltaTime);
-            float k = 1f - Mathf.Exp(-dt / Mathf.Max(0.001f, P2BodyPositionSmoothing));
-            if (!_p2EyeInitialized) { _p2Eye = eyeTarget; _p2EyeInitialized = true; }
-            else _p2Eye = Vector3.Lerp(_p2Eye, eyeTarget, k);
-
-            _p2Cam.transform.SetPositionAndRotation(_p2Eye, rotation);
+            Vector3 eyeTarget = _client.VisualPosition + Vector3.up * _client.VisualEyeHeight;
+            _p2Cam.transform.SetPositionAndRotation(eyeTarget, rotation);
         }
 
         // ---- P2 first-person viewmodel + shot feel ----

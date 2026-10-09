@@ -1,6 +1,6 @@
-# Current playtest — Boatyard environment look sample
+# Current playtest — Boatyard continuity and camera feel
 
-**Layout accepted; corrected PBR/room-light sample, not final art · 2026-10-09**
+**Layout accepted; expanded continuity/environment + camera correction, not final art · 2026-10-09**
 
 Build: `Builds/Windows/BeMyArms.exe`. **PLAY → Duel → P2 → Start Match** tests the P1 movement
 partner; repeat as **P1** to test the P2 weapon partner. Try Easy first, then Hard. F6 resets
@@ -9,7 +9,7 @@ an encounter; F7 exchanges practice roles. Use matching client/server builds.
 ## What to review now
 
 Menu Duel and duo practice open **Boatyard**: a small coastal engine/boat repair business,
-mostly blockout, with an environment look sample at the workshop entry/loading/nearby yard.
+with an expanded environment pass following review of the workshop entry/loading/nearby yard sample.
 Workshop/loading platform faces a tighter repair yard;
 the lower quay bends around a coastal spur/pump building, rather than filling a square arena.
 An eastern maintenance passage offers an alternate approach with a low service pipe.
@@ -39,8 +39,13 @@ maps; powder-coated metal and bare steel are no longer just plain color material
 floating workshop text is gone. Three ceiling fixtures/downward baked task lights illuminate the
 room, with three current lightmaps, body probes and reflection captures. Exterior sun/grading is
 preserved rather than globally increasing ambient/exposure.
-Sky, lighting, contextual sea color and light grading affect the wider map; **untreated geometry
-is still blockout**, not finished art. Characters/weapon design have not been redesigned.
+The continuation now treats the remaining buildings, quay/maintenance decks, coastal rock,
+railings and equipment with the same material language and authored service details. Joined
+construction has common surface coordinates and no separate inset bevels at contact edges.
+Concrete uses a larger matched variation composite rather than repeating the same 2 m tile.
+Backdrop hills/workboat have non-box silhouettes; playable cover stays solid with the accepted
+collision. This remains reviewable environment art, not final production polish. Characters/weapon
+design have not been redesigned. Exterior light and the three workshop task lights are retained.
 
 - Too cartoon-like, too realistic, or approximately the right middle ground?
 - Welcoming and bright, without washed-out surfaces or excessive saturation?
@@ -49,11 +54,34 @@ is still blockout**, not finished art. Characters/weapon design have not been re
 - At normal walking/aiming distance, can you actually see material detail this time (not only
   color)? Look at concrete grazing the sun, workshop plaster, teal machinery and metal edging.
 - Do ramps now read as solid flat surfaces? Report flicker/warping or visible seams if they remain.
+- Walk ramp → deck and look along the joins: do they read as one constructed surface now?
+- Inspect the quay, pump building, maintenance passage, racks/winch and boat-service housing:
+  do they belong to one business, or still look like unrelated blocks? Is detail useful or cluttered?
 
-Judge the sample while walking/aiming in both roles. No requirement for screenshots. We stop
-for your feedback before expanding the art pass, importing large asset packs or doing characters.
+Judge while walking/aiming in both roles. No requirement for screenshots. We stop for your feedback
+before another pass, large asset packs or character work.
 
-Follow-up verification: 8 focused look-sample cases passed, with only the panel-emission case
+### Camera / movement review
+
+- **P2 + P1 bot:** inherited body movement now follows a small received-pose interpolation
+  timeline, rather than two smoothing filters chasing each new snapshot. Aim/recoil remain
+  immediate; this does not predict the bot or alter shooting. Is travel smooth during walking,
+  turning, ramp ascent/descent and crouch? Packet gaps can still briefly freeze motion.
+- **P1:** camera follow distance is now **2.8 m instead of 4.6 m**, with the same FOV and
+  obstacle/bounds handling. Is it comfortable like a normal third-person shooter? Check doorways,
+  cliffs, backing toward cover and whether your shared body occupies too much of the view.
+- F6/F7 should reset without dragging the camera from its old role/position. The known near-cover
+  camera vs authoritative shot-origin disagreement is not claimed solved by these presentation fixes.
+
+Current focused verification: 28 map cases, 6 P2 motion cases and 1 camera-default case passed.
+The final surface bake has 3 lightmaps, 72 probes and two reflection captures. Numerical collision
+and exterior sun were preserved; test/bake data are not acceptance of visuals or camera feel.
+One updated Windows Development build succeeded: 0 errors, 42 existing API/unused-field warnings.
+The isolated real P2 + P1-bot fixture passed: 1,904 rendered frames, including 612 moving frames
+between snapshot ticks, zero measured body-eye anchor/aim-rotation error, and a role-switched
+2.8 m P1 rig. No reference/type errors. Perceived smoothness/framing still needs your review.
+
+Earlier PBR follow-up verification (historical): 8 focused look-sample cases passed, with only the panel-emission case
 rerun after its material-flag fix. Collision and exterior sun were asserted unchanged by the
 live authoring script; unrelated movement/combat/lifecycle tests were not rerun.
 The updated Windows build succeeded with 0 errors and 0 reported warnings.
@@ -83,8 +111,9 @@ lighting/reflections, serialized grading and ramp surface data. These do not dec
 6. Near lips, racks and doorway edges, report where camera aim says clear but the actual rifle
    shot is obstructed. This known shot-origin/presentation limitation is not solved by a new map.
 
-**This is not final visual acceptance.** The coastal layout was accepted; this checkpoint asks
-for feedback on a small environment art sample. Character work and a whole-map pass remain outside scope.
+**This is not final visual acceptance.** The coastal layout was accepted and continuing the
+environment pass was authorized; this checkpoint asks for natural joins/materials and camera-feel
+feedback. Character work remains outside scope.
 
 ## Retained accuracy and crosshair behavior
 
