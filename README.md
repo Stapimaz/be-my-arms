@@ -5,6 +5,7 @@ Unity 6 / URP, NGO + Unity Transport, server-authoritative shared-body multiplay
 
 **Current state:** accepted **coast-shaped Boatyard Duel layout**, with a small environment look
 sample at the workshop entry/loading/yard for visual feedback (not final art; characters deferred):
+matched PBR surface maps and local baked workshop lighting, following feedback on the first sample;
 workshop/loading platform versus a bent lower quay, tighter repair yard and a low maintenance
 passage. Unreachable background coastline/buildings suggest a larger place. Starting sides
 alternate each round; team/role ownership stays fixed. The sample's visual direction is awaiting

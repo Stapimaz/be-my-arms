@@ -242,6 +242,15 @@ Do not silently replace it with the registry version during repository cleanup.
    `LocalPlayer` opts the world camera into post-processing when a map Volume exists, leaving
    volume-free legacy scenes and the separate overlay viewmodel unchanged. No FOV/aim changes.
    Textures are ambientCG CC0 with recorded provenance in `BoatyardLookSample/SOURCES.md`.
+   Human review found the initial sample's surface detail too faint and workshop too dark.
+   The focused follow-up uses matched 2K concrete/plaster/coating/bare-metal PBR sets, relative
+   albedo variation and source roughness without excessive clipping; trim/detail UVs are metric.
+   Three downward baked area task lights, four bounce GI and denser workshop charts address room
+   illumination without changing the exterior sun/sky/grading. Decorative panel emission is enabled
+   for display but those fixtures do not contribute GI, avoiding a second baked light source.
+   The rejected oversized TextMesh sign is removed. Current lighting bake has three lightmaps,
+   72 probes and two local reflection captures. `tools/maps/refine-boatyard-surfaces.cs` is a
+   guarded one-time Editor correction, not regeneration or a new runtime lighting system.
   Ramp authoring now provides both walkable surfaces and filled, sloped solids. Horizontal
   movement and bot clearance clip the solid footprint to the feet/step band; bullet rays clip
   against the actual sloped top rather than an enclosing box. This fixes high-side penetration

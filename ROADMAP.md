@@ -1,6 +1,6 @@
 # Be My Arms — Roadmap
 
-**Current status: accepted Boatyard layout; small environment look sample for review · Updated 2026-10-09**
+**Current status: accepted Boatyard layout; refined PBR surfaces/workshop lighting for review · Updated 2026-10-09**
 
 Design: [GAME_CONCEPT.md](GAME_CONCEPT.md). Architecture: [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md).
 Run/build: [docs/DEV_ENVIRONMENT.md](docs/DEV_ENVIRONMENT.md).
@@ -44,6 +44,47 @@ durable identities/security and final release readiness. Human visual/feel accep
 inferred from screenshots or green tests.
 
 ## Current iteration — workshop/loading/yard look sample
+
+### Follow-up to human review of `641063b`
+
+The user liked the exterior light but reported surfaces still looked textureless, the floating
+workshop text was far too large, and the interior was dark. The first sample is **not visually
+accepted**. They authorized a correction in the same slice with quality, matched texture maps,
+not a cheap flat image overlay; no whole-map or character expansion.
+
+- Five major materials now use 2K albedo/normal/packed metallic-smoothness sets. Concrete/surface
+  normals and visible relative albedo variation replace the excessive initial flattening.
+  Dedicated CC0 powder-coating/bare-metal sources supply paint/steel surface response. Preserve
+  roughness-map variation instead of clipping most values to a small constant range; coatings
+  remain dielectric. Metric UVs also fix stretched texture scale on thin paint/trim/drawer pieces.
+- Remove only the rejected `WorkshopServiceSign`. Add three local ceiling fixtures/downward
+  **baked area lights**, with four-bounce GI and denser workshop charts. Current bake has **3
+  lightmaps**, 72 probes and two local reflection captures. Exterior sun/sky/grading remain the
+  same; no global ambient lift or fake new cover. Shared collision entries were asserted identical.
+- Two eye-height URP previews reviewed before building for visible surface detail and room light;
+  technical rendering review is not human art acceptance. A disposable preview initially cleared
+  global lightmaps via Editor `NewScene`; preserve/reload those maps when previewing instead of
+  mistaking that tooling artifact for missing delivered GI. No gameplay scene was altered by preview.
+- Verification scope: compilation, the focused `LookSample` cases and one updated build, with
+  the existing representative rendered-P2 smoke checking the five PBR map sets, baked room light
+  and removed sign. No full movement/combat/lifecycle rerun; geometry and network code are unchanged.
+
+Focused verification: **8 look-sample cases** passed across the initial run and one affected
+rerun. URP material validation disabled panel emission when no `AnyEmissive` flag was set;
+the flag is now correct and the fixtures remain non-GI contributors, so the area lights (not
+decorative panels) supply the bake. That material-only fix needed no second light bake.
+One updated Windows Development build succeeded (**0 errors, 0 reported warnings**). Runtime
+verification uses the disposable rendered P2, with an optional actual game-camera frame for
+technical review; that frame is not a requirement or an automated visual acceptance gate.
+All **13 menu/shared-body/presentation smoke checks** passed with the five 2K PBR sets and
+baked room lights loaded in the actual player. Its real P2 frame was reviewed for wall/floor
+detail and lit room surfaces. A QA-only use of the Editor-only `Light.lightmapBakeType` API
+was corrected to runtime `bakingOutput`; no second player build was needed.
+
+Stop for human feedback on perceptible material quality and workshop readability. Do not declare
+the art successful just because map references/bake data exist, and do not expand into other areas.
+
+### First sample (historical)
 
 The user accepted the bent coastal layout (`e551b23`: “layout baya beğendim”) and authorized
 the proposed **small environment art slice**, not a full map or character pass. Direction to

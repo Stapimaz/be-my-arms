@@ -111,6 +111,9 @@ unity command eval_file tools/maintenance/audit-unity-references.cs 30000 --time
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/smoke-duel.ps1
 # Current Boatyard look sample: same disposable smoke plus rendered lighting/grading import checks
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/smoke-duel.ps1 -CheckLookSample
+# Optional: save this disposable P2's real rendered frame in Builds/Windows/QA/DuelSmoke;
+# not a desktop/human-session screenshot or an automated art acceptance requirement
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/smoke-duel.ps1 -CheckLookSample -CaptureLookReview
 # Broader session/peer-loss regression: use when ownership/lifecycle/Transport changes
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/test-session-lifecycle.ps1 -BuildDirectory Builds/Windows
 # Rifle geometry/damage/feedback + P1-motion spread: real role RPCs and server ticks

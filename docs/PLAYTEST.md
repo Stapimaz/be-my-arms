@@ -1,6 +1,6 @@
 # Current playtest — Boatyard environment look sample
 
-**Layout accepted; small visual-direction experiment, not final art · 2026-10-09**
+**Layout accepted; corrected PBR/room-light sample, not final art · 2026-10-09**
 
 Build: `Builds/Windows/BeMyArms.exe`. **PLAY → Duel → P2 → Start Match** tests the P1 movement
 partner; repeat as **P1** to test the P2 weapon partner. Try Easy first, then Hard. F6 resets
@@ -33,8 +33,12 @@ is unchanged. Use matching updated client/server builds.
 
 Start on the workshop side (or walk there as P1). Inspect the entry, loading ramp/edge, inside
 workbench and adjacent yard machinery. Warm light concrete/plaster, teal paint, limited ochre
-accents and subtle surface detail are the sample. Two baked indirect lightmaps, body light
-probes, reflection captures and a shadowed sun supply depth without intentionally dark interiors.
+accents and surface detail are the sample. After feedback that the first sample still looked
+textureless/dark, five major materials now use matched 2K albedo, normal and metallic/smoothness
+maps; powder-coated metal and bare steel are no longer just plain color materials. The oversized
+floating workshop text is gone. Three ceiling fixtures/downward baked task lights illuminate the
+room, with three current lightmaps, body probes and reflection captures. Exterior sun/grading is
+preserved rather than globally increasing ambient/exposure.
 Sky, lighting, contextual sea color and light grading affect the wider map; **untreated geometry
 is still blockout**, not finished art. Characters/weapon design have not been redesigned.
 
@@ -42,12 +46,22 @@ is still blockout**, not finished art. Characters/weapon design have not been re
 - Welcoming and bright, without washed-out surfaces or excessive saturation?
 - Does shaded workshop space still let you identify the shared body/roles and aim comfortably?
 - Do concrete, paint and steel feel distinct? Too flat, too shiny, too noisy, or too repetitive?
+- At normal walking/aiming distance, can you actually see material detail this time (not only
+  color)? Look at concrete grazing the sun, workshop plaster, teal machinery and metal edging.
 - Do ramps now read as solid flat surfaces? Report flicker/warping or visible seams if they remain.
 
 Judge the sample while walking/aiming in both roles. No requirement for screenshots. We stop
 for your feedback before expanding the art pass, importing large asset packs or doing characters.
 
-Technical verification: all 20 focused map/presentation cases passed (one Volume persistence
+Follow-up verification: 8 focused look-sample cases passed, with only the panel-emission case
+rerun after its material-flag fix. Collision and exterior sun were asserted unchanged by the
+live authoring script; unrelated movement/combat/lifecycle tests were not rerun.
+The updated Windows build succeeded with 0 errors and 0 reported warnings.
+13 disposable menu/shared-body/presentation checks passed, including the actual player's five
+2K PBR sets, baked room lights and absence of the rejected sign. The rendered P2 camera frame
+was reviewed for surface detail/room illumination; this is not a final visual-quality verdict.
+
+First sample verification (historical): all 20 focused map/presentation cases passed (one Volume persistence
 fix needed only its affected test rerun). One updated Windows build succeeded: 0 errors,
 12 warnings (11 existing source warnings, one non-blocking Unity symbol-upload 403).
 13 disposable menu/shared-body smoke checks passed, including rendered P2 loading of baked

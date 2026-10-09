@@ -1,4 +1,4 @@
-param([string]$BuildDirectory='Builds/Windows', [switch]$CheckLookSample)
+param([string]$BuildDirectory='Builds/Windows', [switch]$CheckLookSample, [switch]$CaptureLookReview)
 $ErrorActionPreference='Stop'
 $root=(Resolve-Path $BuildDirectory).Path
 $exe=Join-Path $root 'BeMyArms.exe'
@@ -108,6 +108,14 @@ try {
     $b=Await $p2 {param($s)$s.InputGameplayActive -and $s.ApplicationFocused} 'P2 focus/input ownership'
     $cross=Read-Crosshair $p2
     Check ($cross.Active -and !$cross.Raycast -and [Math]::Abs($cross.Radius-$cross.ProjectedRadius) -lt .01) 'Live P2 crosshair is input-transparent and projects spread with the actual world-camera FOV/canvas scale'
+    if($CaptureLookReview){
+        # Optional, this disposable player's own rendered frame, not a desktop/human screenshot
+        # or an automated art-quality assertion. No extra match or camera/controls mutation.
+        $image=Join-Path $qa 'refined-look-p2.png'
+        $capture=Join-Path $qa 'capture-look.cs'
+        [IO.File]::WriteAllText($capture,'UnityEngine.ScreenCapture.CaptureScreenshot(@"'+$image.Replace('"','""')+'"); return true;')
+        Qa $p2 'eval_file' @($capture) | Out-Null
+    }
     $ammo=$b.Ammo
     Qa $p2 'qa_inject_input' @('--fire','true') | Out-Null
     $b=Await $p2 {param($s)$s.Ammo -lt $ammo -and $s.ShotsFired -gt 0} 'P2 authoritative shot'

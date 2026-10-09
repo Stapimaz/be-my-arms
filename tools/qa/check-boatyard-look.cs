@@ -5,6 +5,9 @@ Assert(scene.name == "Boatyard", "Expected revised Boatyard client");
 var roots = scene.GetRootGameObjects();
 var sample = roots.Single(g => g.name == "LookSample");
 Assert(sample.GetComponentsInChildren<UnityEngine.Collider>().Length == 0, "Art detail must not add collision");
+Assert(sample.transform.Find("WorkshopServiceSign") == null, "Rejected oversized sign still present");
+var roomLights = sample.GetComponentsInChildren<UnityEngine.Light>();
+Assert(roomLights.Length == 3 && roomLights.All(l => l.type == UnityEngine.LightType.Rectangle && l.bakingOutput.isBaked && l.bakingOutput.lightmapBakeType == UnityEngine.LightmapBakeType.Baked), "Local baked workshop lights missing");
 var volumeType = System.Type.GetType("UnityEngine.Rendering.Volume, Unity.RenderPipelines.Core.Runtime");
 var volume = sample.GetComponentInChildren(volumeType);
 var profile = volumeType.GetField("sharedProfile").GetValue(volume);
@@ -20,9 +23,19 @@ Assert(UnityEngine.LightmapSettings.lightProbes != null && UnityEngine.LightmapS
 Assert(sample.GetComponentsInChildren<UnityEngine.ReflectionProbe>().All(p => p.bakedTexture != null), "Reflection captures missing from player");
 Assert(sample.GetComponentsInChildren<UnityEngine.Renderer>().All(r => r.sharedMaterial != null && r.sharedMaterial.shader.isSupported), "Sample material/shader missing or unsupported");
 var arena = roots.Single(g => g.name == "Arena").transform;
+var materials = arena.GetComponentsInChildren<UnityEngine.Renderer>().Select(r => r.sharedMaterial).Distinct()
+    .Where(m => new[] { "Concrete", "Plaster", "TealPaint", "SafetyOchre", "Steel" }.Contains(m.name)).ToArray();
+Assert(materials.Length == 5, "Expected five refined surface materials");
+foreach (var material in materials) {
+    Assert(material.IsKeywordEnabled("_NORMALMAP") && material.IsKeywordEnabled("_METALLICSPECGLOSSMAP"), material.name + " must use PBR detail, not just a color texture");
+    foreach (string property in new[] { "_BaseMap", "_BumpMap", "_MetallicGlossMap" }) {
+        var texture = material.GetTexture(property);
+        Assert(texture != null && texture.width >= 2000, material.name + " lost its 2K surface map: " + property);
+    }
+}
 foreach (var t in arena.Cast<UnityEngine.Transform>().Where(t => t.name.StartsWith("BMA_Map_Ramp"))) {
     var mesh = t.GetComponent<UnityEngine.MeshFilter>().sharedMesh;
     Assert(mesh.vertexCount == mesh.uv.Length && mesh.vertexCount == mesh.tangents.Length, "Ramp surface coordinates missing");
 }
-return new {Success = true, Lightmaps = UnityEngine.LightmapSettings.lightmaps.Length,
+return new {Success = true, PbrSurfaces = materials.Length, InteriorBakedLights = roomLights.Length, RemovedOversizedSign = true, Lightmaps = UnityEngine.LightmapSettings.lightmaps.Length,
     Probes = UnityEngine.LightmapSettings.lightProbes.count, WorldGrading = true, ViewmodelGrading = false};

@@ -251,5 +251,50 @@ namespace BeMyArms.Client.Tests
             Assert.AreEqual(2, reflections.Length);
             Assert.IsTrue(reflections.All(p => p.bakedTexture != null), "Reflection captures must be baked before delivery");
         }
+
+        [TestCase("Concrete")]
+        [TestCase("Plaster")]
+        [TestCase("TealPaint")]
+        [TestCase("SafetyOchre")]
+        [TestCase("Steel")]
+        public void LookSampleMajorSurfacesUseMatchedPbrMapsNotOnlyFlatColor(string name)
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(BoatyardLookSample.AssetDir + "/" + name + ".mat");
+            Assert.IsNotNull(material);
+            Assert.IsTrue(material.IsKeywordEnabled("_NORMALMAP"));
+            Assert.IsTrue(material.IsKeywordEnabled("_METALLICSPECGLOSSMAP"));
+            foreach (string property in new[] { "_BaseMap", "_BumpMap", "_MetallicGlossMap" })
+            {
+                var texture = material.GetTexture(property);
+                Assert.IsNotNull(texture, name + " " + property);
+                Assert.GreaterOrEqual(texture.width, 2000); Assert.GreaterOrEqual(texture.height, 2000);
+                var importer = (TextureImporter)AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(texture));
+                Assert.AreEqual(property == "_BaseMap", importer.sRGBTexture, "Only color data is sRGB");
+                Assert.IsFalse(importer.isReadable, "No retained CPU copy of delivered surface maps");
+                Assert.AreEqual(TextureWrapMode.Repeat, importer.wrapMode);
+                if (property == "_BumpMap") Assert.AreEqual(TextureImporterType.NormalMap, importer.textureType);
+                Assert.AreEqual(material.GetTextureScale("_BaseMap"), material.GetTextureScale(property), "Matched surface-map scale");
+            }
+            Assert.AreEqual(name == "Steel" ? 1 : 0, material.GetFloat("_Metallic"), "Paint is a dielectric coating, not colored bare metal");
+        }
+
+        [Test]
+        public void LookSampleLocalBakedWorkshopLightsReplaceTheRejectedOversizedSign()
+        {
+            var sample = _scene.GetRootGameObjects().Single(g => g.name == BoatyardLookSample.RootName);
+            Assert.IsNull(sample.transform.Find("WorkshopServiceSign"));
+            var lights = sample.GetComponentsInChildren<Light>(); Assert.AreEqual(3, lights.Length);
+            foreach (var light in lights)
+            {
+                Assert.AreEqual(LightType.Rectangle, light.type); Assert.AreEqual(LightmapBakeType.Baked, light.lightmapBakeType);
+                Assert.Less(light.transform.forward.y, -.99f, "Task lights illuminate the room, not the roof");
+                Assert.Greater(light.intensity, 0); Assert.Greater(light.areaSize.x, 1);
+            }
+            var panel = AssetDatabase.LoadAssetAtPath<Material>(BoatyardLookSample.AssetDir + "/WorkshopLightPanel.mat");
+            Assert.IsTrue(panel.IsKeywordEnabled("_EMISSION"), "The visible fixture must look switched on");
+            Assert.IsEmpty(sample.GetComponentsInChildren<Collider>());
+            var sun = _scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Light>()).Single(l => l.type == LightType.Directional);
+            Assert.AreEqual(1.5f, sun.intensity); Assert.Less(Quaternion.Angle(Quaternion.Euler(48, -38, 0), sun.transform.rotation), .01f);
+        }
     }
 }
