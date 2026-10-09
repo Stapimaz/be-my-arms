@@ -63,16 +63,33 @@ try {
     Check ($ui.Scene -eq 'MainMenu' -and @($ui.Buttons | Where-Object Name -eq 'DUO PRACTICE').Count -eq 1) 'Normal player starts at the usable main-menu entry'
     Qa $p1 'qa_click_button' @('--name','DUO PRACTICE') | Out-Null
     Qa $p1 'qa_click_button' @('--name','Host') | Out-Null
-    $a=Await $p1 {param($s)$s.OwnBodyResolved -and $s.MatchPhase -eq 'Warmup'} 'P1 host assignment'
     $file=Join-Path $qa 'allocated-server.cs'
     [IO.File]::WriteAllText($file,'var t=System.Type.GetType("BeMyArms.Client.PrivateMatch, BeMyArms.Client");var current=t.GetField("Current").GetValue(null);var allocator=t.GetField("Allocator").GetValue(null);var process=allocator.GetType().GetField("_process",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(allocator);return new { Port=current.GetType().GetField("Port").GetValue(current),Pid=process.GetType().GetProperty("Id").GetValue(process) };')
     $allocated=(Qa $p1 'eval_file' @($file)).result
     $processes.Add([System.Diagnostics.Process]::GetProcessById([int]$allocated.Pid))
+    $serverRuntime=Join-Path $qa 'allocated-server-runtime'
+    New-Item -ItemType Directory -Force $serverRuntime | Out-Null
+    # Snapshot server startup BEFORE polling the client: every client command republishes
+    # the shared discovery file, hiding a server that has already finished startup.
+    $deadline=[DateTime]::UtcNow.AddSeconds(25)
+    $descriptor=$null
+    do {
+        try {
+            $candidate=Get-Content (Join-Path $root '.unity-pipeline-runtime-port') -Raw
+            if(($candidate | ConvertFrom-Json).pid -eq $allocated.Pid){$descriptor=$candidate;break}
+        }catch{}
+        Start-Sleep -Milliseconds 100
+    }while([DateTime]::UtcNow -lt $deadline)
+    Check ($null -ne $descriptor) 'Disposable allocated server endpoint belongs to this smoke session'
+    [IO.File]::WriteAllText((Join-Path $serverRuntime '.unity-pipeline-runtime-port'),$descriptor)
+    $server=@{Runtime=$serverRuntime}
+    $a=Await $p1 {param($s)$s.OwnBodyResolved -and $s.MatchPhase -eq 'Warmup'} 'P1 host assignment'
     Check ($a.LocalRole -eq 0 -and $allocated.Port -gt 0) 'Menu allocates a separate dedicated Duel server and binds P1'
     # A rendered P2 checks the actual Resources viewmodel load without judging its pixels.
     $p2=Start-Player 'duel-p2' "-screen-fullscreen 0 -screen-width 1280 -screen-height 720 -client-join 127.0.0.1 -client-port $($allocated.Port) -client-join-role p2"
     $b=Await $p2 {param($s)$s.MatchLive -and $s.OwnBodyResolved -and $s.ViewmodelCount -eq 1} 'P2 live assignment/viewmodel import'
     $a=Qa $p1 'qa_player_state'
+    Check ($a.Scene -eq 'Boatyard' -and $b.Scene -eq 'Boatyard') 'Menu and joining partner load the same new Boatyard Duel map'
     Check ($b.LocalRole -eq 1 -and $a.LocalTeam -eq $b.LocalTeam -and $a.LocalBodyIndex -eq $b.LocalBodyIndex -and $b.BodyCount -eq 2 -and !$b.P1Bot -and !$b.P2Bot) 'Both authorized human roles own the same shared body, without duplicate bots'
     Check ($b.DuplicateSummary -eq 'none' -and $b.ViewmodelCount -eq 1) 'Normalized P2 presentation resources resolve to one viewmodel'
     Qa $p1 'qa_headless_controls' | Out-Null
@@ -94,6 +111,8 @@ try {
     Check ($cross.Active -and $cross.Spread -gt 0 -and $cross.Radius -gt 0) 'Real local rifle firing opens the rendered P2 crosshair for next-round bloom'
     Qa $p2 'qa_inject_input' | Out-Null
     Check ($b.Ammo -lt $ammo) 'P2 fire reaches authoritative ammo/shot state'
+    $rounds=(Qa $server 'eval_file' @((Join-Path $PSScriptRoot 'check-boatyard-rounds.cs'))).result
+    Check ($rounds.Success -and $rounds.OwnersAndScoresPreserved) 'Actual server round starts alternate geographic sides while preserving team scores and P1/P2 owners'
     $logs=Get-ChildItem $qa -Filter '*.log'
     $errors=@($logs | Select-String -Pattern 'NullReferenceException|MissingReferenceException|TypeLoadException|Exception:|Not allowed|\[Error\]|error CS\d')
     Check ($errors.Count -eq 0) 'Smoke logs contain no runtime reference/type errors'
@@ -102,7 +121,7 @@ try {
 }finally {
     foreach($process in $processes){if(!$process.HasExited){$process.Kill();$process.WaitForExit(5000) | Out-Null}}
     # Remove only endpoint copies created by this run, not arbitrary runtime/user files.
-    foreach($name in @('menu-p1','duel-p2')){
+    foreach($name in @('menu-p1','duel-p2','allocated-server')){
         $runtime=Join-Path $qa "$name-runtime"
         $descriptor=Join-Path $runtime '.unity-pipeline-runtime-port'
         if(Test-Path $descriptor){Remove-Item $descriptor -Force}

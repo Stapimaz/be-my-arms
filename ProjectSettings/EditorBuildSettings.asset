@@ -14,5 +14,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/TwoVsTwoArena.unity
     guid: a7b0f7cfe316d104e9c737c2a15c2d21
+  - enabled: 1
+    path: Assets/Scenes/Boatyard.unity
+    guid: 01647bf8b7f2f00468779a078be9a044
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

@@ -3,10 +3,10 @@
 Two players, one fighter: **P1 controls body/movement; P2 controls arms/weapons/aim**.
 Unity 6 / URP, NGO + Unity Transport, server-authoritative shared-body multiplayer.
 
-**Current state:** **responsive smooth P2 spread crosshair + speed-dependent rifle accuracy**, ready for
-human playtest after positive bot feedback. The crosshair smoothly tracks next-round movement/burst
-spread; slide error shrinks with actual speed. A recovered stationary first rifle round has zero
-spread. Human controls and the accepted P2 POV remain unchanged.
+**Current state:** first **Boatyard Duel blockout**, ready for layout playtest: workshop/loading
+platform versus lower quay, a central repair yard and a low maintenance passage. Starting sides
+alternate each round; team/role ownership stays fixed. Visual direction, including characters,
+is deferred. Accepted controls, P2 POV, bots and motion-dependent rifle accuracy remain unchanged.
 
 ## Start here
 
@@ -20,7 +20,7 @@ spread. Human controls and the accepted P2 POV remain unchanged.
 Build entry: `tools/build/build-player.cs`. Output: `Builds/Windows/BeMyArms.exe`.
 Play: **PLAY → Duel → P1/P2 → Start Match**, with a bot teammate for solo testing.
 
-`Assets/Scripts` and tests use domains; `Assets/Scenes` contains the three playable scenes
+`Assets/Scripts` and tests use domains; `Assets/Scenes` contains the four playable scenes
 and a separate Samples folder. Current shared-rig character assets live under
 `Assets/Art/Characters/SharedRig`. History and investigative tooling are in
 [docs/archive](docs/archive/README.md) and `tools/archive`, not the current source of truth.

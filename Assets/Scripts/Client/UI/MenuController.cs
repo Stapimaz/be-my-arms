@@ -138,7 +138,7 @@ namespace BeMyArms.Client
             var request = new MatchRequest
             {
                 Mode = _mode,
-                ArenaScene = _mode == MapFamily.Duel ? "DuelArena" : "TwoVsTwoArena",
+                ArenaScene = _mode == MapFamily.Duel ? PrivateMatch.DefaultDuelScene : "TwoVsTwoArena",
                 Team = 0,
                 Body = 0,
                 Role = _role,
@@ -190,7 +190,7 @@ namespace BeMyArms.Client
             { _status.text = "Enter a host address and a port between 1 and 65535."; return; }
             PrivateMatch.Begin(new MatchRequest
             {
-                Mode = MapFamily.Duel, ArenaScene = "DuelArena", Duo = true,
+                Mode = MapFamily.Duel, ArenaScene = PrivateMatch.DefaultDuelScene, Duo = true,
                 Role = _role, JoinExisting = join, Address = _joinAddress, Port = port
             });
         }

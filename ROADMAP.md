@@ -1,6 +1,6 @@
 # Be My Arms — Roadmap
 
-**Current status: responsive smooth P2 spread crosshair ready for review · Updated 2026-10-09**
+**Current status: first Boatyard Duel blockout ready for layout review · Updated 2026-10-09**
 
 Design: [GAME_CONCEPT.md](GAME_CONCEPT.md). Architecture: [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md).
 Run/build: [docs/DEV_ENVIRONMENT.md](docs/DEV_ENVIRONMENT.md).
@@ -43,7 +43,31 @@ arena/bot quality, generated audio/VFX, onboarding and round presentation, produ
 durable identities/security and final release readiness. Human visual/feel acceptance is not
 inferred from screenshots or green tests.
 
-## Current follow-up — responsive crosshair smoothing
+## Current iteration — first Boatyard Duel blockout
+
+The user authorized the first purpose-built Duel map: a small coastal boat/engine repair
+business, with workshop/service and lower-quay starts, a loading platform, central repair
+yard and side maintenance passage. **Visual/art direction, including characters, is deferred**;
+neutral blockout materials do not establish a style. No 2v2 variant or additional map is built.
+
+- Menu Duel and duo practice now open `Boatyard`. The previous `DuelArena` remains unchanged
+  and included in the build for explicit development launch; `TwoVsTwoArena` is unchanged.
+- Approximately 40 × 40 m bounds, three natural floor levels (0 / 1.2 / 2.4 m), four ramps,
+  wide workshop space and functional crane/engine-rack/hull cover masses. The maintenance pipe
+  needs crouch/slide. Existing geometry-based bots use the same deterministic collision.
+- Starts alternate each round; team identities, scores and human P1/P2 ownership do not swap.
+  No attack/defend objective, new traversal or network foundation was introduced.
+- Stop here for human review of approaches, scale, firing opportunities, dominant platform
+  angles and near-cover camera/shot-origin disagreement. Correct layout before any art pass.
+  Release content target is 5+ maps per mode, not this iteration's delivery scope.
+
+Verification: **9 focused map tests** passed, covering spawn clearance/occlusion, side schedule,
+all four ramps, crouch clearance and existing bot reachability. **12 menu/shared-body smoke checks**
+passed, including Boatyard entry and real server round-side resets preserving owners/slots/score.
+One Windows Development build succeeded (**0 errors, 42 existing warnings**). No full combat or
+lifecycle suite rerun: this iteration changes geometry, menu map selection and round poses.
+
+## Previous follow-up — responsive crosshair smoothing
 
 Human feedback requested quick, lightly smoothed expansion/contraction rather than snapping.
 The display continues to track total next-round spread from any cause, including stationary

@@ -54,7 +54,8 @@ unity command eval_file tools/build/build-player.cs 3600000 --timeout 3600 --for
 ```
 
 Output: **`Builds/Windows/BeMyArms.exe`**, with its entire accompanying folder. Scene zero is
-`MainMenu`, followed by `DuelArena` and `TwoVsTwoArena`. The same binary acts as client and local
+`MainMenu`, followed by `Boatyard`, `DuelArena` and `TwoVsTwoArena`. Duel from the menu opens
+Boatyard; the old arena remains available by explicit launch flags. The same binary acts as client and local
 headless dedicated server. The entry builds Development and preserves the runtime Pipeline
 development flag correctly. Never enable the runtime command endpoint in public release builds.
 
@@ -90,14 +91,16 @@ Current flags use domain names, not development-phase numbers:
 
 ```powershell
 # Direct dedicated Duel (choose a free port)
-Start-Process 'Builds/Windows/BeMyArms.exe' -ArgumentList '-batchmode -nographics -match-role server -client-arena DuelArena -queue-mode duel -queue-matchmaker 0 -match-port 7790 -match-required-players 2 -match-start-delay 0 -match-practice 1 -match-strict-slots 1 -match-delay 0 -match-loss 0'
+Start-Process 'Builds/Windows/BeMyArms.exe' -ArgumentList '-batchmode -nographics -match-role server -client-arena Boatyard -queue-mode duel -queue-matchmaker 0 -match-port 7790 -match-required-players 2 -match-start-delay 0 -match-practice 1 -match-strict-slots 1 -match-delay 0 -match-loss 0'
 # Human role client, using the same build
-Start-Process 'Builds/Windows/BeMyArms.exe' -ArgumentList '-client-join 127.0.0.1 -client-port 7790 -client-join-role p1'
+Start-Process 'Builds/Windows/BeMyArms.exe' -ArgumentList '-client-arena Boatyard -client-join 127.0.0.1 -client-port 7790 -client-join-role p1'
 ```
 
 The menu is the normal human entry; flags are for repeatable development sessions. The normalized
 build must be used on both sides. Old flags/scene names are historical launch interfaces, not the
 canonical workflow; use the current scripts rather than copying commands from archives.
+To revisit the old checkpoint, use `-client-arena DuelArena` on **both** server and clients;
+there is no runtime map selector or scene auto-synchronization in this iteration.
 
 ## Risk-directed verification
 

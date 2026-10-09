@@ -15,6 +15,7 @@ namespace BeMyArms.Client.EditorTools
         static readonly string[] Scenes =
         {
             "Assets/Scenes/MainMenu.unity",
+            "Assets/Scenes/Boatyard.unity",
             "Assets/Scenes/DuelArena.unity",
             "Assets/Scenes/TwoVsTwoArena.unity"
         };

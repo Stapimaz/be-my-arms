@@ -35,7 +35,10 @@ does not redesign the assembly graph or replace mature components with a new fra
 
 ## 2. Process entry and sessions
 
-Normal scenes: `MainMenu`, `DuelArena`, `TwoVsTwoArena`. `AppBootstrap` is the entry point.
+Normal scenes: `MainMenu`, `Boatyard`, `DuelArena`, `TwoVsTwoArena`. `AppBootstrap` is the entry
+point. Menu Duel uses `PrivateMatch.DefaultDuelScene` (`Boatyard`); the old Duel arena remains
+in the build as a development checkpoint. Explicit direct joins can select `-client-arena`;
+both processes must load the same map because NGO scene management is disabled.
 
 - Menu/private flow creates a `MatchRequest` with mode, body/role, bot difficulty and required humans.
 - `PrivateMatch` manages fresh session state, join versus owned-server flow and return to menu.
@@ -214,6 +217,12 @@ Do not silently replace it with the registry version during repository cleanup.
   accepted rifle POV is serialized in `SharedRig/Resources/P2ArmsViewmodel.prefab`; idle
   breathing is disabled and the firing-side renderer is reload-only.
 - Map records and scene links supply spawns, geometry/collision and family metadata.
+  The Boatyard blockout uses the existing box/surface classifier, with four visible ramp meshes,
+  three floor levels (0 / 1.2 / 2.4 m) and a 1.30 m maintenance clearance. No new movement or
+  navigation framework is introduced. `MapSpawns.AlternateDuelSides` is opt-in; `MatchDirector`
+  resolves round-aware poses while team IDs, role slots, owners and scores stay unchanged.
+  The one-time Editor builder refuses to overwrite the authored scene; later layout edits use
+  the connected Editor. Art direction, including characters, is deferred.
 - Audio/VFX libraries and services are presentation. Generated clips/particles are production
   test content, not subjective production-quality acceptance.
 - Blender authoring lives in `art/blender` and `tools/pipeline`; exported models/materials/prefabs

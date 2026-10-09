@@ -82,6 +82,7 @@ namespace BeMyArms.Client
     {
         public const ushort DefaultPort = 7780;
         public const string MenuScene = "MainMenu";
+        public const string DefaultDuelScene = "Boatyard";
 
         /// <summary>Replace with the production allocator later; gameplay/lobby code does not change.</summary>
         public static IMatchServerAllocator Allocator = new LocalProcessAllocator();

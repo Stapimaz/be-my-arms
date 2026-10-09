@@ -1,12 +1,36 @@
-# Current playtest — dynamic P2 crosshair and shared-body accuracy
+# Current playtest — Boatyard Duel blockout
 
-**Responsive smoothing follow-up · 2026-10-09**
+**First layout review; no art-direction decision · 2026-10-09**
 
 Build: `Builds/Windows/BeMyArms.exe`. **PLAY → Duel → P2 → Start Match** tests the P1 movement
 partner; repeat as **P1** to test the P2 weapon partner. Try Easy first, then Hard. F6 resets
 an encounter; F7 exchanges practice roles. Use matching client/server builds.
 
-## What changed
+## What to review now
+
+Menu Duel and duo practice open **Boatyard**: a small coastal engine/boat repair business,
+currently neutral blockout geometry. Workshop/loading platform faces a repair yard and lower
+quay; an eastern maintenance passage offers an alternate approach with a low service pipe.
+Floor levels are 0 / 1.2 / 2.4 m. Starting sides alternate each round, not teams or P1/P2 roles.
+F6 restarts the current round on the same side. F7 exchanges practice roles and starts a fresh
+match at round one, as before; an ordinary next round exchanges geographic starts.
+The old arena remains available via `-client-arena DuelArena` on both server and clients.
+
+1. Try both P1 and P2, ideally then two humans sharing a body. Can P1 offer useful, stable firing
+   positions while P2 requests a different angle? Does movement have a purpose beyond rushing?
+2. Compare the main yard crossing against the maintenance approach. Is the alternative useful,
+   findable and contestable, or simply slow and pointless? Try crouch/slide under the service pipe.
+3. Is the loading platform strong but answerable from other angles? Flag positions that lock
+   every exit, unavoidable spawn pressure, dead ends and routes you never want to use.
+4. Judge distances, contact time, openness, workshop close fighting and cover proportions.
+   Flag where the P1 bot sticks, cannot leave a start or repeatedly ruins an otherwise good shot.
+5. Near lips, racks and doorway edges, report where camera aim says clear but the actual rifle
+   shot is obstructed. This known shot-origin/presentation limitation is not solved by a new map.
+
+**Do not judge final visuals yet.** Map/character art direction is explicitly postponed.
+This checkpoint needs layout feedback before more geometry, additional maps or an art pass.
+
+## Retained accuracy and crosshair behavior
 
 - Rifle accuracy now depends on P1's actual body movement. A recovered, grounded stationary
   first shot follows P2's aim exactly; crouch-walk adds less spread than walk, sprint adds more,
@@ -96,12 +120,19 @@ Animated limb coverage and near-cover camera/shot-origin agreement are not decla
 
 ## Scope and evidence
 
+Boatyard: **9 focused map tests** and **12 menu/shared-body smoke checks** passed. The latter
+exercise the built map with both human roles and actual server round changes, preserving team
+scores and P1/P2 owners/slots. One Windows Development build succeeded (**0 errors, 42 existing
+warnings**). Full combat/lifecycle suites were not rerun; gun and session foundations are unchanged.
+The smoke's shared-endpoint discovery and Vector3-result serialization needed tooling-only fixes;
+those did not require another player build. Layout and bot usefulness still need human review.
+
 No map-specific coordinates or hand-authored bot routes were added. Navigation consumes the
 same bounds/boxes/surfaces as physical movement, so new maps need valid collision data. The
 current bounded local, single-floor-per-cell search is not final global/stacked-floor navigation
 or deep duo tactics; human findings will determine the next improvement.
 
-Current smoothing follow-up: **10 focused crosshair tests** and **9 Duel/HUD smoke checks** passed;
+Previous smoothing follow-up: **10 focused crosshair tests** and **9 Duel/HUD smoke checks** passed;
 one Windows build succeeded (**0 errors, 33 existing deprecated-API/unused-field warnings**).
 Real shot simulation/networking is unchanged; the full suite and combat/lifecycle checks were
 not rerun. Human review decides whether the quick smoothing feels right.

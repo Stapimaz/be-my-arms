@@ -35,7 +35,7 @@ namespace BeMyArms.Client
             {
                 PrivateMatch.Begin(new MatchRequest
                 {
-                    Mode = MapFamily.Duel, ArenaScene = "DuelArena", Duo = true,
+                    Mode = MapFamily.Duel, ArenaScene = PrivateMatch.GetArg("-client-arena") ?? PrivateMatch.DefaultDuelScene, Duo = true,
                     JoinExisting = true, Address = join, Port = port,
                     Role = PrivateMatch.GetArg("-client-join-role") == "p2" ? 1 : 0
                 });
@@ -52,7 +52,7 @@ namespace BeMyArms.Client
                 PrivateMatch.Begin(new MatchRequest
                 {
                     Mode = twoVsTwo ? MapFamily.TwoVsTwo : MapFamily.Duel,
-                    ArenaScene = twoVsTwo ? "TwoVsTwoArena" : "DuelArena",
+                    ArenaScene = twoVsTwo ? "TwoVsTwoArena" : PrivateMatch.DefaultDuelScene,
                     Team = 0,
                     Body = 0,
                     Role = role.Equals("p2", System.StringComparison.OrdinalIgnoreCase) ? 1 : 0,

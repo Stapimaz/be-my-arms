@@ -70,10 +70,10 @@ function Await-State([string]$runtime, [scriptblock]$predicate, [string]$descrip
 
 try {
     $server = Start-Headless 'server' "-match-role server -client-arena DuelArena -queue-mode duel -queue-matchmaker 0 -match-port $port -match-required-players 2 -match-start-delay 0 -match-practice 1 -match-strict-slots 1 -match-delay 0 -match-loss 0 -match-buy 3"
-    $p1 = Start-Headless 'p1' "-client-join 127.0.0.1 -client-port $port -client-join-role p1 -match-token pass1-body"
+    $p1 = Start-Headless 'p1' "-client-arena DuelArena -client-join 127.0.0.1 -client-port $port -client-join-role p1 -match-token pass1-body"
     $a = Await-State $p1 { param($s) $s.OwnBodyResolved } 'first client assignment'
     Assert-Check ($a.LocalSlot -eq 0 -and $a.MatchPhase -eq 'Warmup') 'Duo waits for its second human'
-    $p2 = Start-Headless 'p2' "-client-join 127.0.0.1 -client-port $port -client-join-role p2 -match-token pass1-arms"
+    $p2 = Start-Headless 'p2' "-client-arena DuelArena -client-join 127.0.0.1 -client-port $port -client-join-role p2 -match-token pass1-arms"
     $b = Await-State $p2 { param($s) $s.MatchLive -and $s.OwnBodyResolved } 'duo live'
     $a = State $p1
     Assert-Check ($b.LocalSlot -eq 1 -and $a.LocalTeam -eq $b.LocalTeam -and $a.LocalBodyIndex -eq $b.LocalBodyIndex -and $b.BodyCount -eq 2) 'Both human roles resolve to one shared Team A body'
@@ -136,13 +136,13 @@ try {
     } else { $processes[2].Kill() }
     $a = Await-State $p1 { param($s) $s.P1Bot } 'temporary bot takeover' 45
     Assert-Check ($a.OwnBodyResolved -and $a.LocalSlot -eq 1) 'Unaffected partner stays connected through peer loss'
-    $p2 = Start-Headless 'p2-reconnect' "-client-join 127.0.0.1 -client-port $port -client-join-role p2 -match-token pass1-arms"
+    $p2 = Start-Headless 'p2-reconnect' "-client-arena DuelArena -client-join 127.0.0.1 -client-port $port -client-join-role p2 -match-token pass1-arms"
     $b = Await-State $p2 { param($s) $s.OwnBodyResolved -and $s.LocalSlot -eq 0 -and !$s.P1Bot } 'token reconnect to swapped slot'
     Assert-Check ($b.LocalRole -eq 0 -and !$b.P2Bot) 'Reconnect restores exchanged role and removes temporary bot'
 
     Invoke-QaEval $p2 'System.Type.GetType("BeMyArms.Client.PrivateMatch, BeMyArms.Client").GetMethod("ReturnToMenu").Invoke(null, null); return true;' | Out-Null
     Await-State $p1 { param($s) $s.P1Bot } 'explicit guest leave' | Out-Null
-    $guest = Start-Headless 'fresh-guest' "-client-join 127.0.0.1 -client-port $port -client-join-role p1 -match-token pass1-new-guest"
+    $guest = Start-Headless 'fresh-guest' "-client-arena DuelArena -client-join 127.0.0.1 -client-port $port -client-join-role p1 -match-token pass1-new-guest"
     $b = Await-State $guest { param($s) $s.OwnBodyResolved -and $s.LocalSlot -eq 0 -and !$s.P1Bot } 'fresh guest after intentional leave'
     Assert-Check ($b.BodyCount -eq 2) 'Intentional guest leave frees the role for a fresh human without restarting the server'
 

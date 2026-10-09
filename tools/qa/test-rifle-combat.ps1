@@ -122,8 +122,8 @@ function Advance-Ticks([int]$count){
 }
 try {
     $server=Start-Player 'server' "-match-role server -client-arena DuelArena -queue-mode duel -queue-matchmaker 0 -match-port $port -match-required-players 2 -match-start-delay 0 -match-practice 1 -match-strict-slots 1 -match-delay 0 -match-loss 0 -match-buy 1"
-    $p1=Start-Player 'p1' "-client-join 127.0.0.1 -client-port $port -client-join-role p1"
-    $p2=Start-Player 'p2' "-client-join 127.0.0.1 -client-port $port -client-join-role p2"
+    $p1=Start-Player 'p1' "-client-arena DuelArena -client-join 127.0.0.1 -client-port $port -client-join-role p1"
+    $p2=Start-Player 'p2' "-client-arena DuelArena -client-join 127.0.0.1 -client-port $port -client-join-role p2"
     $deadline=[DateTime]::UtcNow.AddSeconds(25)
     do {$state=Qa $p2 'qa_player_state';if($state.MatchLive -and $state.OwnBodyResolved){break};Start-Sleep -Milliseconds 200}while([DateTime]::UtcNow -lt $deadline)
     Check ($state.MatchLive -and $state.LocalRole -eq 1) 'Real dedicated Duel assigns P1/P2 before the combat fixture'

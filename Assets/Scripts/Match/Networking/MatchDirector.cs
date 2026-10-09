@@ -318,7 +318,7 @@ namespace BeMyArms.Match
 
                     Vector3 position;
                     float yaw;
-                    if (mapSpawns != null && mapSpawns.TryGetBodyPose(team, i, out position, out yaw))
+                    if (mapSpawns != null && mapSpawns.TryGetBodyPose(team, i, round, out position, out yaw))
                     {
                         body.ServerResetRound(position.x, position.y, position.z, yaw);
                     }

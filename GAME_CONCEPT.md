@@ -162,6 +162,13 @@ Current competitive direction:
 - Desired contact roughly 10–20 seconds after start and rounds around 2–3 minutes; tuning targets.
 - Closing-zone pressure prevents indefinite stalling; timing/radius/damage are tuning.
 - A map family can close routes for Duel and open extra lanes for 2v2.
+- First purpose-built Duel map: **Boatyard**, a compact coastal boat/engine repair business,
+  not a large commercial port. Workshop/service side versus lower quay, loading platform,
+  repair yard and a side maintenance passage; modest height changes and functional cover.
+  Alternate geographic starts each round without exchanging teams or P1/P2 roles. The current
+  blockout is for human layout review, not accepted final balance or art. Build one Duel map now;
+  release target remains **5+ maps per mode**. Dust 2 A-site is a rough readability/scale reference,
+  not a layout to copy.
 - Current economy draft: fixed per-round budget, no carryover or win/loss snowball; P2 buys,
   P1 can see the loadout. A persistent CS-style economy is not currently required.
 
@@ -209,10 +216,12 @@ have production online matchmaking, durable accounts, voice, commerce or entitle
 
 ## 7. Art, cosmetics and platforms
 
-The working presentation is stylized, grounded and readable: smooth shared-rig characters,
-distinct uniform role surfaces, exposed P1 head, and independently composed rifle POV.
-Final art style, skin range, animation quality, music, SFX and VFX still need human review
-and production work. Generated content is not automatically final production art.
+The current presentation uses smooth shared-rig characters, distinct uniform role surfaces,
+exposed P1 head and an independently composed rifle POV. These are playable placeholder assets,
+not an agreed visual language. **Art direction is explicitly deferred, including characters**:
+the Boatyard iteration authors gameplay geometry only. A coherent cross-map style, skin range,
+animation quality, music, SFX and VFX need a later discussion and production work. Generated
+content is not automatically final production art; accepted controls/POV remain preserved meanwhile.
 
 Accounts are intended to own both role identities. Skins, weapons, mounting/lobby animations,
 poses and profile cosmetics may express identity; **no hero stat kits or pay-to-win**.

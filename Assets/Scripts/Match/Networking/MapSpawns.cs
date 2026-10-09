@@ -25,6 +25,7 @@ namespace BeMyArms.Match
     {
         public Vector3 BoundsSize = new Vector3(24f, 8f, 24f);
         public List<BodySpawn> Spawns = new List<BodySpawn>();
+        public bool AlternateDuelSides;
         /// <summary>Legacy XZ rectangles of cover/walls; used only when the arena hierarchy is absent.</summary>
         public List<Vector4> Obstacles = new List<Vector4>();
 
@@ -43,7 +44,12 @@ namespace BeMyArms.Match
         }
 
         public bool TryGetBodyPose(int team, int body, out Vector3 position, out float yaw)
+            => TryGetBodyPose(team, body, 1, out position, out yaw);
+
+        /// <summary>Swap geographic starts only: team ownership, roles and score never change.</summary>
+        public bool TryGetBodyPose(int team, int body, int round, out Vector3 position, out float yaw)
         {
+            if (AlternateDuelSides && round > 0 && round % 2 == 0) team = 1 - team;
             BodySpawn p1, p2;
             if (TryGet(team, body, 0, out p1) && TryGet(team, body, 1, out p2))
             {
