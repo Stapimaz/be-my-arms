@@ -189,5 +189,67 @@ namespace BeMyArms.Client.Tests
                 sim.ApplyP1(new P1Input { MoveZ = 1, Jump = i == 0, Crouch = crouch }, 1f / 60);
             Assert.LessOrEqual(sim.State.PosX, 16.61f, "Guard height must follow the rising walkway, not let players hop into the backdrop");
         }
+
+        [Test]
+        public void RampVisualsHaveHardPlanarFacesAndUsableTextureAndBakeCoordinates()
+        {
+            var arena = _scene.GetRootGameObjects().Single(g => g.name == "Arena").transform;
+            foreach (var t in arena.Cast<Transform>().Where(t => t.name.StartsWith("BMA_Map_Ramp")))
+            {
+                var mesh = t.GetComponent<MeshFilter>().sharedMesh;
+                Assert.AreEqual(mesh, t.GetComponent<MeshCollider>().sharedMesh);
+                Assert.AreEqual(mesh.vertexCount, mesh.uv.Length, t.name);
+                Assert.AreEqual(mesh.vertexCount, mesh.uv2.Length, t.name);
+                Assert.AreEqual(mesh.vertexCount, mesh.tangents.Length, t.name);
+                var vertices = mesh.vertices; var normals = mesh.normals; var triangles = mesh.triangles;
+                for (int i = 0; i < triangles.Length; i += 3)
+                {
+                    int a = triangles[i], b = triangles[i + 1], c = triangles[i + 2];
+                    var normal = Vector3.Cross(vertices[b] - vertices[a], vertices[c] - vertices[a]).normalized;
+                    foreach (int index in new[] { a, b, c })
+                        Assert.Greater(Vector3.Dot(normal, normals[index]), .999f, t.name + " must not smooth normals across wedge edges");
+                }
+                Assert.Greater(mesh.uv.Distinct().Count(), 4);
+            }
+        }
+
+        [Test]
+        public void LookSampleIsSurfaceDetailNotNewGameplayOrCameraCollision()
+        {
+            var sample = _scene.GetRootGameObjects().Single(g => g.name == BoatyardLookSample.RootName);
+            Assert.IsEmpty(sample.GetComponentsInChildren<Collider>(true));
+            Assert.IsEmpty(sample.GetComponentsInChildren<MapSpawns>(true));
+            Assert.IsTrue(sample.GetComponentsInChildren<Renderer>().All(r => r.transform.root == sample.transform));
+            Assert.Greater(sample.GetComponentsInChildren<Renderer>().Length, 10);
+            var arena = _scene.GetRootGameObjects().Single(g => g.name == "Arena").transform;
+            var roof = arena.Find("BMA_Map_Solid_WorkshopRoof");
+            Assert.AreEqual(new Vector3(-3, 6.55f, 14), roof.position);
+            Assert.AreEqual(new Vector3(18.5f, .3f, 10.5f), roof.localScale);
+            Assert.IsNotNull(roof.GetComponent<BoxCollider>(), "Existing camera collider is not replaced by the visual bevel");
+        }
+
+        [Test]
+        public void LookSampleHasBakedLightAndRestrainedGradingWithoutCinematicBlur()
+        {
+            var sample = _scene.GetRootGameObjects().Single(g => g.name == BoatyardLookSample.RootName);
+            var volume = sample.GetComponentInChildren<UnityEngine.Rendering.Volume>();
+            Assert.IsTrue(volume.isGlobal); Assert.IsNotNull(volume.sharedProfile);
+            var profile = volume.sharedProfile;
+            Assert.IsTrue(profile.TryGet<UnityEngine.Rendering.Universal.Tonemapping>(out var tone));
+            Assert.AreEqual(UnityEngine.Rendering.Universal.TonemappingMode.Neutral, tone.mode.value);
+            profile.TryGet<UnityEngine.Rendering.Universal.Bloom>(out var bloom); Assert.AreEqual(0, bloom.intensity.value);
+            profile.TryGet<UnityEngine.Rendering.Universal.MotionBlur>(out var blur); Assert.AreEqual(0, blur.intensity.value);
+            profile.TryGet<UnityEngine.Rendering.Universal.DepthOfField>(out var dof);
+            Assert.AreEqual(UnityEngine.Rendering.Universal.DepthOfFieldMode.Off, dof.mode.value);
+            var sun = _scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Light>()).Single(l => l.type == LightType.Directional);
+            Assert.AreEqual(LightShadows.Soft, sun.shadows);
+            Assert.AreEqual(LightmapBakeType.Mixed, sun.lightmapBakeType);
+            Assert.Greater(LightmapSettings.lightmaps.Length, 0);
+            Assert.IsNotNull(LightmapSettings.lightProbes);
+            Assert.Greater(sample.GetComponentInChildren<LightProbeGroup>().probePositions.Length, 20);
+            var reflections = sample.GetComponentsInChildren<ReflectionProbe>();
+            Assert.AreEqual(2, reflections.Length);
+            Assert.IsTrue(reflections.All(p => p.bakedTexture != null), "Reflection captures must be baked before delivery");
+        }
     }
 }

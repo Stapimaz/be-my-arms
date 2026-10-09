@@ -1,6 +1,6 @@
-# Current playtest — Boatyard Duel blockout
+# Current playtest — Boatyard environment look sample
 
-**Coast-shaped layout revision; no art-direction decision · 2026-10-09**
+**Layout accepted; small visual-direction experiment, not final art · 2026-10-09**
 
 Build: `Builds/Windows/BeMyArms.exe`. **PLAY → Duel → P2 → Start Match** tests the P1 movement
 partner; repeat as **P1** to test the P2 weapon partner. Try Easy first, then Hard. F6 resets
@@ -9,7 +9,8 @@ an encounter; F7 exchanges practice roles. Use matching client/server builds.
 ## What to review now
 
 Menu Duel and duo practice open **Boatyard**: a small coastal engine/boat repair business,
-currently neutral blockout geometry. Workshop/loading platform faces a tighter repair yard;
+mostly blockout, with an environment look sample at the workshop entry/loading/nearby yard.
+Workshop/loading platform faces a tighter repair yard;
 the lower quay bends around a coastal spur/pump building, rather than filling a square arena.
 An eastern maintenance passage offers an alternate approach with a low service pipe.
 Floor levels are 0 / 1.2 / 2.4 m. Starting sides alternate each round, not teams or P1/P2 roles.
@@ -21,13 +22,38 @@ The continuous square ground and four enclosing perimeter walls are gone. Differ
 offsets, service-building masses and open seaward guards limit playable space. Beyond them,
 simple sea/headland/island silhouettes, neighboring workshops, road continuation and a remote
 berth/boat suggest a larger location. That backdrop is **not reachable and not gameplay cover**.
-It is only spatial context; map/character art direction remains deferred.
+It is only spatial context; character art remains deferred. The accepted layout is unchanged.
 
 Ramps retain the previous filled-volume fix: try high-side/back approaches and ordinary
 ascent/descent. The coastal guard rises with the quay ramp, including during crouch jumping.
-The revision passed 17 focused map tests and 12 normal menu/shared-body smoke checks. One
-Windows build succeeded (0 errors, 0 reported warnings). These checks do not establish natural
-feel or layout acceptance. Use matching updated client/server builds.
+Ramp visuals now have hard planar-face normals and texture/lightmap UVs; the slope/solid volume
+is unchanged. Use matching updated client/server builds.
+
+### What to judge in this iteration
+
+Start on the workshop side (or walk there as P1). Inspect the entry, loading ramp/edge, inside
+workbench and adjacent yard machinery. Warm light concrete/plaster, teal paint, limited ochre
+accents and subtle surface detail are the sample. Two baked indirect lightmaps, body light
+probes, reflection captures and a shadowed sun supply depth without intentionally dark interiors.
+Sky, lighting, contextual sea color and light grading affect the wider map; **untreated geometry
+is still blockout**, not finished art. Characters/weapon design have not been redesigned.
+
+- Too cartoon-like, too realistic, or approximately the right middle ground?
+- Welcoming and bright, without washed-out surfaces or excessive saturation?
+- Does shaded workshop space still let you identify the shared body/roles and aim comfortably?
+- Do concrete, paint and steel feel distinct? Too flat, too shiny, too noisy, or too repetitive?
+- Do ramps now read as solid flat surfaces? Report flicker/warping or visible seams if they remain.
+
+Judge the sample while walking/aiming in both roles. No requirement for screenshots. We stop
+for your feedback before expanding the art pass, importing large asset packs or doing characters.
+
+Technical verification: all 20 focused map/presentation cases passed (one Volume persistence
+fix needed only its affected test rerun). One updated Windows build succeeded: 0 errors,
+12 warnings (11 existing source warnings, one non-blocking Unity symbol-upload 403).
+13 disposable menu/shared-body smoke checks passed, including rendered P2 loading of baked
+lighting/reflections, serialized grading and ramp surface data. These do not decide art quality.
+
+### Retained layout/combat review questions
 
 1. Walk the whole route as P1: do spaces feel like parts of a coastal business instead of a
    single boxed arena? Does the unreachable world continuation help, or still feel like a stage?
@@ -43,8 +69,8 @@ feel or layout acceptance. Use matching updated client/server builds.
 6. Near lips, racks and doorway edges, report where camera aim says clear but the actual rifle
    shot is obstructed. This known shot-origin/presentation limitation is not solved by a new map.
 
-**Do not judge final visuals yet.** Map/character art direction is explicitly postponed.
-This checkpoint needs layout feedback before more geometry, additional maps or an art pass.
+**This is not final visual acceptance.** The coastal layout was accepted; this checkpoint asks
+for feedback on a small environment art sample. Character work and a whole-map pass remain outside scope.
 
 ## Retained accuracy and crosshair behavior
 

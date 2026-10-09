@@ -222,10 +222,13 @@ have production online matchmaking, durable accounts, voice, commerce or entitle
 
 The current presentation uses smooth shared-rig characters, distinct uniform role surfaces,
 exposed P1 head and an independently composed rifle POV. These are playable placeholder assets,
-not an agreed visual language. **Art direction is explicitly deferred, including characters**:
-the Boatyard iteration authors gameplay geometry only. A coherent cross-map style, skin range,
-animation quality, music, SFX and VFX need a later discussion and production work. Generated
-content is not automatically final production art; accepted controls/POV remain preserved meanwhile.
+not an agreed visual language. After accepting the coastal Boatyard layout, the user authorized
+a **small environment look sample**, not a whole-map or character art pass: bright, welcoming,
+readable, lightly stylized realism, slightly more realistic than Fortnite without photorealistic
+grime or dark/crushed shadows. Workshop entry/loading ramp/nearby yard are the feedback slice;
+lighting/sky affect their wider context. **Character art remains deferred**. Cross-map style,
+skin range, animation quality, music, SFX and VFX still need later decisions and production work.
+Generated content is not automatically final art; accepted controls/POV remain preserved.
 
 Accounts are intended to own both role identities. Skins, weapons, mounting/lobby animations,
 poses and profile cosmetics may express identity; **no hero stat kits or pay-to-win**.

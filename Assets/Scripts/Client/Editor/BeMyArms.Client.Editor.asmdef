@@ -13,7 +13,9 @@
         "BeMyArms.Core",
         "Unity.Netcode.Runtime",
         "Unity.Animation.Rigging",
-        "Unity.Cinemachine"
+        "Unity.Cinemachine",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime"
     ],
     "includePlatforms": [
         "Editor"

@@ -222,14 +222,26 @@ Do not silently replace it with the registry version during repository cleanup.
   navigation framework is introduced. `MapSpawns.AlternateDuelSides` is opt-in; `MatchDirector`
   resolves round-aware poses while team IDs, role slots, owners and scores stay unchanged.
   The one-time Editor builder refuses to overwrite the authored scene; later layout edits use
-  the connected Editor. Art direction, including characters, is deferred.
+   the connected Editor. The coastal layout is human-accepted; a limited environment look sample
+   is now authorized, with character art still deferred.
   The coastal revision replaces the square base/perimeter with a bent quay, tighter yard,
   land spur/pump house and open seaward guards. `Backdrop` is a separate visual-only scene
   root: no Unity colliders and no entries in the `Arena`-derived movement/bot/shot collision.
   Do not place gameplay cover under that root. The 40 × 40 m bounds are an outer safety clamp,
   not the shape of the playable floor. Start poses/round schedule and collision algorithms
   are unchanged by this layout revision. `tools/maps/revise-boatyard-coast.cs` is a guarded
-  one-time live-Editor authoring operation, not a routine regeneration/build dependency.
+   one-time live-Editor authoring operation, not a routine regeneration/build dependency.
+   `BoatyardLookSample.Author` is another guarded, one-time live-Editor operation for the workshop
+   entry/loading/yard sample. Sample mesh bevels preserve renderer AABBs and original box camera
+   colliders; ramp visual normals are split across geometric faces, with metric UV/tangents and
+   UV2, without changing wedge bounds/volume. The author verifies all shared collision entries
+   before saving. `LookSample` surface details have no colliders and stay outside `Arena`.
+   Lighting uses a mixed shadowed sun, CPU-baked indirect light, legacy light probes and two baked
+   reflection probes; the old pipeline's light-probe mode is retained. Existing PC SSAO is not
+   amplified or stacked with baked AO. A scene Volume supplies restrained neutral grading;
+   `LocalPlayer` opts the world camera into post-processing when a map Volume exists, leaving
+   volume-free legacy scenes and the separate overlay viewmodel unchanged. No FOV/aim changes.
+   Textures are ambientCG CC0 with recorded provenance in `BoatyardLookSample/SOURCES.md`.
   Ramp authoring now provides both walkable surfaces and filled, sloped solids. Horizontal
   movement and bot clearance clip the solid footprint to the feet/step band; bullet rays clip
   against the actual sloped top rather than an enclosing box. This fixes high-side penetration

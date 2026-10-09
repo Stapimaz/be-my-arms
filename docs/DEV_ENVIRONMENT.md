@@ -109,6 +109,8 @@ there is no runtime map selector or scene auto-synchronization in this iteration
 unity command eval_file tools/maintenance/audit-unity-references.cs 30000 --timeout 120 --format json
 # Menu/startup/shared-body P1/P2 Duel + rendered crosshair projection/firing smoke (no screenshots)
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/smoke-duel.ps1
+# Current Boatyard look sample: same disposable smoke plus rendered lighting/grading import checks
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/smoke-duel.ps1 -CheckLookSample
 # Broader session/peer-loss regression: use when ownership/lifecycle/Transport changes
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/qa/test-session-lifecycle.ps1 -BuildDirectory Builds/Windows
 # Rifle geometry/damage/feedback + P1-motion spread: real role RPCs and server ticks
@@ -121,6 +123,16 @@ Run runtime scripts **sequentially**: multiple processes share the build directo
 descriptor. `--runtime-path` takes the directory containing `.unity-pipeline-runtime-port`, not
 the descriptor file. Each script snapshots its own process's descriptor, checks results and
 cleans up its processes. Runtime QA needs a Development build.
+
+For small Boatyard art/mesh edits, compile and run the focused `BoatyardTests` filter instead of
+the whole EditMode suite. The accepted layout is not regenerated. When changed lighting needs
+rebaking, open **only** the saved Boatyard scene (no Play mode/additive scenes), then run
+`unity command eval_file tools/maps/bake-boatyard-look.cs 3600000 --timeout 3600 --format json`.
+Inspect its actual lightmap/probe/capture result before one final playable build. Bake artifacts
+live under `Assets/Scenes/Boatyard`; texture provenance is in
+`Assets/Art/Maps/BoatyardLookSample/SOURCES.md`. Visual direction is accepted by human feedback,
+not this runtime import check. `BoatyardLookSample.Author()` is a guarded one-time operation,
+not a routine bake/build prerequisite.
 
 The rifle test creates isolated headless processes, freezes its disposable combat/round/zone clocks,
 then submits real role-authenticated input and advances the ordinary server tick. It checks

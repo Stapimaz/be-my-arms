@@ -288,6 +288,9 @@ namespace BeMyArms.Client
             var mainData = go.GetComponent<UniversalAdditionalCameraData>();
             if (mainData == null) mainData = go.AddComponent<UniversalAdditionalCameraData>();
             mainData.renderType = CameraRenderType.Base;
+            // Authored map volumes opt into grading. Legacy blockout scenes have no Volume,
+            // so their accepted camera/presentation remains unchanged. Viewmodel stays ungraded.
+            mainData.renderPostProcessing = FindAnyObjectByType<UnityEngine.Rendering.Volume>() != null;
             var vmData = vmGo.AddComponent<UniversalAdditionalCameraData>();
             vmData.renderType = CameraRenderType.Overlay;
             mainData.cameraStack.Add(_viewmodelCamera);

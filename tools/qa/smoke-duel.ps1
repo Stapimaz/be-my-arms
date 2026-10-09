@@ -1,4 +1,4 @@
-param([string]$BuildDirectory='Builds/Windows')
+param([string]$BuildDirectory='Builds/Windows', [switch]$CheckLookSample)
 $ErrorActionPreference='Stop'
 $root=(Resolve-Path $BuildDirectory).Path
 $exe=Join-Path $root 'BeMyArms.exe'
@@ -92,6 +92,10 @@ try {
     Check ($a.Scene -eq 'Boatyard' -and $b.Scene -eq 'Boatyard') 'Menu and joining partner load the same new Boatyard Duel map'
     Check ($b.LocalRole -eq 1 -and $a.LocalTeam -eq $b.LocalTeam -and $a.LocalBodyIndex -eq $b.LocalBodyIndex -and $b.BodyCount -eq 2 -and !$b.P1Bot -and !$b.P2Bot) 'Both authorized human roles own the same shared body, without duplicate bots'
     Check ($b.DuplicateSummary -eq 'none' -and $b.ViewmodelCount -eq 1) 'Normalized P2 presentation resources resolve to one viewmodel'
+    if($CheckLookSample){
+        $look=(Qa $p2 'eval_file' @((Join-Path $PSScriptRoot 'check-boatyard-look.cs'))).result
+        Check ($look.Success) 'Rendered P2 loads the map grading, baked lighting/reflections and valid ramp visuals without grading the viewmodel'
+    }
     Qa $p1 'qa_headless_controls' | Out-Null
     $before=$b.AuthoritativePosition
     Qa $p1 'qa_inject_input' @('--movex','1') | Out-Null

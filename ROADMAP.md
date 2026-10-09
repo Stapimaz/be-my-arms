@@ -1,6 +1,6 @@
 # Be My Arms — Roadmap
 
-**Current status: coast-shaped Boatyard revision ready for layout review · Updated 2026-10-09**
+**Current status: accepted Boatyard layout; small environment look sample for review · Updated 2026-10-09**
 
 Design: [GAME_CONCEPT.md](GAME_CONCEPT.md). Architecture: [TECHNICAL_PLAN.md](TECHNICAL_PLAN.md).
 Run/build: [docs/DEV_ENVIRONMENT.md](docs/DEV_ENVIRONMENT.md).
@@ -43,16 +43,49 @@ arena/bot quality, generated audio/VFX, onboarding and round presentation, produ
 durable identities/security and final release readiness. Human visual/feel acceptance is not
 inferred from screenshots or green tests.
 
-## Current iteration — coast-shaped Boatyard blockout
+## Current iteration — workshop/loading/yard look sample
+
+The user accepted the bent coastal layout (`e551b23`: “layout baya beğendim”) and authorized
+the proposed **small environment art slice**, not a full map or character pass. Direction to
+test: bright/welcoming, readable, lightly stylized realism, somewhat more realistic than
+Fortnite; avoid grimy photorealism, crushed shadows and excessive rainbow saturation.
+
+- Local sample: warm, low-contrast textured plaster/concrete, teal painted machinery/trim,
+  restrained ochre safety accents, steel/rubber, inward edge bevels and workshop surface detail.
+  Adjacent areas/backdrop remain blockout; sun/sky/sea-context color and grading affect the
+  whole scene. Characters, rig, P2 POV/immediate aim and combat remain unchanged.
+- Ramp presentation bug fixed on all four wedges: hard geometric-face normals, metric texture
+  UVs/tangents and UV2, without changing the slope/bounds/solid volume. Sample architecture
+  keeps its renderer envelopes and original box camera colliders; the author asserted identical
+  shared collision entries before saving. `LookSample` details have no independent colliders.
+- Mixed shadowed sun, CPU-baked indirect light (**2 lightmaps**), **72 light probes** and two
+  baked reflection captures; existing restrained SSAO retained, no stacked baked AO. Neutral
+  tonemapping/light grading; no bloom, motion blur, DOF or vignette. World camera opts into
+  map Volume grading; the separate overlay viewmodel and volume-free legacy maps do not.
+- Free ambientCG CC0 texture sources and adaptations are recorded in
+  `Assets/Art/Maps/BoatyardLookSample/SOURCES.md`. No paid assets/services, AI models, new
+  content pipeline, layout revision or additional map. Live authoring refuses regeneration.
+
+Verification: compilation completed; all **20 focused Boatyard map/presentation cases** passed.
+The grading check first caught an empty persisted Volume profile; component sub-assets were
+explicitly saved and that one affected test passed on rerun. No light rebake was invalidated.
+One Windows Development build succeeded (**0 errors, 12 reported warnings**): 11 existing
+deprecated-API/unused-field warnings and one Unity native-symbol upload 403 warning, not a
+player/shader failure. **13 disposable menu/shared-body smoke checks** passed, including actual
+rendered P2 loading of grading components, baked light/probes/reflections and ramp coordinates,
+with the overlay viewmodel ungraded. No full EditMode/combat/lifecycle rerun; no automated visual acceptance.
+Stop for human feedback on this slice before expanding or choosing a final cross-map style.
+
+## Previous iteration — coast-shaped Boatyard blockout
 
 The user authorized the first purpose-built Duel map: a small coastal boat/engine repair
 business, with workshop/service and lower-quay starts, a loading platform, central repair
-yard and side maintenance passage. **Visual/art direction, including characters, is deferred**;
+yard and side maintenance passage. At that stage **visual/art direction, including characters, was deferred**;
 neutral blockout materials do not establish a style. No 2v2 variant or additional map is built.
 
 Human review rejected the first broad rectangular floor/perimeter as too much like a boxed
 arena. The user confirmed a natural-feeling place inside a larger scenic world, with unreachable
-background structures if useful. Implemented that direction; human layout acceptance is pending:
+background structures if useful. Implemented that direction; the user subsequently accepted its layout:
 
 - Replace the full square ground with three connected quay pads bending around a land spur;
   their combined footprint is 225 m². Narrow the loading yard; retain the workshop and ramps.
@@ -94,7 +127,7 @@ warnings**). No full suite, menu smoke or lifecycle rerun; the map layout has no
 - Starts alternate each round; team identities, scores and human P1/P2 ownership do not swap.
   No attack/defend objective, new traversal or network foundation was introduced.
 - Stop here for human review of approaches, scale, firing opportunities, dominant platform
-  angles and near-cover camera/shot-origin disagreement. Correct layout before any art pass.
+  angles and near-cover camera/shot-origin disagreement. That layout review now permits a small art sample.
   Release content target is 5+ maps per mode, not this iteration's delivery scope.
 
 First blockout verification: **9 focused map tests** passed, covering spawn clearance/occlusion, side schedule,
